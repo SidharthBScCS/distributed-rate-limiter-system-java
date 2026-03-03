@@ -6,6 +6,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.RedisSystemException;
@@ -296,6 +297,18 @@ public class DistributedRateLimiterService {
         return hasActiveBlockMarker(apiKey.getApiKey()) ? "Blocked" : "Normal";
     }
 
+    public long resolveCurrentWindowRequestCount(ApiKey apiKey) {
+        if (apiKey == null || apiKey.getApiKey() == null || apiKey.getApiKey().isBlank()) {
+            return 0L;
+        }
+
+        String apiKeyValue = apiKey.getApiKey();
+        long sliding = sumSlidingWindowCount(apiKeyValue);
+        long fixed = sumFixedWindowCount(apiKeyValue);
+        long bucket = sumTokenBucketUsed(apiKeyValue, apiKey.getRateLimit(), apiKey.getWindowSeconds());
+        return Math.max(0L, sliding + fixed + bucket);
+    }
+
     private boolean hasActiveBlockMarker(String apiKeyValue) {
         try {
             return Boolean.TRUE.equals(redisTemplate.hasKey(blockMarkerKey(apiKeyValue)));
@@ -324,6 +337,71 @@ public class DistributedRateLimiterService {
 
     private String blockMarkerKey(String apiKeyValue) {
         return redisPrefix + ":status:block:" + apiKeyValue;
+    }
+
+    private long sumSlidingWindowCount(String apiKeyValue) {
+        Set<String> keys = redisTemplate.keys(redisPrefix + ":sliding:" + apiKeyValue + ":*");
+        if (keys == null || keys.isEmpty()) {
+            return 0L;
+        }
+        long sum = 0L;
+        for (String key : keys) {
+            Long value = redisTemplate.opsForZSet().zCard(key);
+            sum += value == null ? 0L : value;
+        }
+        return sum;
+    }
+
+    private long sumFixedWindowCount(String apiKeyValue) {
+        Set<String> keys = redisTemplate.keys(redisPrefix + ":fixed:" + apiKeyValue + ":*");
+        if (keys == null || keys.isEmpty()) {
+            return 0L;
+        }
+        long sum = 0L;
+        for (String key : keys) {
+            String value = redisTemplate.opsForValue().get(key);
+            if (value == null || value.isBlank()) {
+                continue;
+            }
+            try {
+                sum += Long.parseLong(value);
+            } catch (NumberFormatException ignored) {
+                // Ignore malformed values.
+            }
+        }
+        return sum;
+    }
+
+    private long sumTokenBucketUsed(String apiKeyValue, Integer rateLimit, Integer windowSeconds) {
+        Set<String> keys = redisTemplate.keys(redisPrefix + ":bucket:" + apiKeyValue + ":*");
+        if (keys == null || keys.isEmpty()) {
+            return 0L;
+        }
+
+        int limit = Math.max(1, rateLimit == null ? 1 : rateLimit);
+        int window = Math.max(1, windowSeconds == null ? 60 : windowSeconds);
+        double refillPerSecond = tokenBucketRefillPerSecond > 0
+                ? tokenBucketRefillPerSecond
+                : ((double) limit / (double) window);
+        double capacity = Math.max(1.0, Math.ceil(limit * Math.max(0.1, tokenBucketCapacityMultiplier)));
+        if (refillPerSecond <= 0) {
+            return 0L;
+        }
+
+        long used = 0L;
+        for (String key : keys) {
+            Object tokensRaw = redisTemplate.opsForHash().get(key, "tokens");
+            if (tokensRaw == null) {
+                continue;
+            }
+            try {
+                double tokens = Double.parseDouble(tokensRaw.toString());
+                used += Math.max(0L, (long) Math.ceil(capacity - tokens));
+            } catch (NumberFormatException ignored) {
+                // Ignore malformed values.
+            }
+        }
+        return used;
     }
 
     private long windowMs(ApiKey apiKey) {

@@ -70,7 +70,7 @@ public class ApiKeyController {
 
         List<Map<String, Object>> apiKeys = allKeys.stream()
                 .map(apiKey -> {
-                    long requestCount = apiKey.getTotalRequests() == null ? 0L : apiKey.getTotalRequests();
+                    long requestCount = distributedRateLimiterService.resolveCurrentWindowRequestCount(apiKey);
                     int rateLimit = apiKey.getRateLimit() == null || apiKey.getRateLimit() <= 0 ? 1 : apiKey.getRateLimit();
                     double usagePercentage = Math.min((requestCount * 100.0) / rateLimit, 100.0);
                     String status = distributedRateLimiterService.resolveCurrentStatus(apiKey);
