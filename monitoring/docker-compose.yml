@@ -20,6 +20,7 @@ services:
       GF_SECURITY_CONTENT_SECURITY_POLICY: "false"
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DATASOURCE_PROMETHEUS_URL: http://prometheus:9090
     volumes:
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
       - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
