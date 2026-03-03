@@ -68,7 +68,7 @@ body {
 }
 
 .dashboard-content {
-  margin-top: 2rem;
+  margin-top: 0;
 }
 
 /* Mobile Navigation */
@@ -184,6 +184,6 @@ body {
 
 @media (max-width: 768px) {
   .dashboard-content {
-    margin-top: 1rem;
+    margin-top: 0;
   }
 }

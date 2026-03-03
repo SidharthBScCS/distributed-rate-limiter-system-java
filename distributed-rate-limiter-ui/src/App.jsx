@@ -1,5 +1,4 @@
 import Sidebar from "./Sidebar";
-import Header from "./Heading";
 import StatsCards from "./Card";
 import ApiTable from "./Table_Box";
 import Analytics from "./Analytics";
@@ -82,7 +81,6 @@ function App() {
             element={
               isAuthenticated ? (
                 <div className="dashboard-page">
-                  <Header />
                   <div className="dashboard-content">
                     <StatsCards refreshTick={refreshTick} />
                     <ApiTable refreshTick={refreshTick} />
@@ -99,7 +97,6 @@ function App() {
             element={
               isAuthenticated ? (
                 <div className="page-container">
-                  <Header />
                   <Analytics />
                 </div>
               ) : (
