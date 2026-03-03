@@ -76,8 +76,7 @@ public class ApiKeyController {
                     String status = apiKey.getStatus() == null ? "Normal" : apiKey.getStatus();
                     Map<String, Object> row = new java.util.LinkedHashMap<>();
                     row.put("id", apiKey.getId());
-                    row.put("apiKeyDisplay", formatApiKey(apiKey.getApiKey()));
-                    row.put("apiKeyFull", apiKey.getApiKey());
+                    row.put("apiKey", apiKey.getApiKey());
                     row.put("userName", apiKey.getUserName());
                     row.put("rateLimit", apiKey.getRateLimit());
                     row.put("windowSeconds", apiKey.getWindowSeconds());
@@ -219,12 +218,6 @@ public class ApiKeyController {
                 ),
                 "maxValue", maxValue
         ));
-    }
-
-    private static String formatApiKey(String key) {
-        if (key == null) return "";
-        if (key.length() <= 16) return key;
-        return key.substring(0, 8) + "..." + key.substring(key.length() - 8);
     }
 
     private static String statusColor(String status) {

@@ -4,8 +4,7 @@ import {
   CheckCircle, 
   XCircle, 
   TrendingUp,
-  TrendingDown,
-  MoreVertical 
+  TrendingDown
 } from "lucide-react";
 import { apiUrl } from "./apiBase";
 import "./Cards.css";
@@ -81,9 +80,6 @@ function StatsCards({ refreshTick }) {
               <div className="card-icon-wrapper" style={{ background: card.bgColor }}>
                 <Icon size={22} color={card.color} />
               </div>
-              <button className="card-menu">
-                <MoreVertical size={16} color="var(--text-muted)" />
-              </button>
             </div>
 
             <div className="card-body">
@@ -100,7 +96,6 @@ function StatsCards({ refreshTick }) {
                 )}
                 <span>{card.change}</span>
               </div>
-              <span className="period-text">vs last hour</span>
             </div>
 
             <div className="card-glow" style={{ background: card.color }} />
