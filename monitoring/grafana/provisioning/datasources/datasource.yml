@@ -5,8 +5,8 @@ datasources:
     name: Prometheus
     type: prometheus
     access: proxy
-    # use environment variable so the same file works outside Docker
-    # (defaults to localhost:9090).
-    url: "${GF_DATASOURCE_PROMETHEUS_URL:http://localhost:9090}"
+    # inside docker-compose, use service DNS name.
+    # can still be overridden via GF_DATASOURCE_PROMETHEUS_URL.
+    url: "${GF_DATASOURCE_PROMETHEUS_URL:http://prometheus:9090}"
     isDefault: true
     editable: true
