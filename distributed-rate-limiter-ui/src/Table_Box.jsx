@@ -4,7 +4,6 @@ import { apiUrl } from "./apiBase";
 import "./Table_Box.css";
 
 function ApiTable({ refreshTick, defaults }) {
-  const defaultAlgorithm = "SLIDING_WINDOW";
   const defaultRateLimit = String(defaults?.rateLimit ?? "");
   const defaultWindowSeconds = String(defaults?.windowSeconds ?? "");
   const [keys, setKeys] = useState([]);
@@ -14,7 +13,6 @@ function ApiTable({ refreshTick, defaults }) {
     userName: "",
     rateLimit: defaultRateLimit,
     windowSeconds: defaultWindowSeconds,
-    algorithm: defaultAlgorithm,
   });
   const [createError, setCreateError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,10 +27,9 @@ function ApiTable({ refreshTick, defaults }) {
         userName: "",
         rateLimit: defaultRateLimit,
         windowSeconds: defaultWindowSeconds,
-        algorithm: defaultAlgorithm,
       });
     }
-  }, [defaultAlgorithm, defaultRateLimit, defaultWindowSeconds, isCreateModalOpen]);
+  }, [defaultRateLimit, defaultWindowSeconds, isCreateModalOpen]);
 
   const fetchKeys = async () => {
     try {
@@ -67,7 +64,6 @@ function ApiTable({ refreshTick, defaults }) {
       userName: "",
       rateLimit: defaultRateLimit,
       windowSeconds: defaultWindowSeconds,
-      algorithm: defaultAlgorithm,
     });
     setIsCreateModalOpen(true);
   };
@@ -90,7 +86,6 @@ function ApiTable({ refreshTick, defaults }) {
       userName: formState.userName.trim(),
       rateLimit: Number(formState.rateLimit),
       windowSeconds: Number(formState.windowSeconds),
-      algorithm: formState.algorithm,
     };
 
     try {
@@ -190,7 +185,7 @@ function ApiTable({ refreshTick, defaults }) {
                       <span className="window-value">{key.windowSeconds}s</span>
                     </td>
                     <td>
-                      <span className="algo-badge">SLIDING_WINDOW</span>
+                      <code className="algo-code">SLIDING_WINDOW</code>
                     </td>
                     <td>
                       <div className="usage-cell">
@@ -260,11 +255,6 @@ function ApiTable({ refreshTick, defaults }) {
                   onChange={(event) => updateField("windowSeconds", event.target.value)}
                   required
                 />
-              </label>
-
-              <label>
-                Algorithm
-                <input type="text" value="SLIDING_WINDOW" readOnly />
               </label>
 
               {createError ? <p className="create-error">{createError}</p> : null}

@@ -163,18 +163,16 @@
   white-space: nowrap;
 }
 
-.algo-badge {
+.algo-code {
+  font-family: "JetBrains Mono", "Cascadia Code", "Fira Code", monospace;
   display: inline-block;
-  padding: 0.28rem 0.78rem;
   background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 30px;
+  padding: 0.28rem 0.5rem;
+  border-radius: 8px;
   font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  line-height: 1.35;
   white-space: nowrap;
 }
 
@@ -266,11 +264,11 @@
 }
 
 .modal-card {
-  width: min(480px, 100%);
+  width: min(680px, 100%);
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 1.25rem;
+  border-radius: 14px;
+  padding: 1.75rem;
 }
 
 .modal-card h3 {

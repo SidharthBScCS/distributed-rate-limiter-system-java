@@ -140,8 +140,7 @@ public class ApiKeyController {
         ApiKey created = apiKeyService.createApiKey(
                 request.getUserName(),
                 request.getRateLimit(),
-                request.getWindowSeconds(),
-                request.getAlgorithm()
+                request.getWindowSeconds()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

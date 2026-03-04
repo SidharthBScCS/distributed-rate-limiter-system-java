@@ -27,7 +27,7 @@ public class ApiKeyService {
         this.blockThreshold = Math.max(0L, blockThreshold);
     }
 
-    public ApiKey createApiKey(String userName, Integer rateLimit, Integer windowSeconds, String algorithm) {
+    public ApiKey createApiKey(String userName, Integer rateLimit, Integer windowSeconds) {
         if (userName == null || userName.trim().isEmpty()) throw new IllegalArgumentException("userName is required");
         if (rateLimit == null || rateLimit <= 0) throw new IllegalArgumentException("rateLimit must be > 0");
         if (windowSeconds == null || windowSeconds <= 0) throw new IllegalArgumentException("windowSeconds must be > 0");
@@ -36,7 +36,7 @@ public class ApiKeyService {
         apiKey.setUserName(userName.trim());
         apiKey.setRateLimit(rateLimit);
         apiKey.setWindowSeconds(windowSeconds);
-        apiKey.setAlgorithm(normalizeOrDefault(algorithm, defaultAlgorithm));
+        apiKey.setAlgorithm(defaultAlgorithm);
         // generate a random API key token
         String token = UUID.randomUUID().toString().replace("-", "");
         apiKey.setApiKey(token);
