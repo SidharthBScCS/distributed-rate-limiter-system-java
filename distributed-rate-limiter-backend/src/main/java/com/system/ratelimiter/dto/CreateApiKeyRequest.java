@@ -3,6 +3,7 @@ package com.system.ratelimiter.dto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 public class CreateApiKeyRequest {
 
@@ -17,6 +18,10 @@ public class CreateApiKeyRequest {
     @Min(value = 1, message = "windowSeconds must be >= 1")
     private Integer windowSeconds;
 
+    @Pattern(
+            regexp = "SLIDING_WINDOW",
+            message = "Algorithm must be SLIDING_WINDOW"
+    )
     private String algorithm;
 
     public String getUserName() {

@@ -145,8 +145,6 @@ public class ApiKeyService {
     }
 
     private boolean isSupportedAlgorithm(String algorithm) {
-        return "TOKEN_BUCKET".equals(algorithm)
-                || "FIXED_WINDOW".equals(algorithm)
-                || "SLIDING_WINDOW".equals(algorithm);
+        return "SLIDING_WINDOW".equals(algorithm);
     }
 }

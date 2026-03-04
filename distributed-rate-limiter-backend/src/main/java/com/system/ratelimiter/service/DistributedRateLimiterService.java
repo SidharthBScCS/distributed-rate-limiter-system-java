@@ -430,7 +430,7 @@ public class DistributedRateLimiterService {
                 return requested;
             }
             throw new IllegalArgumentException(
-                    "Algorithm must be one of TOKEN_BUCKET, FIXED_WINDOW, SLIDING_WINDOW"
+                    "Algorithm must be SLIDING_WINDOW"
             );
         }
 
@@ -442,9 +442,7 @@ public class DistributedRateLimiterService {
     }
 
     private boolean isSupportedAlgorithm(String algorithm) {
-        return TOKEN_BUCKET.equals(algorithm)
-                || FIXED_WINDOW.equals(algorithm)
-                || SLIDING_WINDOW.equals(algorithm);
+        return SLIDING_WINDOW.equals(algorithm);
     }
 
     public record Decision(boolean allowed, int retryAfterSeconds, String reason, String algorithm) {}

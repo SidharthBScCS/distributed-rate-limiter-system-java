@@ -173,7 +173,6 @@ function App() {
                     <ApiTable
                       refreshTick={refreshTick}
                       defaults={uiConfig.defaults}
-                      allowedAlgorithms={uiConfig.allowedAlgorithms}
                     />
                   </div>
                 </div>

@@ -3,11 +3,10 @@ import { Plus, Copy } from "lucide-react";
 import { apiUrl } from "./apiBase";
 import "./Table_Box.css";
 
-function ApiTable({ refreshTick, defaults, allowedAlgorithms }) {
-  const defaultAlgorithm = defaults?.algorithm || "";
+function ApiTable({ refreshTick, defaults }) {
+  const defaultAlgorithm = "SLIDING_WINDOW";
   const defaultRateLimit = String(defaults?.rateLimit ?? "");
   const defaultWindowSeconds = String(defaults?.windowSeconds ?? "");
-  const algorithmOptions = Array.isArray(allowedAlgorithms) ? allowedAlgorithms : [];
   const [keys, setKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -191,7 +190,7 @@ function ApiTable({ refreshTick, defaults, allowedAlgorithms }) {
                       <span className="window-value">{key.windowSeconds}s</span>
                     </td>
                     <td>
-                      <span className="algo-badge">{key.algorithm}</span>
+                      <span className="algo-badge">SLIDING_WINDOW</span>
                     </td>
                     <td>
                       <div className="usage-cell">
@@ -265,14 +264,7 @@ function ApiTable({ refreshTick, defaults, allowedAlgorithms }) {
 
               <label>
                 Algorithm
-                <select
-                  value={formState.algorithm}
-                  onChange={(event) => updateField("algorithm", event.target.value)}
-                >
-                  {algorithmOptions.map((algorithm) => (
-                    <option key={algorithm} value={algorithm}>{algorithm}</option>
-                  ))}
-                </select>
+                <input type="text" value="SLIDING_WINDOW" readOnly />
               </label>
 
               {createError ? <p className="create-error">{createError}</p> : null}
