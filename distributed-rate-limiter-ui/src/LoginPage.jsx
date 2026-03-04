@@ -44,28 +44,12 @@ function LoginPage() {
   return (
     <div className="gh-login-shell">
       <div className="gh-main">
-        <div className="gh-left">
-          <div className="gh-overview-card">
-            <span className="gh-chip">Realtime Protection</span>
-            <div className="gh-overview-header">
-              <h1>Distributed Rate Limiter System</h1>
-              <p>Production-ready API traffic control with Redis-backed sliding window enforcement.</p>
-            </div>
-            <ul className="gh-overview-list">
-              <li>Protects APIs from overload and abuse under high traffic.</li>
-              <li>Uses Redis for real-time sliding window limit decisions.</li>
-              <li>Stores API key configuration and stats in PostgreSQL.</li>
-              <li>Returns ALLOW or DENY (429) consistently for fair usage.</li>
-              <li>Supports monitoring with Prometheus and Grafana.</li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="gh-right">
+        <div className="gh-right gh-right--single">
           <div className="gh-card">
+            <span className="gh-chip">Cyber Access</span>
             <div className="gh-auth-head">
-              <h3>Welcome back</h3>
-              <p>Sign in to continue to the control panel</p>
+              <h3>Secure Sign In</h3>
+              <p>Authenticate to access the rate limiter control panel</p>
             </div>
 
             {error ? (

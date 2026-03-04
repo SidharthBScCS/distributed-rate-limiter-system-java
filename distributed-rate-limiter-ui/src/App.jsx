@@ -14,6 +14,7 @@ function App() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
   const [uiConfig, setUiConfig] = useState(null);
+  const [configError, setConfigError] = useState("");
   const isAnalyticsPage = location.pathname === "/analytics";
   const isFullWidthPage = location.pathname === "/login";
   const showSidebar = !isFullWidthPage;
@@ -26,25 +27,32 @@ function App() {
       if (!response.ok) {
         if (response.status === 401) {
           window.location.assign("/login");
+          return false;
         }
+        setConfigError(`Failed to load backend config (HTTP ${response.status}).`);
         return false;
       }
       const data = await response.json();
       setUiConfig(data);
+      setConfigError("");
       return true;
     } catch {
+      setConfigError("Cannot reach backend. Make sure Spring Boot is running.");
       return false;
     }
   };
 
   useEffect(() => {
+    if (isFullWidthPage) {
+      return undefined;
+    }
     const configTimeoutId = window.setTimeout(() => {
       loadUiConfig();
     }, 0);
     return () => {
       window.clearTimeout(configTimeoutId);
     };
-  }, []);
+  }, [isFullWidthPage]);
 
   useEffect(() => {
     const onAuthChanged = () => {
@@ -53,16 +61,6 @@ function App() {
     window.addEventListener("auth-changed", onAuthChanged);
     return () => window.removeEventListener("auth-changed", onAuthChanged);
   }, []);
-
-  useEffect(() => {
-    if (isAnalyticsPage && uiConfig && !uiConfig.grafanaDashboardUrl) {
-      const timeoutId = window.setTimeout(() => {
-        loadUiConfig();
-      }, 0);
-      return () => window.clearTimeout(timeoutId);
-    }
-    return undefined;
-  }, [isAnalyticsPage, uiConfig]);
 
   // Refresh data periodically
   useEffect(() => {
@@ -119,7 +117,7 @@ function App() {
         {!isFullWidthPage && !uiConfig ? (
           <div className="page-container">
             <div className="analytics-empty-state">
-              <p>Loading configuration...</p>
+              <p>{configError || "Loading configuration..."}</p>
             </div>
           </div>
         ) : (
@@ -137,24 +135,40 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <div className="dashboard-page">
-                <div className="dashboard-content">
-                  <StatsCards refreshTick={refreshTick} />
-                  <ApiTable
-                    refreshTick={refreshTick}
-                    defaults={uiConfig.defaults}
-                  />
+              !uiConfig ? (
+                <div className="page-container">
+                  <div className="analytics-empty-state">
+                    <p>{configError || "Loading configuration..."}</p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="dashboard-page">
+                  <div className="dashboard-content">
+                    <StatsCards refreshTick={refreshTick} />
+                    <ApiTable
+                      refreshTick={refreshTick}
+                      defaults={uiConfig.defaults}
+                    />
+                  </div>
+                </div>
+              )
             }
           />
           
           <Route
             path="/analytics"
             element={
-              <div className="page-container analytics-page-container">
-                <Analytics grafanaDashboardUrl={uiConfig.grafanaDashboardUrl} />
-              </div>
+              !uiConfig ? (
+                <div className="page-container">
+                  <div className="analytics-empty-state">
+                    <p>{configError || "Loading configuration..."}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="page-container analytics-page-container">
+                  <Analytics grafanaDashboardUrl={uiConfig.grafanaDashboardUrl} />
+                </div>
+              )
             }
           />
           
