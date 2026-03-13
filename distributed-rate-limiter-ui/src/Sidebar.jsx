@@ -5,13 +5,12 @@ import {
   LogOut,
   X
 } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import { apiUrl } from "./apiBase";
 import "./Sidebar.css";
 
 function Sidebar({ isMobileOpen }) {
-  const location = useLocation();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const menuItems = [
@@ -58,10 +57,10 @@ function Sidebar({ isMobileOpen }) {
           const Icon = item.icon;
 
           return (
-            <a
+            <NavLink
               key={item.path}
-              href={item.path}
-              className={`nav-item ${location.pathname === item.path ? "active" : ""}`}
+              to={item.path}
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
             >
               <div className="nav-content">
                 <div className="nav-icon">
@@ -69,7 +68,7 @@ function Sidebar({ isMobileOpen }) {
                 </div>
                 <span className="nav-label">{item.label}</span>
               </div>
-            </a>
+            </NavLink>
           );
         })}
       </nav>

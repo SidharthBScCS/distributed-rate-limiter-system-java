@@ -1,18 +1,18 @@
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  gap: 1.25rem;
+  margin-bottom: 1.6rem;
 }
 
 .stat-card {
   background:
-    radial-gradient(140% 150% at 100% 0%, rgba(125, 211, 252, 0.24), transparent 45%),
-    radial-gradient(140% 150% at 0% 100%, rgba(96, 165, 250, 0.18), transparent 52%),
-    linear-gradient(165deg, rgba(18, 39, 84, 0.98), rgba(7, 20, 48, 0.98));
-  border: 1px solid var(--border-color);
-  border-radius: 24px;
-  padding: 1.8rem;
+    radial-gradient(140% 150% at 100% 0%, rgba(125, 211, 252, 0.18), transparent 45%),
+    radial-gradient(140% 150% at 0% 100%, rgba(96, 165, 250, 0.12), transparent 52%),
+    linear-gradient(165deg, rgba(16, 34, 72, 0.98), rgba(8, 18, 42, 0.98));
+  border: 1px solid rgba(93, 141, 255, 0.16);
+  border-radius: 22px;
+  padding: 1.55rem;
   position: relative;
   overflow: hidden;
   animation: slideIn 0.45s ease forwards;
@@ -21,17 +21,17 @@
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 20px 44px rgba(2, 12, 32, 0.38);
-  min-height: 238px;
+    0 18px 36px rgba(2, 12, 32, 0.28);
+  min-height: 220px;
   isolation: isolate;
 }
 
 .stat-card:hover {
-  transform: translateY(-8px) scale(1.01);
-  border-color: rgba(116, 176, 255, 0.55);
+  transform: translateY(-5px);
+  border-color: rgba(116, 176, 255, 0.32);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 28px 58px rgba(3, 13, 35, 0.46);
+    0 24px 44px rgba(3, 13, 35, 0.34);
 }
 
 .stat-card:nth-child(1) {
@@ -107,13 +107,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .card-icon-wrapper {
-  width: 54px;
-  height: 54px;
-  border-radius: 16px;
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -126,10 +126,10 @@
 
 .card-header::after {
   content: "";
-  width: 72px;
+  width: 56px;
   height: 1px;
-  background: linear-gradient(90deg, rgba(135, 185, 255, 0.5), transparent);
-  opacity: 0.7;
+  background: linear-gradient(90deg, rgba(135, 185, 255, 0.36), transparent);
+  opacity: 0.65;
 }
 
 .stat-card:hover .card-icon-wrapper {
@@ -138,33 +138,33 @@
 }
 
 .card-body {
-  margin-bottom: 1.2rem;
+  margin-bottom: 1rem;
 }
 
 .card-title {
-  font-size: 0.84rem;
-  font-weight: 700;
-  color: #a9c0f7;
-  margin-bottom: 0.55rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #9fb7eb;
+  margin-bottom: 0.45rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
 }
 
 .card-value {
   font-family: var(--font-display);
-  font-size: clamp(2.2rem, 3vw, 2.9rem);
+  font-size: clamp(2rem, 2.8vw, 2.55rem);
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  text-shadow: 0 4px 18px rgba(8, 17, 45, 0.3);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-shadow: 0 2px 14px rgba(8, 17, 45, 0.24);
   animation: valueRise 0.7s ease both;
 }
 
 .card-caption {
-  margin-top: 0.45rem;
-  color: rgba(226, 235, 255, 0.66);
-  font-size: 0.94rem;
+  margin-top: 0.38rem;
+  color: rgba(226, 235, 255, 0.62);
+  font-size: 0.88rem;
   font-weight: 500;
 }
 
@@ -178,19 +178,19 @@
 
 .card-footnote {
   color: rgba(169, 192, 247, 0.72);
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 700;
+  letter-spacing: 0.12em;
+  font-weight: 800;
 }
 
 .trend-badge {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.42rem 0.9rem;
+  padding: 0.38rem 0.82rem;
   border-radius: 999px;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   border: 1px solid transparent;
@@ -224,7 +224,7 @@
   width: 220px;
   height: 220px;
   filter: blur(72px);
-  opacity: 0.14;
+  opacity: 0.1;
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s ease;
   animation: glowDrift 6s ease-in-out infinite;
@@ -232,15 +232,15 @@
 }
 
 .stat-card:hover .card-glow {
-  opacity: 0.26;
-  transform: scale(1.06);
+  opacity: 0.18;
+  transform: scale(1.04);
 }
 
 .cards-skeleton {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
-  height: 210px;
+  height: 190px;
 }
 
 .cards-skeleton::before {
@@ -331,7 +331,7 @@
   }
 
   .stat-card {
-    min-height: 214px;
+    min-height: 198px;
   }
 
   .card-footer {

@@ -182,11 +182,55 @@
 
 .gh-auth-head h3,
 .gh-auth-head p,
+.gh-brand-row,
+.gh-status-strip,
 .gh-form,
 .gh-card-meta,
-.gh-error {
+.gh-error,
+.gh-footer-note {
   position: relative;
   z-index: 1;
+}
+
+.gh-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+  animation: ghFadeUpSoft 0.75s ease both;
+  animation-delay: 0.06s;
+}
+
+.gh-brand-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #eef7ff;
+  background: linear-gradient(135deg, rgba(120, 199, 255, 0.92), rgba(45, 119, 255, 0.96));
+  box-shadow:
+    0 14px 30px rgba(30, 104, 255, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.gh-brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.gh-brand-copy strong {
+  font-size: 0.96rem;
+  letter-spacing: -0.02em;
+}
+
+.gh-brand-copy span {
+  color: rgba(190, 211, 240, 0.72);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .gh-auth-head {
@@ -246,6 +290,39 @@
   animation-delay: 0.22s;
 }
 
+.gh-status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.95rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 16px;
+  border: 1px solid rgba(103, 147, 214, 0.2);
+  background: rgba(8, 23, 47, 0.64);
+  animation: ghFadeUpSoft 0.86s ease both;
+  animation-delay: 0.16s;
+}
+
+.gh-status-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #bcd8f8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gh-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #57e2ff;
+  box-shadow: 0 0 14px rgba(87, 226, 255, 0.42);
+  animation: ghBlinkDot 1.9s ease-in-out infinite;
+}
+
 .gh-form label {
   color: #9fb9dd;
   font-size: 0.72rem;
@@ -267,6 +344,38 @@
   outline: none;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.gh-password-field {
+  position: relative;
+}
+
+.gh-password-field input {
+  padding-right: 3.2rem;
+}
+
+.gh-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.7rem;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(18, 44, 88, 0.84);
+  color: #9cc9ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.gh-password-toggle:hover {
+  background: rgba(28, 65, 126, 0.92);
+  color: #d9ecff;
+  transform: translateY(-50%) scale(1.04);
 }
 
 .gh-form input::placeholder {
@@ -297,6 +406,10 @@
   transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
   position: relative;
   overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
 }
 
 .gh-submit:hover {
@@ -325,6 +438,15 @@
   opacity: 0.8;
   cursor: not-allowed;
   transform: none;
+}
+
+.gh-submit-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(4, 18, 31, 0.24);
+  border-top-color: rgba(4, 18, 31, 0.92);
+  animation: ghSpin 0.8s linear infinite;
 }
 
 .gh-error {
@@ -363,6 +485,17 @@
   letter-spacing: 0.07em;
   text-transform: uppercase;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.gh-footer-note {
+  margin: 0.95rem 0 0;
+  color: rgba(183, 205, 235, 0.6);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  animation: ghFadeUpSoft 1.06s ease both;
+  animation-delay: 0.34s;
 }
 
 @keyframes ghPulseDot {
@@ -420,6 +553,15 @@
   }
 }
 
+@keyframes ghSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes ghCardReveal {
   from {
     opacity: 0;
@@ -461,10 +603,15 @@
   .gh-auth-card,
   .gh-card-orbit,
   .gh-auth-head,
+  .gh-brand-row,
+  .gh-status-strip,
   .gh-form,
   .gh-card-meta,
+  .gh-footer-note,
   .gh-error,
   .gh-kicker::before,
+  .gh-status-dot,
+  .gh-submit-spinner,
   .gh-auth-card:hover .gh-card-shine {
     animation: none !important;
     transition: none !important;
@@ -493,10 +640,6 @@
 @media (max-width: 640px) {
   .gh-main {
     padding: 1rem;
-  }
-
-  .gh-hero-panels {
-    grid-template-columns: 1fr;
   }
 
   .gh-auth-card {

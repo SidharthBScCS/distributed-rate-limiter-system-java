@@ -4,21 +4,26 @@
   top: 0;
   width: 280px;
   height: 100vh;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border-color);
+  background:
+    linear-gradient(180deg, rgba(17, 26, 46, 0.96), rgba(12, 18, 33, 0.98));
+  border-right: 1px solid rgba(93, 141, 255, 0.14);
   padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
   z-index: 100;
   overflow-y: auto;
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.02);
 }
 
 .sidebar-brand {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.5rem;
-  margin-bottom: 2rem;
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 1.7rem;
+  border-radius: 16px;
+  background: rgba(19, 29, 51, 0.4);
+  border: 1px solid rgba(93, 141, 255, 0.08);
 }
 
 .brand-logo {
@@ -83,22 +88,23 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
+  padding: 0.72rem 0.9rem;
+  border-radius: 14px;
   color: var(--text-secondary);
   text-decoration: none;
   transition: all 0.2s ease;
 }
 
 .nav-item:hover {
-  background: var(--bg-hover);
+  background: rgba(24, 37, 65, 0.86);
   color: var(--text-primary);
-  transform: translateX(4px);
+  transform: translateX(3px);
 }
 
 .nav-item.active {
-  background: linear-gradient(90deg, rgba(63, 185, 80, 0.16), transparent);
-  color: var(--accent-primary);
+  background: linear-gradient(90deg, rgba(76, 141, 255, 0.18), rgba(76, 141, 255, 0.03));
+  color: #9fc5ff;
+  border: 1px solid rgba(93, 141, 255, 0.16);
 }
 
 .nav-content {
@@ -114,12 +120,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-card);
+  background: rgba(19, 29, 51, 0.88);
   transition: all 0.2s ease;
 }
 
 .nav-item:hover .nav-icon {
-  background: var(--bg-secondary);
+  background: rgba(14, 23, 42, 0.95);
+}
+
+.nav-item.active .nav-icon {
+  background: rgba(76, 141, 255, 0.12);
 }
 
 .nav-label {
@@ -131,7 +141,7 @@
 .sidebar-footer {
   margin-top: auto;
   padding-top: 1rem;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid rgba(93, 141, 255, 0.12);
 }
 
 .logout-btn {
@@ -142,7 +152,7 @@
   padding: 0.75rem 1rem;
   background: transparent;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 14px;
   color: var(--danger);
   font-size: 0.96rem;
   font-weight: 700;
@@ -154,7 +164,7 @@
 .logout-btn:hover {
   background: rgba(248, 81, 73, 0.14);
   border-color: var(--danger);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .logout-modal-overlay {

@@ -23,6 +23,18 @@ function ApiTable({ refreshTick, defaults }) {
     userName: "",
   });
 
+  const formatUsage = (value) => {
+    const numericValue = Number(value ?? 0);
+    if (!Number.isFinite(numericValue)) {
+      return "0%";
+    }
+    if (numericValue === 100) {
+      return "100%";
+    }
+    const rounded = numericValue >= 10 ? numericValue.toFixed(1) : numericValue.toFixed(2);
+    return `${rounded.replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1")}%`;
+  };
+
   useEffect(() => {
     fetchKeys();
   }, [refreshTick]);
@@ -210,6 +222,7 @@ function ApiTable({ refreshTick, defaults }) {
                 const usage = key.usagePercentage;
                 const usageColor = key.usageColor;
                 const fullApiKey = key.apiKey;
+                const usageLabel = formatUsage(usage);
 
                 return (
                   <tr key={key.id} className="table-row">
@@ -243,7 +256,7 @@ function ApiTable({ refreshTick, defaults }) {
                         <div className="usage-header">
                           <span>{key.requestCount} req</span>
                           <span style={{ color: usageColor }}>
-                            {usage}%
+                            {usageLabel}
                           </span>
                         </div>
                         <div className="usage-bar">

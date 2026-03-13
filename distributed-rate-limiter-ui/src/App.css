@@ -54,7 +54,7 @@ body {
 .right-content {
   flex: 1;
   margin-left: var(--sidebar-width);
-  padding: var(--page-padding-y) var(--page-padding-x);
+  padding: 1.2rem 1.6rem;
   background: transparent;
   transition: margin 0.3s ease;
   min-height: 100vh;
@@ -83,7 +83,7 @@ body {
 .dashboard-page,
 .page-container {
   width: 100%;
-  max-width: 1440px;
+  max-width: 1380px;
   margin: 0 auto;
   overflow-x: hidden;
 }

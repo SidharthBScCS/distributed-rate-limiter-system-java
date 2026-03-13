@@ -1,5 +1,5 @@
 import "./LoginPage.css";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Shield } from "lucide-react";
 import { useState } from "react";
 import { apiUrl } from "./apiBase";
 
@@ -8,6 +8,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -54,6 +55,15 @@ function LoginPage() {
             <div className="gh-card-orbit gh-card-orbit--one" />
             <div className="gh-card-orbit gh-card-orbit--two" />
             <div className="gh-card-shine" />
+            <div className="gh-brand-row">
+              <div className="gh-brand-badge">
+                <Shield size={18} strokeWidth={2.1} />
+              </div>
+              <div className="gh-brand-copy">
+                <strong>RateLimiter Console</strong>
+                <span>Protected admin gateway</span>
+              </div>
+            </div>
             <div className="gh-auth-topbar">
               <span className="gh-topbar-dot" />
               <span className="gh-topbar-dot" />
@@ -73,6 +83,21 @@ function LoginPage() {
               </div>
             ) : null}
 
+            <div className="gh-status-strip" aria-label="System status">
+              <span className="gh-status-item">
+                <span className="gh-status-dot" />
+                System secure
+              </span>
+              <span className="gh-status-item">
+                <span className="gh-status-dot" />
+                Redis live
+              </span>
+              <span className="gh-status-item">
+                <span className="gh-status-dot" />
+                Session protected
+              </span>
+            </div>
+
             <form className="gh-form" onSubmit={handleSubmit}>
               <label htmlFor="username">Username</label>
               <input
@@ -85,17 +110,35 @@ function LoginPage() {
               />
 
               <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                autoComplete="current-password"
-                placeholder="Enter your password"
-              />
+              <div className="gh-password-field">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  className="gh-password-toggle"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  onClick={() => setShowPassword((value) => !value)}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
 
               <button className="gh-submit" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Signing in..." : "Enter Dashboard"}
+                {isSubmitting ? (
+                  <>
+                    <span className="gh-submit-spinner" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Enter Dashboard"
+                )}
               </button>
             </form>
 
@@ -104,6 +147,8 @@ function LoginPage() {
               <span className="gh-meta-pill">Live Metrics</span>
               <span className="gh-meta-pill">Admin Console</span>
             </div>
+
+            <p className="gh-footer-note">Authorized admin access only</p>
           </div>
         </section>
       </div>
