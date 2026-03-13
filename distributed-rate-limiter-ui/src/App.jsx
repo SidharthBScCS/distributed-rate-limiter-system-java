@@ -18,6 +18,7 @@ function App() {
   const isAnalyticsPage = location.pathname === "/analytics";
   const isFullWidthPage = location.pathname === "/login";
   const showSidebar = !isFullWidthPage;
+  const triggerRefresh = () => setRefreshTick((prev) => prev + 1);
 
   const loadUiConfig = async () => {
     try {
@@ -35,6 +36,7 @@ function App() {
       const data = await response.json();
       setUiConfig(data);
       setConfigError("");
+      triggerRefresh();
       return true;
     } catch {
       setConfigError("Cannot reach backend. Make sure Spring Boot is running.");
@@ -64,27 +66,63 @@ function App() {
 
   // Refresh data periodically
   useEffect(() => {
-    if (isFullWidthPage) {
+    if (isFullWidthPage || !uiConfig) {
       return undefined;
     }
 
     const source = new EventSource(apiUrl("/api/stream/dashboard"), { withCredentials: true });
 
     const onTick = () => {
-      setRefreshTick((prev) => prev + 1);
+      triggerRefresh();
     };
 
     source.addEventListener("tick", onTick);
     source.onerror = () => {
       source.close();
-      window.location.assign("/login");
     };
 
     return () => {
       source.removeEventListener("tick", onTick);
       source.close();
     };
-  }, [isFullWidthPage]);
+  }, [isFullWidthPage, uiConfig]);
+
+  useEffect(() => {
+    if (isFullWidthPage || !uiConfig) {
+      return undefined;
+    }
+
+    const intervalMs = Math.max(5000, Number(uiConfig.refreshIntervalMs) || 30000);
+    const intervalId = window.setInterval(() => {
+      triggerRefresh();
+    }, intervalMs);
+
+    return () => window.clearInterval(intervalId);
+  }, [isFullWidthPage, uiConfig]);
+
+  useEffect(() => {
+    if (isFullWidthPage || !uiConfig) {
+      return undefined;
+    }
+
+    const handleWindowFocus = () => {
+      triggerRefresh();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        triggerRefresh();
+      }
+    };
+
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isFullWidthPage, uiConfig]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {

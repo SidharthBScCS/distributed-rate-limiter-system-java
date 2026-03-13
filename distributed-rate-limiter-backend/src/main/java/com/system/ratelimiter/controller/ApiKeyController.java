@@ -58,10 +58,11 @@ public class ApiKeyController {
 
     @GetMapping("/view/dashboard")
     public ResponseEntity<Map<String, Object>> getDashboardView() {
+        RequestStats statsSnapshot = requestStatsService.syncWithApiKeys();
         List<ApiKey> allKeys = apiKeyService.getAllRealKeys();
-        long total = allKeys.stream().mapToLong(k -> k.getTotalRequests() == null ? 0L : k.getTotalRequests()).sum();
-        long allowed = allKeys.stream().mapToLong(k -> k.getAllowedRequests() == null ? 0L : k.getAllowedRequests()).sum();
-        long blocked = allKeys.stream().mapToLong(k -> k.getBlockedRequests() == null ? 0L : k.getBlockedRequests()).sum();
+        long total = statsSnapshot.getTotalRequests() == null ? 0L : statsSnapshot.getTotalRequests();
+        long allowed = statsSnapshot.getAllowedRequests() == null ? 0L : statsSnapshot.getAllowedRequests();
+        long blocked = statsSnapshot.getBlockedRequests() == null ? 0L : statsSnapshot.getBlockedRequests();
 
         double allowedPercent = total == 0 ? 0.0 : (allowed * 100.0) / total;
         double blockedPercent = total == 0 ? 0.0 : (blocked * 100.0) / total;
@@ -97,7 +98,12 @@ public class ApiKeyController {
                         "allowedPercent", allowedPercent,
                         "blockedPercent", blockedPercent
                 ),
-                "apiKeys", apiKeys
+                "apiKeys", apiKeys,
+                "sources", Map.of(
+                        "postgres", "api_keys, request_stats",
+                        "redis", "live window counters and block markers"
+                ),
+                "generatedAt", java.time.Instant.now().toString()
         ));
     }
 
