@@ -79,7 +79,20 @@ function ApiTable({ refreshTick, defaults }) {
     try {
       const res = await fetch(apiUrl("/api/view/dashboard"), { credentials: "include" });
       const data = await res.json();
-      setKeys(data.apiKeys);
+      const sortedKeys = [...(data.apiKeys ?? [])].sort((left, right) => {
+        const usageDiff = Number(right.usagePercentage ?? 0) - Number(left.usagePercentage ?? 0);
+        if (usageDiff !== 0) {
+          return usageDiff;
+        }
+
+        const requestDiff = Number(right.requestCount ?? 0) - Number(left.requestCount ?? 0);
+        if (requestDiff !== 0) {
+          return requestDiff;
+        }
+
+        return String(left.userName ?? "").localeCompare(String(right.userName ?? ""));
+      });
+      setKeys(sortedKeys);
     } catch {
       // Keep previous table state on network failures.
     } finally {

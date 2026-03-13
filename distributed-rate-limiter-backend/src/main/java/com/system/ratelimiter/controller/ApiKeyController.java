@@ -8,7 +8,7 @@ import com.system.ratelimiter.service.ApiKeyService;
 import com.system.ratelimiter.service.DistributedRateLimiterService;
 import com.system.ratelimiter.service.RequestStatsService;
 import jakarta.validation.Valid;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpHeaders;
@@ -88,6 +88,7 @@ public class ApiKeyController {
                     return row;
                 })
                 .toList();
+        apiKeys = mergeSortApiKeysByUsage(apiKeys);
 
         return ResponseEntity.ok(Map.of(
                 "stats", Map.of(
@@ -266,5 +267,80 @@ public class ApiKeyController {
         if (percentage > 90) return "#ef4444";
         if (percentage > 70) return "#f59e0b";
         return "#10b981";
+    }
+
+    private static List<Map<String, Object>> mergeSortApiKeysByUsage(List<Map<String, Object>> apiKeys) {
+        if (apiKeys == null || apiKeys.size() <= 1) {
+            return apiKeys == null ? List.of() : apiKeys;
+        }
+
+        int midpoint = apiKeys.size() / 2;
+        List<Map<String, Object>> left = mergeSortApiKeysByUsage(new ArrayList<>(apiKeys.subList(0, midpoint)));
+        List<Map<String, Object>> right = mergeSortApiKeysByUsage(new ArrayList<>(apiKeys.subList(midpoint, apiKeys.size())));
+
+        return mergeApiKeyLists(left, right);
+    }
+
+    private static List<Map<String, Object>> mergeApiKeyLists(
+            List<Map<String, Object>> left,
+            List<Map<String, Object>> right
+    ) {
+        List<Map<String, Object>> merged = new ArrayList<>(left.size() + right.size());
+        int leftIndex = 0;
+        int rightIndex = 0;
+
+        while (leftIndex < left.size() && rightIndex < right.size()) {
+            Map<String, Object> leftRow = left.get(leftIndex);
+            Map<String, Object> rightRow = right.get(rightIndex);
+
+            if (compareApiKeyRows(leftRow, rightRow) <= 0) {
+                merged.add(leftRow);
+                leftIndex++;
+            } else {
+                merged.add(rightRow);
+                rightIndex++;
+            }
+        }
+
+        while (leftIndex < left.size()) {
+            merged.add(left.get(leftIndex++));
+        }
+
+        while (rightIndex < right.size()) {
+            merged.add(right.get(rightIndex++));
+        }
+
+        return merged;
+    }
+
+    private static int compareApiKeyRows(Map<String, Object> leftRow, Map<String, Object> rightRow) {
+        int usageComparison = Double.compare(
+                toDouble(rightRow.get("usagePercentage")),
+                toDouble(leftRow.get("usagePercentage"))
+        );
+        if (usageComparison != 0) {
+            return usageComparison;
+        }
+
+        int requestCountComparison = Long.compare(
+                toLong(rightRow.get("requestCount")),
+                toLong(leftRow.get("requestCount"))
+        );
+        if (requestCountComparison != 0) {
+            return requestCountComparison;
+        }
+
+        return String.CASE_INSENSITIVE_ORDER.compare(
+                String.valueOf(leftRow.getOrDefault("userName", "")),
+                String.valueOf(rightRow.getOrDefault("userName", ""))
+        );
+    }
+
+    private static double toDouble(Object value) {
+        return value instanceof Number number ? number.doubleValue() : 0.0;
+    }
+
+    private static long toLong(Object value) {
+        return value instanceof Number number ? number.longValue() : 0L;
     }
 }
