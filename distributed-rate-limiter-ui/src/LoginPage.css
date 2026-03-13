@@ -1,238 +1,511 @@
 .gh-login-shell {
-  min-height: 100vh;
-  width: 100%;
-  display: flex;
-  padding: 20px;
-  box-sizing: border-box;
-  background:
-    radial-gradient(1100px 600px at 15% 10%, rgba(0, 255, 170, 0.12), transparent 55%),
-    radial-gradient(900px 500px at 90% 100%, rgba(0, 140, 255, 0.14), transparent 60%),
-    linear-gradient(145deg, #05070b 0%, #0a0f18 45%, #05080f 100%),
-    #0d1117;
-  color: #f0f6fc;
-  font-family: "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+  position: fixed;
+  inset: 0;
+  height: 100vh;
   overflow: hidden;
-  position: relative;
+  background:
+    radial-gradient(860px 520px at 12% 14%, rgba(96, 165, 250, 0.2), transparent 50%),
+    radial-gradient(760px 420px at 88% 18%, rgba(56, 189, 248, 0.12), transparent 52%),
+    radial-gradient(680px 360px at 50% 100%, rgba(29, 78, 216, 0.16), transparent 56%),
+    linear-gradient(145deg, #061021 0%, #0a1d3c 45%, #071427 100%);
+  color: #eef4ff;
+  isolation: isolate;
+}
+
+.gh-login-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(123, 173, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(123, 173, 255, 0.06) 1px, transparent 1px);
+  background-size: 52px 52px;
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 .gh-login-shell::after {
   content: "";
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(rgba(56, 139, 253, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56, 139, 253, 0.08) 1px, transparent 1px);
-  background-size: 44px 44px;
-  opacity: 0.2;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03), transparent 48%);
   pointer-events: none;
 }
 
-.gh-login-shell::before {
-  content: "";
+.gh-grid-lines,
+.gh-auth-topbar {
+  display: none;
+}
+
+.gh-halo {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 520px;
-  height: 520px;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(0, 255, 170, 0.14) 0%, rgba(0, 0, 0, 0) 70%);
-  filter: blur(40px);
+  border-radius: 999px;
   pointer-events: none;
+  filter: blur(18px);
+  opacity: 0.9;
+  z-index: 0;
 }
 
-@keyframes ghPulse {
-  0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.45; }
-  50% { transform: translate(-50%, -50%) scale(1.03); opacity: 0.7; }
-  100% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.45; }
+.gh-halo--one {
+  top: 7%;
+  left: 11%;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.18), transparent 68%);
+  animation: ghFloatHalo 14s ease-in-out infinite;
 }
 
-@keyframes ghSweep {
-  0% { transform: translateX(-130%) rotate(10deg); opacity: 0; }
-  15% { opacity: 0.6; }
-  40% { opacity: 0.2; }
-  100% { transform: translateX(220%) rotate(10deg); opacity: 0; }
+.gh-halo--two {
+  bottom: 10%;
+  right: 10%;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.2), transparent 70%);
+  animation: ghFloatHalo 16s ease-in-out infinite reverse;
+}
+
+.gh-halo--three {
+  top: 48%;
+  right: 28%;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(147, 197, 253, 0.14), transparent 70%);
+  animation: ghPulseHalo 7s ease-in-out infinite;
 }
 
 .gh-main {
-  width: 100%;
-  max-width: 560px;
-  margin: 0 auto;
-  min-height: calc(100vh - 40px);
+  position: relative;
+  z-index: 1;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  z-index: 2;
+  padding: 1rem 1.75rem;
 }
 
-.gh-card {
-  position: relative;
+.gh-stage {
+  width: min(540px, 100%);
+  display: block;
+}
+
+.gh-auth-card {
   width: 100%;
-  box-sizing: border-box;
-  border: 1px solid rgba(89, 174, 255, 0.35);
-  border-radius: 20px;
-  padding: 34px 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 26px;
+  padding: 1.95rem 1.7rem 1.4rem;
+  border: 1px solid rgba(132, 182, 255, 0.28);
   background:
-    linear-gradient(180deg, rgba(8, 15, 26, 0.94), rgba(5, 9, 16, 0.96)),
-    linear-gradient(135deg, rgba(0, 255, 170, 0.08), rgba(56, 139, 253, 0.05));
+    linear-gradient(180deg, rgba(7, 19, 40, 0.86), rgba(4, 12, 28, 0.94));
   box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.58),
-    0 0 0 1px rgba(0, 255, 170, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
+    0 36px 90px rgba(2, 10, 24, 0.42),
+    0 0 0 1px rgba(83, 143, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+  position: relative;
   overflow: hidden;
-  isolation: isolate;
+  animation: ghCardReveal 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transform-origin: center;
 }
 
-.gh-right--single {
-  width: 100%;
-}
-
-.gh-card-glow {
-  position: absolute;
-  inset: -2px;
-  border-radius: 20px;
-  background: conic-gradient(
-    from 120deg,
-    rgba(0, 255, 170, 0.45),
-    rgba(56, 139, 253, 0.24),
-    rgba(0, 255, 170, 0.45)
-  );
-  filter: blur(12px);
-  opacity: 0.32;
-  z-index: -1;
-  animation: ghPulse 5s ease-in-out infinite;
-}
-
-.gh-card::after {
+.gh-auth-card::before {
   content: "";
   position: absolute;
-  top: -40%;
-  left: -50%;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 22%),
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.14), transparent 38%);
+  pointer-events: none;
+}
+
+.gh-auth-card::after {
+  content: "";
+  position: absolute;
+  top: -30%;
+  right: -10%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.16), transparent 68%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.gh-card-orbit {
+  position: absolute;
+  border-radius: 999px;
+  border: 1px solid rgba(126, 180, 255, 0.16);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.gh-card-orbit--one {
+  width: 220px;
+  height: 220px;
+  top: -80px;
+  right: -72px;
+  animation: ghOrbitSpin 18s linear infinite;
+}
+
+.gh-card-orbit--two {
+  width: 150px;
+  height: 150px;
+  bottom: -54px;
+  left: -36px;
+  animation: ghOrbitSpin 12s linear infinite reverse;
+}
+
+.gh-card-shine {
+  position: absolute;
+  inset: -25% auto auto -36%;
   width: 70%;
-  height: 220%;
+  height: 180%;
+  transform: rotate(18deg);
   background: linear-gradient(
     90deg,
-    rgba(0, 255, 170, 0),
-    rgba(0, 255, 170, 0.16),
-    rgba(0, 255, 170, 0)
+    transparent 0%,
+    rgba(255, 255, 255, 0.02) 36%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.02) 64%,
+    transparent 100%
   );
+  opacity: 0;
   pointer-events: none;
-  animation: ghSweep 6.5s linear infinite;
+  z-index: 0;
+}
+
+.gh-auth-card:hover .gh-card-shine {
+  animation: ghSweepCard 1.15s ease;
+}
+
+.gh-auth-head h3,
+.gh-auth-head p,
+.gh-form,
+.gh-card-meta,
+.gh-error {
+  position: relative;
+  z-index: 1;
 }
 
 .gh-auth-head {
-  margin-bottom: 16px;
+  animation: ghFadeUpSoft 0.8s ease both;
+  animation-delay: 0.12s;
+}
+
+.gh-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.48rem 0.82rem;
+  border-radius: 999px;
+  background: rgba(20, 55, 104, 0.64);
+  border: 1px solid rgba(111, 168, 255, 0.22);
+  color: #9fd0ff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.gh-kicker::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  margin-right: 0.45rem;
+  border-radius: 50%;
+  background: #71d6ff;
+  box-shadow: 0 0 14px rgba(113, 214, 255, 0.5);
+  animation: ghBlinkDot 1.8s ease-in-out infinite;
 }
 
 .gh-auth-head h3 {
-  margin: 0;
-  font-size: 1.65rem;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  color: #e6f9ff;
+  margin: 0.7rem 0 0.28rem;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  letter-spacing: -0.04em;
+  color: #f7fbff;
+  text-shadow: 0 10px 26px rgba(13, 70, 174, 0.18);
 }
 
 .gh-auth-head p {
-  margin: 0.45rem 0 0;
-  color: #9ec7d8;
-  font-size: 0.95rem;
-  line-height: 1.45;
+  margin: 0;
+  color: rgba(218, 231, 255, 0.76);
+  font-size: 0.94rem;
+  line-height: 1.48;
 }
 
 .gh-form {
   display: grid;
-  gap: 14px;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  animation: ghFadeUpSoft 0.9s ease both;
+  animation-delay: 0.22s;
 }
 
 .gh-form label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  color: #9fb9dd;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: #96b4c2;
 }
 
 .gh-form input {
   width: 100%;
-  height: 48px;
-  border-radius: 12px;
-  border: 1px solid rgba(93, 140, 170, 0.48);
-  background: rgba(4, 10, 18, 0.9);
-  color: #e8f7ff;
-  font-size: 15px;
-  font-weight: 500;
-  padding: 0 14px;
+  height: 54px;
+  border-radius: 15px;
+  border: 1px solid rgba(102, 144, 207, 0.35);
+  padding: 0 1rem;
+  background:
+    linear-gradient(180deg, rgba(7, 20, 43, 0.92), rgba(6, 17, 37, 0.96));
+  color: #eef5ff;
+  font-size: 1rem;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.12s ease;
-  caret-color: #00ffd5;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.gh-form input::placeholder {
+  color: rgba(176, 198, 228, 0.45);
 }
 
 .gh-form input:focus {
-  border-color: #00e2c0;
-  box-shadow: 0 0 0 3px rgba(0, 226, 192, 0.22);
-  background: rgba(5, 14, 24, 1);
+  border-color: #63b4ff;
+  box-shadow:
+    0 0 0 4px rgba(99, 180, 255, 0.17),
+    0 14px 28px rgba(10, 25, 56, 0.18);
   transform: translateY(-1px);
 }
 
 .gh-submit {
-  margin-top: 12px;
-  height: 48px;
-  border: 1px solid rgba(0, 255, 170, 0.34);
-  border-radius: 12px;
-  background: linear-gradient(135deg, #00d2ff, #00ffa3);
-  color: #041018;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  margin-top: 0.3rem;
+  height: 56px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #8ed2ff, #44abff 46%, #2a7fff 100%);
+  color: #04121f;
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: transform 0.15s ease, filter 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 18px 34px rgba(37, 118, 255, 0.34);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .gh-submit:hover {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
-  box-shadow: 0 12px 26px rgba(0, 224, 190, 0.36);
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+  box-shadow: 0 22px 40px rgba(37, 118, 255, 0.42);
 }
 
-.gh-submit:active {
-  transform: translateY(0);
+.gh-submit::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 80%;
+  height: 100%;
+  transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent);
+  transition: left 0.55s ease;
+}
+
+.gh-submit:hover::after {
+  left: 145%;
 }
 
 .gh-submit:disabled {
-  opacity: 0.75;
+  opacity: 0.8;
   cursor: not-allowed;
   transform: none;
-  background: linear-gradient(135deg, #2a3d4e, #1e2d3d);
-  color: #89a2b2;
 }
 
 .gh-error {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  border: 1px solid rgba(248, 81, 73, 0.5);
-  border-radius: 12px;
-  background: rgba(248, 81, 73, 0.14);
-  color: #ffa198;
-  font-size: 13px;
-  padding: 10px 12px;
+  gap: 0.55rem;
+  margin-top: 0.8rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid rgba(248, 113, 113, 0.38);
+  background: rgba(127, 29, 29, 0.22);
+  color: #ffb1b1;
+  font-size: 0.9rem;
+  animation: ghFadeUpSoft 0.35s ease both;
+}
+
+.gh-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.95rem;
+  animation: ghFadeUpSoft 1s ease both;
+  animation-delay: 0.3s;
+}
+
+.gh-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.48rem 0.78rem;
+  border-radius: 999px;
+  border: 1px solid rgba(106, 153, 225, 0.24);
+  background: rgba(9, 25, 54, 0.8);
+  color: #c3daf5;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+@keyframes ghPulseDot {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes ghBlinkDot {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes ghFloatHalo {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -18px, 0) scale(1.06);
+  }
+}
+
+@keyframes ghPulseHalo {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.72;
+  }
+  50% {
+    transform: scale(1.16);
+    opacity: 1;
+  }
+}
+
+@keyframes ghOrbitSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ghCardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ghFadeUpSoft {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ghSweepCard {
+  0% {
+    opacity: 0;
+    transform: translateX(-28%) rotate(18deg);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(180%) rotate(18deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gh-halo,
+  .gh-auth-card,
+  .gh-card-orbit,
+  .gh-auth-head,
+  .gh-form,
+  .gh-card-meta,
+  .gh-error,
+  .gh-kicker::before,
+  .gh-auth-card:hover .gh-card-shine {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 980px) {
+  .gh-login-shell {
+    position: relative;
+    inset: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .gh-main {
+    padding: 1.4rem;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .gh-stage {
+    width: min(460px, 100%);
+  }
 }
 
 @media (max-width: 640px) {
-  .gh-login-shell {
-    padding: 12px;
+  .gh-main {
+    padding: 1rem;
   }
 
-  .gh-card {
-    padding: 24px 18px;
-    border-radius: 16px;
+  .gh-hero-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .gh-auth-card {
+    height: auto;
+    padding: 1.5rem 1.1rem 1.2rem;
+    border-radius: 22px;
   }
 
   .gh-auth-head h3 {
-    font-size: 1.35rem;
+    font-size: 1.7rem;
   }
 }

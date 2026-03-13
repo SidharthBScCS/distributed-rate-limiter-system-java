@@ -43,13 +43,27 @@ function LoginPage() {
 
   return (
     <div className="gh-login-shell">
+      <div className="gh-grid-lines" />
+      <div className="gh-halo gh-halo--one" />
+      <div className="gh-halo gh-halo--two" />
+      <div className="gh-halo gh-halo--three" />
+
       <div className="gh-main">
-        <div className="gh-right gh-right--single">
-          <div className="gh-card">
-            <div className="gh-card-glow" />
+        <section className="gh-stage">
+          <div className="gh-auth-card">
+            <div className="gh-card-orbit gh-card-orbit--one" />
+            <div className="gh-card-orbit gh-card-orbit--two" />
+            <div className="gh-card-shine" />
+            <div className="gh-auth-topbar">
+              <span className="gh-topbar-dot" />
+              <span className="gh-topbar-dot" />
+              <span className="gh-topbar-dot" />
+            </div>
+
             <div className="gh-auth-head">
-              <h3>Secure Sign In</h3>
-              <p>Authenticate to access the rate limiter control panel</p>
+              <span className="gh-kicker">Admin Access</span>
+              <h3>Welcome back</h3>
+              <p>Sign in to open the rate limiter dashboard.</p>
             </div>
 
             {error ? (
@@ -67,6 +81,7 @@ function LoginPage() {
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
                 autoComplete="username"
+                placeholder="Enter admin username"
               />
 
               <label htmlFor="password">Password</label>
@@ -76,14 +91,21 @@ function LoginPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete="current-password"
+                placeholder="Enter your password"
               />
 
               <button className="gh-submit" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Signing in..." : "Sign in"}
+                {isSubmitting ? "Signing in..." : "Enter Dashboard"}
               </button>
             </form>
+
+            <div className="gh-card-meta">
+              <span className="gh-meta-pill">Secure Session</span>
+              <span className="gh-meta-pill">Live Metrics</span>
+              <span className="gh-meta-pill">Admin Console</span>
+            </div>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

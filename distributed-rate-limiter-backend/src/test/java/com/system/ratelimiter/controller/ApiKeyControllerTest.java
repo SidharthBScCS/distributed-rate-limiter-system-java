@@ -45,9 +45,8 @@ class ApiKeyControllerTest {
         request.setApiKey("k1");
         request.setRoute("/api/test");
         request.setTokens(1);
-        request.setAlgorithm("SLIDING_WINDOW");
 
-        when(distributedRateLimiterService.evaluate(anyString(), anyString(), anyInt(), anyString()))
+        when(distributedRateLimiterService.evaluate(anyString(), anyString(), anyInt()))
                 .thenReturn(new DistributedRateLimiterService.Decision(
                         false,
                         60,
@@ -70,9 +69,8 @@ class ApiKeyControllerTest {
         request.setApiKey("k1");
         request.setRoute("/api/test");
         request.setTokens(1);
-        request.setAlgorithm("SLIDING_WINDOW");
 
-        when(distributedRateLimiterService.evaluate(anyString(), anyString(), anyInt(), anyString()))
+        when(distributedRateLimiterService.evaluate(anyString(), anyString(), anyInt()))
                 .thenReturn(new DistributedRateLimiterService.Decision(
                         true,
                         0,
@@ -88,4 +86,3 @@ class ApiKeyControllerTest {
         assertEquals("ALLOWED", response.getBody().reason());
     }
 }
-
