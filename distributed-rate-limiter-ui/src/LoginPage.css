@@ -291,14 +291,13 @@
 }
 
 .gh-status-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
   margin-top: 0.95rem;
-  padding: 0.7rem 0.75rem;
-  border-radius: 16px;
-  border: 1px solid rgba(103, 147, 214, 0.2);
-  background: rgba(8, 23, 47, 0.64);
+  padding: 0;
+  border: none;
+  background: transparent;
   animation: ghFadeUpSoft 0.86s ease both;
   animation-delay: 0.16s;
 }
@@ -307,6 +306,15 @@
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+  min-height: 46px;
+  padding: 0.75rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid rgba(103, 147, 214, 0.22);
+  background:
+    linear-gradient(180deg, rgba(9, 25, 54, 0.78), rgba(6, 18, 39, 0.92));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 24px rgba(4, 11, 28, 0.2);
   color: #bcd8f8;
   font-size: 0.72rem;
   font-weight: 700;
@@ -638,6 +646,10 @@
 }
 
 @media (max-width: 640px) {
+  .gh-status-strip {
+    grid-template-columns: 1fr;
+  }
+
   .gh-main {
     padding: 1rem;
   }

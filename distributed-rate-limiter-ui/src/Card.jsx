@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { 
   Activity, 
   CheckCircle, 
-  XCircle, 
+  XCircle,
   TrendingUp,
   TrendingDown
 } from "lucide-react";
@@ -103,8 +103,7 @@ function StatsCards({ refreshTick }) {
               <p className="card-caption">{card.caption}</p>
             </div>
 
-            <div className="card-footer">
-              <span className="card-footnote">Share of total</span>
+            <div className="card-footer card-footer--compact">
               <div className={`trend-badge ${card.trend}`}>
                 {card.trend === "up" ? (
                   <TrendingUp size={14} />

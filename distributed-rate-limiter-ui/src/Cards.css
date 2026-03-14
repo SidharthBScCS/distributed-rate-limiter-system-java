@@ -176,6 +176,10 @@
   margin-top: auto;
 }
 
+.card-footer--compact {
+  justify-content: flex-end;
+}
+
 .card-footnote {
   color: rgba(169, 192, 247, 0.72);
   font-size: 0.74rem;

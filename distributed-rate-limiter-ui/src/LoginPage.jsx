@@ -70,12 +70,6 @@ function LoginPage() {
               <span className="gh-topbar-dot" />
             </div>
 
-            <div className="gh-auth-head">
-              <span className="gh-kicker">Admin Access</span>
-              <h3>Welcome back</h3>
-              <p>Sign in to open the rate limiter dashboard.</p>
-            </div>
-
             {error ? (
               <div className="gh-error">
                 <AlertCircle size={16} />
@@ -84,6 +78,10 @@ function LoginPage() {
             ) : null}
 
             <div className="gh-status-strip" aria-label="System status">
+              <span className="gh-status-item">
+                <span className="gh-status-dot" />
+                Admin access
+              </span>
               <span className="gh-status-item">
                 <span className="gh-status-dot" />
                 System secure
@@ -141,12 +139,6 @@ function LoginPage() {
                 )}
               </button>
             </form>
-
-            <div className="gh-card-meta">
-              <span className="gh-meta-pill">Secure Session</span>
-              <span className="gh-meta-pill">Live Metrics</span>
-              <span className="gh-meta-pill">Admin Console</span>
-            </div>
 
             <p className="gh-footer-note">Authorized admin access only</p>
           </div>
