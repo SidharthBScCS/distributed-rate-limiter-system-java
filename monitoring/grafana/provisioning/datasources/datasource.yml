@@ -5,8 +5,8 @@ datasources:
     name: Prometheus
     type: prometheus
     access: proxy
-    # inside docker-compose, use service DNS name.
-    # can still be overridden via GF_DATASOURCE_PROMETHEUS_URL.
-    url: "${GF_DATASOURCE_PROMETHEUS_URL:http://prometheus:9090}"
+    # Grafana 12 provisioning in this setup was resolving the env-substituted
+    # URL to an empty string, so keep the internal compose DNS name explicit.
+    url: http://prometheus:9090
     isDefault: true
     editable: true
