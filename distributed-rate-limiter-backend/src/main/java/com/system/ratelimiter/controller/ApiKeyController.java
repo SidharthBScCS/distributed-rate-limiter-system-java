@@ -1,10 +1,12 @@
 package com.system.ratelimiter.controller;
 import com.system.ratelimiter.dto.RateLimitCheckRequest;
 import com.system.ratelimiter.dto.CreateApiKeyRequest;
+import com.system.ratelimiter.dto.DecisionAuditEntry;
 import com.system.ratelimiter.dto.RateLimitDecisionResponse;
 import com.system.ratelimiter.entity.ApiKey;
 import com.system.ratelimiter.entity.RequestStats;
 import com.system.ratelimiter.service.ApiKeyService;
+import com.system.ratelimiter.service.DecisionAuditService;
 import com.system.ratelimiter.service.DistributedRateLimiterService;
 import com.system.ratelimiter.service.RequestStatsService;
 import jakarta.validation.Valid;
@@ -31,15 +33,18 @@ public class ApiKeyController {
     private final ApiKeyService apiKeyService;
     private final RequestStatsService requestStatsService;
     private final DistributedRateLimiterService distributedRateLimiterService;
+    private final DecisionAuditService decisionAuditService;
 
     public ApiKeyController(
             ApiKeyService apiKeyService,
             RequestStatsService requestStatsService,
-            DistributedRateLimiterService distributedRateLimiterService
+            DistributedRateLimiterService distributedRateLimiterService,
+            DecisionAuditService decisionAuditService
     ) {
         this.apiKeyService = apiKeyService;
         this.requestStatsService = requestStatsService;
         this.distributedRateLimiterService = distributedRateLimiterService;
+        this.decisionAuditService = decisionAuditService;
     }
 
     @GetMapping
@@ -122,7 +127,13 @@ public class ApiKeyController {
                 decision.retryAfterSeconds(),
                 safeReason,
                 decision.algorithm(),
-                request.getApiKey()
+                request.getApiKey(),
+                decision.route(),
+                decision.limit(),
+                decision.windowSeconds(),
+                decision.currentUsage(),
+                decision.remainingRequests(),
+                decision.evaluatedAt().toString()
         );
         if (!decision.allowed()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
@@ -130,6 +141,11 @@ public class ApiKeyController {
                     .body(body);
         }
         return ResponseEntity.ok(body);
+    }
+
+    @GetMapping("/analytics/recent-decisions")
+    public ResponseEntity<List<DecisionAuditEntry>> getRecentDecisions() {
+        return ResponseEntity.ok(decisionAuditService.getRecent(50));
     }
 
     private static String normalizeReason(boolean allowed, String reason) {

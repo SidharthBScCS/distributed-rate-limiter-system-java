@@ -1,15 +1,20 @@
 package com.system.ratelimiter.service;
 
+import com.system.ratelimiter.dto.DecisionAuditEntry;
 import com.system.ratelimiter.entity.ApiKey;
 import com.system.ratelimiter.repository.ApiKeyRepository;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.RedisSystemException;
+import org.springframework.data.redis.connection.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -37,20 +42,21 @@ public class DistributedRateLimiterService {
                 local retryMs = (oldestTs + windowMs) - now
                 if retryMs < 1 then retryMs = 1 end
                 local retrySeconds = math.ceil(retryMs / 1000.0)
-                redis.call('PEXPIRE', KEYS[1], windowMs)
-                return {0, retrySeconds, 2}
+            redis.call('PEXPIRE', KEYS[1], windowMs)
+            return {0, retrySeconds, 2, count, limit}
             end
 
             for i = 1, cost do
                 redis.call('ZADD', KEYS[1], now, requestId .. ':' .. i)
             end
             redis.call('PEXPIRE', KEYS[1], windowMs)
-            return {1, 0, 0}
+            return {1, 0, 0, count + cost, limit}
             """;
 
     private final StringRedisTemplate redisTemplate;
     private final ApiKeyRepository apiKeyRepository;
     private final RequestStatsService requestStatsService;
+    private final DecisionAuditService decisionAuditService;
     private final MeterRegistry meterRegistry;
     private final String redisPrefix;
     private final DefaultRedisScript<List> slidingWindowScript;
@@ -59,12 +65,14 @@ public class DistributedRateLimiterService {
             StringRedisTemplate redisTemplate,
             ApiKeyRepository apiKeyRepository,
             RequestStatsService requestStatsService,
+            DecisionAuditService decisionAuditService,
             MeterRegistry meterRegistry,
             @Value("${ratelimiter.redis-prefix:ratelimiter}") String redisPrefix
     ) {
         this.redisTemplate = redisTemplate;
         this.apiKeyRepository = apiKeyRepository;
         this.requestStatsService = requestStatsService;
+        this.decisionAuditService = decisionAuditService;
         this.meterRegistry = meterRegistry;
         this.redisPrefix = redisPrefix == null || redisPrefix.isBlank() ? "ratelimiter" : redisPrefix.trim();
 
@@ -104,6 +112,19 @@ public class DistributedRateLimiterService {
                 "result",
                 decision.allowed() ? "allowed" : "blocked"
         ).increment();
+        decisionAuditService.record(new DecisionAuditEntry(
+                apiKey.getApiKey(),
+                routeKey,
+                decision.allowed(),
+                decision.reason(),
+                decision.algorithm(),
+                decision.retryAfterSeconds(),
+                decision.limit(),
+                decision.windowSeconds(),
+                decision.currentUsage(),
+                decision.remainingRequests(),
+                decision.evaluatedAt().toString()
+        ));
 
         return decision;
     }
@@ -119,24 +140,42 @@ public class DistributedRateLimiterService {
                 Integer.toString(cost),
                 UUID.randomUUID().toString()
         );
-        return toDecision(result);
+        Decision baseDecision = toDecision(result);
+        int limit = Math.max(1, apiKey.getRateLimit() == null ? 1 : apiKey.getRateLimit());
+        int windowSeconds = Math.max(1, apiKey.getWindowSeconds() == null ? 60 : apiKey.getWindowSeconds());
+        return new Decision(
+                baseDecision.allowed(),
+                baseDecision.retryAfterSeconds(),
+                baseDecision.reason(),
+                baseDecision.algorithm(),
+                limit,
+                windowSeconds,
+                baseDecision.currentUsage(),
+                Math.max(0L, (long) limit - baseDecision.currentUsage()),
+                Instant.now(),
+                route
+        );
     }
 
     private Decision toDecision(List<Long> result) {
-        if (result == null || result.size() < 3) {
-            return new Decision(false, 1, "LIMITER_ERROR", SLIDING_WINDOW);
+        if (result == null || result.size() < 5) {
+            return new Decision(false, 1, "LIMITER_ERROR", SLIDING_WINDOW, 0, 0, 0L, 0L, Instant.now(), "global");
         }
         boolean allowed = result.get(0) != null && result.get(0) == 1L;
         int retryAfter = result.get(1) == null ? 1 : Math.max(1, result.get(1).intValue());
         long code = result.get(2) == null ? 4L : result.get(2);
+        long currentUsage = result.get(3) == null ? 0L : Math.max(0L, result.get(3));
+        int limit = result.get(4) == null ? 0 : Math.max(0, result.get(4).intValue());
         String reason = switch ((int) code) {
             case 0 -> "ALLOWED";
             case 2 -> "SLIDING_WINDOW_EXCEEDED";
+            case 3 -> "LIMITER_ERROR";
             default -> "SLIDING_WINDOW_EXCEEDED";
         };
+        long remainingRequests = Math.max(0L, (long) limit - currentUsage);
         return allowed
-                ? new Decision(true, 0, reason, SLIDING_WINDOW)
-                : new Decision(false, retryAfter, reason, SLIDING_WINDOW);
+                ? new Decision(true, 0, reason, SLIDING_WINDOW, limit, 0, currentUsage, remainingRequests, Instant.now(), "global")
+                : new Decision(false, retryAfter, reason, SLIDING_WINDOW, limit, 0, currentUsage, remainingRequests, Instant.now(), "global");
     }
 
     private void updateStats(ApiKey apiKey, boolean allowed) {
@@ -210,14 +249,20 @@ public class DistributedRateLimiterService {
     }
 
     private long sumSlidingWindowCount(String apiKeyValue) {
-        Set<String> keys = redisTemplate.keys(redisPrefix + ":sliding:" + apiKeyValue + ":*");
-        if (keys == null || keys.isEmpty()) {
-            return 0L;
-        }
+        String pattern = redisPrefix + ":sliding:" + apiKeyValue + ":*";
+        ScanOptions options = ScanOptions.scanOptions().match(pattern).count(100).build();
         long sum = 0L;
-        for (String key : keys) {
-            Long value = redisTemplate.opsForZSet().zCard(key);
-            sum += value == null ? 0L : value;
+        try (Cursor<byte[]> cursor = redisTemplate.getConnectionFactory()
+                .getConnection()
+                .keyCommands()
+                .scan(options)) {
+            while (cursor.hasNext()) {
+                String key = new String(cursor.next());
+                Long value = redisTemplate.opsForZSet().zCard(key);
+                sum += value == null ? 0L : value;
+            }
+        } catch (IOException | RuntimeException ex) {
+            return 0L;
         }
         return sum;
     }
@@ -234,5 +279,16 @@ public class DistributedRateLimiterService {
         return value.replace(' ', '_');
     }
 
-    public record Decision(boolean allowed, int retryAfterSeconds, String reason, String algorithm) {}
+    public record Decision(
+            boolean allowed,
+            int retryAfterSeconds,
+            String reason,
+            String algorithm,
+            int limit,
+            int windowSeconds,
+            long currentUsage,
+            long remainingRequests,
+            Instant evaluatedAt,
+            String route
+    ) {}
 }

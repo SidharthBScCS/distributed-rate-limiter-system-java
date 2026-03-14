@@ -1,12 +1,12 @@
 package com.system.ratelimiter.dto;
 
-public record RateLimitDecisionResponse(
-        boolean allowed,
-        int retryAfterSeconds,
-        String reason,
-        String algorithm,
+public record DecisionAuditEntry(
         String apiKey,
         String route,
+        boolean allowed,
+        String reason,
+        String algorithm,
+        int retryAfterSeconds,
         int limit,
         int windowSeconds,
         long currentUsage,

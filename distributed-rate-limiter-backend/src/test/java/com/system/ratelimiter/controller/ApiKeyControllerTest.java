@@ -3,8 +3,10 @@ package com.system.ratelimiter.controller;
 import com.system.ratelimiter.dto.RateLimitCheckRequest;
 import com.system.ratelimiter.dto.RateLimitDecisionResponse;
 import com.system.ratelimiter.service.ApiKeyService;
+import com.system.ratelimiter.service.DecisionAuditService;
 import com.system.ratelimiter.service.DistributedRateLimiterService;
 import com.system.ratelimiter.service.RequestStatsService;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,11 +34,14 @@ class ApiKeyControllerTest {
     @Mock
     private DistributedRateLimiterService distributedRateLimiterService;
 
+    @Mock
+    private DecisionAuditService decisionAuditService;
+
     private ApiKeyController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new ApiKeyController(apiKeyService, requestStatsService, distributedRateLimiterService);
+        controller = new ApiKeyController(apiKeyService, requestStatsService, distributedRateLimiterService, decisionAuditService);
     }
 
     @Test
@@ -51,7 +56,13 @@ class ApiKeyControllerTest {
                         false,
                         60,
                         "ALLOWED",
-                        "SLIDING_WINDOW"
+                        "SLIDING_WINDOW",
+                        10,
+                        60,
+                        10L,
+                        0L,
+                        Instant.parse("2026-03-14T00:00:00Z"),
+                        "/api/test"
                 ));
 
         ResponseEntity<RateLimitDecisionResponse> response = controller.checkLimit(request);
@@ -61,6 +72,7 @@ class ApiKeyControllerTest {
         assertNotNull(response.getBody());
         assertEquals(false, response.getBody().allowed());
         assertEquals("RATE_LIMIT_EXCEEDED", response.getBody().reason());
+        assertEquals(0L, response.getBody().remainingRequests());
     }
 
     @Test
@@ -76,6 +88,12 @@ class ApiKeyControllerTest {
                         0,
                         "",
                         "SLIDING_WINDOW"
+                        ,10
+                        ,60
+                        ,4L
+                        ,6L
+                        ,Instant.parse("2026-03-14T00:00:00Z")
+                        ,"/api/test"
                 ));
 
         ResponseEntity<RateLimitDecisionResponse> response = controller.checkLimit(request);
@@ -84,5 +102,6 @@ class ApiKeyControllerTest {
         assertNotNull(response.getBody());
         assertEquals(true, response.getBody().allowed());
         assertEquals("ALLOWED", response.getBody().reason());
+        assertEquals(6L, response.getBody().remainingRequests());
     }
 }
