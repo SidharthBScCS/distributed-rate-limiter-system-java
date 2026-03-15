@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import tools.jackson.core.JsonProcessingException;
 import tools.jackson.databind.ObjectMapper;
 
 @Service
@@ -38,10 +37,8 @@ public class DecisionAuditService {
             String payload = objectMapper.writeValueAsString(entry);
             redisTemplate.opsForList().leftPush(auditKey, payload);
             redisTemplate.opsForList().trim(auditKey, 0, maxEntries - 1);
-        } catch (JsonProcessingException ignored) {
-            // Audit logging is best-effort and must not impact limiter decisions.
         } catch (Exception ignored) {
-            // Ignore Redis audit issues and keep request flow healthy.
+            // Audit logging is best-effort and must not impact limiter decisions.
         }
     }
 

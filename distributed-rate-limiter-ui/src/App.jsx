@@ -3,7 +3,7 @@ import StatsCards from "./Card";
 import ApiTable from "./Table_Box";
 import Analytics from "./Analytics";
 import LoginPage from "./LoginPage";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { apiUrl } from "./apiBase";
@@ -15,6 +15,9 @@ function App() {
   const [refreshTick, setRefreshTick] = useState(0);
   const [uiConfig, setUiConfig] = useState(null);
   const [configError, setConfigError] = useState("");
+  const [toasts, setToasts] = useState([]);
+  const seenDecisionKeysRef = useRef(new Set());
+  const initializedDecisionFeedRef = useRef(false);
   const isAnalyticsPage = location.pathname === "/analytics";
   const isFullWidthPage = location.pathname === "/login";
   const showSidebar = !isFullWidthPage;
@@ -131,6 +134,80 @@ function App() {
     return () => window.clearTimeout(timeoutId);
   }, [location.pathname]);
 
+  useEffect(() => {
+    if (isFullWidthPage || !uiConfig) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    const pushToast = (entry) => {
+      const toastId = `${entry.apiKey}-${entry.evaluatedAt}`;
+      const shortKey = String(entry.apiKey ?? "").slice(0, 12);
+      setToasts((current) => {
+        const next = [
+          ...current,
+          {
+            id: toastId,
+            title: "Too many requests (429)",
+            message: `API key ${shortKey} exceeded the sliding window limit.`,
+          },
+        ];
+        return next.slice(-4);
+      });
+
+      window.setTimeout(() => {
+        setToasts((current) => current.filter((toast) => toast.id !== toastId));
+      }, 4000);
+    };
+
+    const loadRecentDecisions = async () => {
+      try {
+        const response = await fetch(apiUrl("/api/analytics/recent-decisions"), {
+          credentials: "include",
+        });
+        if (!response.ok) {
+          return;
+        }
+        const entries = await response.json();
+        if (cancelled || !Array.isArray(entries)) {
+          return;
+        }
+
+        if (!initializedDecisionFeedRef.current) {
+          entries.forEach((entry) => {
+            if (entry?.apiKey && entry?.evaluatedAt) {
+              seenDecisionKeysRef.current.add(`${entry.apiKey}-${entry.evaluatedAt}`);
+            }
+          });
+          initializedDecisionFeedRef.current = true;
+          return;
+        }
+
+        entries
+          .slice()
+          .reverse()
+          .forEach((entry) => {
+            const decisionKey = `${entry?.apiKey}-${entry?.evaluatedAt}`;
+            if (!entry?.allowed && entry?.apiKey && entry?.evaluatedAt && !seenDecisionKeysRef.current.has(decisionKey)) {
+              seenDecisionKeysRef.current.add(decisionKey);
+              pushToast(entry);
+            }
+          });
+      } catch {
+        // Toast feed is best-effort; ignore transient polling failures.
+      }
+    };
+
+    loadRecentDecisions();
+    const intervalId = window.setInterval(loadRecentDecisions, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [isFullWidthPage, uiConfig]);
+
   return (
     <>
       {showSidebar ? (
@@ -217,6 +294,17 @@ function App() {
         </Routes>
         )}
       </div>
+
+      {toasts.length > 0 ? (
+        <div className="toast-stack" aria-live="polite" aria-atomic="true">
+          {toasts.map((toast) => (
+            <div key={toast.id} className="app-toast app-toast--danger">
+              <strong>{toast.title}</strong>
+              <span>{toast.message}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </>
   );
 }
