@@ -90,6 +90,9 @@ function ApiTable({ refreshTick, defaults }) {
   const fetchKeys = async () => {
     try {
       const res = await fetch(apiUrl("/api/view/dashboard"), { credentials: "include" });
+      if (!res.ok) {
+        throw new Error(`Failed dashboard table request: HTTP ${res.status}`);
+      }
       const data = await res.json();
       const sortedKeys = [...(data.apiKeys ?? [])].sort((left, right) => {
         const usageDiff = Number(right.usagePercentage ?? 0) - Number(left.usagePercentage ?? 0);
@@ -106,7 +109,7 @@ function ApiTable({ refreshTick, defaults }) {
       });
       setKeys(sortedKeys);
     } catch {
-      // Keep previous table state on network failures.
+      setKeys([]);
     } finally {
       setLoading(false);
     }

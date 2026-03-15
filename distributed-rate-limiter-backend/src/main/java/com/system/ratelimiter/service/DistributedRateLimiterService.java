@@ -4,7 +4,6 @@ import com.system.ratelimiter.dto.DecisionAuditEntry;
 import com.system.ratelimiter.entity.ApiKey;
 import com.system.ratelimiter.repository.ApiKeyRepository;
 import io.micrometer.core.instrument.MeterRegistry;
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -13,8 +12,6 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.RedisSystemException;
-import org.springframework.data.redis.connection.Cursor;
-import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -249,20 +246,23 @@ public class DistributedRateLimiterService {
     }
 
     private long sumSlidingWindowCount(String apiKeyValue) {
-        String pattern = redisPrefix + ":sliding:" + apiKeyValue + ":*";
-        ScanOptions options = ScanOptions.scanOptions().match(pattern).count(100).build();
+        Set<String> keys;
+        try {
+            keys = redisTemplate.keys(redisPrefix + ":sliding:" + apiKeyValue + ":*");
+        } catch (Exception ex) {
+            return 0L;
+        }
+        if (keys == null || keys.isEmpty()) {
+            return 0L;
+        }
         long sum = 0L;
-        try (Cursor<byte[]> cursor = redisTemplate.getConnectionFactory()
-                .getConnection()
-                .keyCommands()
-                .scan(options)) {
-            while (cursor.hasNext()) {
-                String key = new String(cursor.next());
+        for (String key : keys) {
+            try {
                 Long value = redisTemplate.opsForZSet().zCard(key);
                 sum += value == null ? 0L : value;
+            } catch (Exception ignored) {
+                // Ignore per-key lookup failures and continue summing the rest.
             }
-        } catch (IOException | RuntimeException ex) {
-            return 0L;
         }
         return sum;
     }

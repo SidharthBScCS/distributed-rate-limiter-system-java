@@ -31,10 +31,13 @@ function StatsCards({ refreshTick }) {
   const fetchStats = async () => {
     try {
       const res = await fetch(apiUrl("/api/view/dashboard"), { credentials: "include" });
+      if (!res.ok) {
+        throw new Error(`Failed dashboard stats request: HTTP ${res.status}`);
+      }
       const data = await res.json();
-      setStats(data.stats);
+      setStats(data?.stats ?? {});
     } catch {
-      // Keep previous stats on fetch failures.
+      setStats({});
     } finally {
       setLoading(false);
     }
