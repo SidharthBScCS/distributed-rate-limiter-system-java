@@ -6,8 +6,10 @@ import "./Table_Box.css";
 function ApiTable({ refreshTick, defaults }) {
   const defaultRateLimit = defaults.rateLimit;
   const defaultWindowSeconds = defaults.windowSeconds;
+  const rowsPerPage = 10;
   const [keys, setKeys] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [formState, setFormState] = useState({
     userName: "",
@@ -38,6 +40,11 @@ function ApiTable({ refreshTick, defaults }) {
   useEffect(() => {
     fetchKeys();
   }, [refreshTick]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(keys.length / rowsPerPage));
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [keys.length]);
 
   useEffect(() => {
     if (!isCreateModalOpen) {
@@ -138,6 +145,11 @@ function ApiTable({ refreshTick, defaults }) {
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
+  const totalPages = Math.max(1, Math.ceil(keys.length / rowsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * rowsPerPage;
+  const visibleKeys = keys.slice(startIndex, startIndex + rowsPerPage);
+
   const handleCreateApiKey = async (event) => {
     event.preventDefault();
     setCreateError("");
@@ -220,7 +232,7 @@ function ApiTable({ refreshTick, defaults }) {
                 </td>
               </tr>
             ) : (
-              keys.map((key) => {
+              visibleKeys.map((key) => {
                 const statusColor = key.statusColor;
                 const usage = key.usagePercentage;
                 const usageColor = key.usageColor;
@@ -286,6 +298,30 @@ function ApiTable({ refreshTick, defaults }) {
           </tbody>
         </table>
       </div>
+
+      {keys.length > 0 ? (
+        <div className="table-pagination">
+          <button
+            type="button"
+            className="pagination-btn"
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            disabled={safeCurrentPage === 1}
+          >
+            Previous
+          </button>
+          <span className="pagination-status">
+            Showing {startIndex + 1}-{Math.min(startIndex + rowsPerPage, keys.length)} of {keys.length}
+          </span>
+          <button
+            type="button"
+            className="pagination-btn"
+            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            disabled={safeCurrentPage === totalPages}
+          >
+            Next
+          </button>
+        </div>
+      ) : null}
 
       {isCreateModalOpen ? (
         <div className="modal-overlay" onClick={closeCreateModal}>
