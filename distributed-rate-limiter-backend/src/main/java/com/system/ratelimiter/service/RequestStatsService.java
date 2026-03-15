@@ -48,12 +48,7 @@ public class RequestStatsService {
     }
 
     public RequestStats snapshot() {
-        Object[] totals = requestStatsRepository.sumTotals();
-        RequestStats snapshot = new RequestStats();
-        snapshot.setTotalRequests(readTotal(totals, 0));
-        snapshot.setAllowedRequests(readTotal(totals, 1));
-        snapshot.setBlockedRequests(readTotal(totals, 2));
-        return normalize(snapshot);
+        return normalize(getOrCreate());
     }
 
     private RequestStats normalize(RequestStats stats) {
@@ -75,12 +70,5 @@ public class RequestStatsService {
 
     private long safe(Long value) {
         return value == null ? 0L : value;
-    }
-
-    private long readTotal(Object[] totals, int index) {
-        if (totals == null || totals.length <= index || !(totals[index] instanceof Number number)) {
-            return 0L;
-        }
-        return Math.max(0L, number.longValue());
     }
 }
