@@ -57,6 +57,10 @@ public class ApiKey {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getUserName() {
         return userName;
     }
@@ -131,5 +135,9 @@ public class ApiKey {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }

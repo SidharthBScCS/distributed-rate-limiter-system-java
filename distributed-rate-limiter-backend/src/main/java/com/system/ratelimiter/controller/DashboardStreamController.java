@@ -17,8 +17,8 @@ public class DashboardStreamController {
 
     private final long intervalMs;
 
-    public DashboardStreamController(@Value("${ui.refresh-interval-ms:30000}") long intervalMs) {
-        this.intervalMs = Math.max(2000L, intervalMs);
+    public DashboardStreamController(@Value("${ui.refresh-interval-ms:1000}") long intervalMs) {
+        this.intervalMs = Math.max(1000L, intervalMs);
     }
 
     @GetMapping(value = "/dashboard", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

@@ -131,7 +131,7 @@ function App() {
       return undefined;
     }
 
-    const intervalMs = Math.max(5000, Number(uiConfig.refreshIntervalMs) || 30000);
+    const intervalMs = Math.max(1000, Number(uiConfig.refreshIntervalMs) || 1000);
     const intervalId = window.setInterval(() => {
       loadDashboardData();
     }, intervalMs);

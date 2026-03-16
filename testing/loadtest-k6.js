@@ -19,14 +19,22 @@ const STAGE_3_DURATION = __ENV.STAGE_3_DURATION || "1m";
 const STAGE_4_DURATION = __ENV.STAGE_4_DURATION || "1m";
 const STAGE_5_DURATION = __ENV.STAGE_5_DURATION || "30s";
 
+function parseApiKeys(raw) {
+  return raw
+    .split(/[\r\n,]+/)
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0);
+}
+
+const apiKeysFile = __ENV.API_KEYS_FILE;
 const apiKeysEnv = __ENV.API_KEYS || "";
-const API_KEYS = apiKeysEnv
-  .split(",")
-  .map((v) => v.trim())
-  .filter((v) => v.length > 0);
+const apiKeysRaw = apiKeysFile ? open(apiKeysFile) : apiKeysEnv;
+const API_KEYS = parseApiKeys(apiKeysRaw);
 
 if (API_KEYS.length === 0) {
-  throw new Error("Set API_KEYS env var with real keys, e.g. API_KEYS=key1,key2,key3");
+  throw new Error(
+    "Set API_KEYS or API_KEYS_FILE with real keys, e.g. API_KEYS=key1,key2,key3 or API_KEYS_FILE=./api-keys.txt"
+  );
 }
 
 export const allowedRequests = new Counter("allowed_requests");

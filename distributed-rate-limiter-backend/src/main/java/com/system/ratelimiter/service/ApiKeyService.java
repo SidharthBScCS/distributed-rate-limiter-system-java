@@ -46,56 +46,9 @@ public class ApiKeyService {
     }
 
     public java.util.List<ApiKey> getAll() {
-        java.util.List<ApiKey> apiKeys = apiKeyRepository.findAll();
-        boolean updated = false;
-
-        for (ApiKey apiKey : apiKeys) {
-            long total = apiKey.getTotalRequests() == null ? 0L : apiKey.getTotalRequests();
-            long allowed = apiKey.getAllowedRequests() == null ? 0L : apiKey.getAllowedRequests();
-            long blocked = apiKey.getBlockedRequests() == null ? 0L : apiKey.getBlockedRequests();
-
-            // Repair older rows where all over-threshold traffic was counted as allowed.
-            if (total > blockThreshold && blocked == 0L && allowed == total) {
-                long repairedBlocked = total - blockThreshold;
-                long repairedAllowed = total - repairedBlocked;
-                apiKey.setAllowedRequests(Math.max(0L, repairedAllowed));
-                apiKey.setBlockedRequests(Math.max(0L, repairedBlocked));
-                allowed = apiKey.getAllowedRequests();
-                blocked = apiKey.getBlockedRequests();
-                updated = true;
-            }
-
-            // Ensure historical counters reflect at least the configured hard-block threshold.
-            if (total > blockThreshold) {
-                long minimumBlocked = total - blockThreshold;
-                if (blocked < minimumBlocked) {
-                    blocked = minimumBlocked;
-                    allowed = Math.max(0L, total - blocked);
-                    apiKey.setBlockedRequests(blocked);
-                    apiKey.setAllowedRequests(allowed);
-                    updated = true;
-                }
-            }
-
-            // Keep counters internally consistent.
-            if (allowed + blocked != total) {
-                long normalizedBlocked = Math.max(0L, total - allowed);
-                apiKey.setBlockedRequests(normalizedBlocked);
-                blocked = normalizedBlocked;
-                updated = true;
-            }
-
-            String expectedStatus = total > blockThreshold ? "Blocked" : "Normal";
-            if (!expectedStatus.equalsIgnoreCase(apiKey.getStatus())) {
-                apiKey.setStatus(expectedStatus);
-                updated = true;
-            }
-        }
-
-        if (updated) {
-            apiKeyRepository.saveAll(apiKeys);
-        }
-        return apiKeys;
+        return apiKeyRepository.findAll().stream()
+                .map(this::copyAndNormalize)
+                .toList();
     }
 
     public java.util.List<ApiKey> getAllRealKeys() {
@@ -141,5 +94,43 @@ public class ApiKeyService {
 
     private boolean isSupportedAlgorithm(String algorithm) {
         return "SLIDING_WINDOW".equals(algorithm);
+    }
+
+    private ApiKey copyAndNormalize(ApiKey source) {
+        ApiKey copy = new ApiKey();
+        copy.setId(source.getId());
+        copy.setUserName(source.getUserName());
+        copy.setRateLimit(source.getRateLimit());
+        copy.setWindowSeconds(source.getWindowSeconds());
+        copy.setAlgorithm(normalizeOrDefault(source.getAlgorithm(), defaultAlgorithm));
+        copy.setApiKey(source.getApiKey());
+        copy.setCreatedAt(source.getCreatedAt());
+
+        long total = source.getTotalRequests() == null ? 0L : source.getTotalRequests();
+        long allowed = source.getAllowedRequests() == null ? 0L : source.getAllowedRequests();
+        long blocked = source.getBlockedRequests() == null ? 0L : source.getBlockedRequests();
+
+        if (total > blockThreshold && blocked == 0L && allowed == total) {
+            blocked = total - blockThreshold;
+            allowed = Math.max(0L, total - blocked);
+        }
+
+        if (total > blockThreshold) {
+            long minimumBlocked = total - blockThreshold;
+            if (blocked < minimumBlocked) {
+                blocked = minimumBlocked;
+                allowed = Math.max(0L, total - blocked);
+            }
+        }
+
+        if (allowed + blocked != total) {
+            blocked = Math.max(0L, total - allowed);
+        }
+
+        copy.setTotalRequests(total);
+        copy.setAllowedRequests(allowed);
+        copy.setBlockedRequests(blocked);
+        copy.setStatus(total > blockThreshold ? "Blocked" : "Normal");
+        return copy;
     }
 }
