@@ -41,7 +41,13 @@ class ApiKeyControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new ApiKeyController(apiKeyService, requestStatsService, distributedRateLimiterService, decisionAuditService);
+        controller = new ApiKeyController(
+                apiKeyService,
+                requestStatsService,
+                distributedRateLimiterService,
+                decisionAuditService,
+                500L
+        );
     }
 
     @Test

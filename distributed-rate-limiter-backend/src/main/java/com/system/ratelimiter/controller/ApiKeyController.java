@@ -14,9 +14,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,17 +37,23 @@ public class ApiKeyController {
     private final RequestStatsService requestStatsService;
     private final DistributedRateLimiterService distributedRateLimiterService;
     private final DecisionAuditService decisionAuditService;
+    private final long dashboardCacheTtlMs;
+    private final AtomicReference<Map<String, Object>> dashboardCache = new AtomicReference<>();
+    private final AtomicLong dashboardCacheAt = new AtomicLong(0L);
+    private final Object dashboardCacheLock = new Object();
 
     public ApiKeyController(
             ApiKeyService apiKeyService,
             RequestStatsService requestStatsService,
             DistributedRateLimiterService distributedRateLimiterService,
-            DecisionAuditService decisionAuditService
+            DecisionAuditService decisionAuditService,
+            @Value("${ui.dashboard-cache-ttl-ms:500}") long dashboardCacheTtlMs
     ) {
         this.apiKeyService = apiKeyService;
         this.requestStatsService = requestStatsService;
         this.distributedRateLimiterService = distributedRateLimiterService;
         this.decisionAuditService = decisionAuditService;
+        this.dashboardCacheTtlMs = Math.max(100L, dashboardCacheTtlMs);
     }
 
     @GetMapping
@@ -64,6 +73,27 @@ public class ApiKeyController {
 
     @GetMapping("/view/dashboard")
     public ResponseEntity<Map<String, Object>> getDashboardView() {
+        long now = System.currentTimeMillis();
+        Map<String, Object> cached = dashboardCache.get();
+        if (cached != null && now - dashboardCacheAt.get() < dashboardCacheTtlMs) {
+            return ResponseEntity.ok(cached);
+        }
+
+        synchronized (dashboardCacheLock) {
+            cached = dashboardCache.get();
+            now = System.currentTimeMillis();
+            if (cached != null && now - dashboardCacheAt.get() < dashboardCacheTtlMs) {
+                return ResponseEntity.ok(cached);
+            }
+
+            Map<String, Object> response = buildDashboardView();
+            dashboardCache.set(response);
+            dashboardCacheAt.set(now);
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    private Map<String, Object> buildDashboardView() {
         RequestStats statsSnapshot = requestStatsService.snapshot();
         List<ApiKey> allKeys = apiKeyService.getAllRealKeys();
         long total = statsSnapshot.getTotalRequests() == null ? 0L : statsSnapshot.getTotalRequests();
@@ -96,7 +126,7 @@ public class ApiKeyController {
                 .toList();
         apiKeys = mergeSortApiKeysByUsage(apiKeys);
 
-        return ResponseEntity.ok(Map.of(
+        return Map.of(
                 "stats", Map.of(
                         "totalRequests", total,
                         "allowedRequests", allowed,
@@ -111,7 +141,7 @@ public class ApiKeyController {
                         "redis", "live window counters and block markers"
                 ),
                 "generatedAt", java.time.Instant.now().toString()
-        ));
+        );
     }
 
     @PostMapping("/limit/check")

@@ -19,14 +19,25 @@ function App() {
   const [toasts, setToasts] = useState([]);
   const seenDecisionKeysRef = useRef(new Set());
   const initializedDecisionFeedRef = useRef(false);
+  const dashboardRequestInFlightRef = useRef(false);
+  const lastDashboardLoadAtRef = useRef(0);
   const isAnalyticsPage = location.pathname === "/analytics";
   const isFullWidthPage = location.pathname === "/login";
   const showSidebar = !isFullWidthPage;
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (force = false) => {
     if (isFullWidthPage) {
       return false;
     }
+    const refreshIntervalMs = Math.max(500, Number(uiConfig?.refreshIntervalMs) || 1000);
+    const now = Date.now();
+    if (!force && now - lastDashboardLoadAtRef.current < refreshIntervalMs) {
+      return false;
+    }
+    if (dashboardRequestInFlightRef.current) {
+      return false;
+    }
+    dashboardRequestInFlightRef.current = true;
     try {
       const response = await fetch(apiUrl("/api/view/dashboard"), {
         credentials: "include",
@@ -43,10 +54,12 @@ function App() {
         stats: data?.stats ?? {},
         apiKeys: data?.apiKeys ?? [],
       });
+      lastDashboardLoadAtRef.current = Date.now();
       return true;
     } catch {
       return false;
     } finally {
+      dashboardRequestInFlightRef.current = false;
       setDashboardLoading(false);
     }
   };
@@ -99,7 +112,7 @@ function App() {
     if (isFullWidthPage || !uiConfig) {
       return undefined;
     }
-    loadDashboardData();
+    loadDashboardData(true);
     return undefined;
   }, [isFullWidthPage, uiConfig]);
 
@@ -131,7 +144,7 @@ function App() {
       return undefined;
     }
 
-    const intervalMs = Math.max(1000, Number(uiConfig.refreshIntervalMs) || 1000);
+    const intervalMs = Math.max(500, Number(uiConfig.refreshIntervalMs) || 1000);
     const intervalId = window.setInterval(() => {
       loadDashboardData();
     }, intervalMs);
@@ -145,12 +158,12 @@ function App() {
     }
 
     const handleWindowFocus = () => {
-      loadDashboardData();
+      loadDashboardData(true);
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        loadDashboardData();
+        loadDashboardData(true);
       }
     };
 
