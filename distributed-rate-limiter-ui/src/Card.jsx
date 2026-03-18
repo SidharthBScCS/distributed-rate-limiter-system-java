@@ -11,45 +11,44 @@ import "./Cards.css";
 function StatsCards({ stats, loading }) {
   const formatPercent = (value) => {
     const numericValue = Number(value ?? 0);
-    if (!Number.isFinite(numericValue)) {
-      return "0%";
+    if (!Number.isFinite(numericValue)) return "0%";
+    
+    if (numericValue >= 10) {
+      return `${numericValue.toFixed(1)}%`;
     }
-    const rounded = numericValue >= 10
-      ? numericValue.toFixed(1)
-      : numericValue.toFixed(2);
-    return `${rounded.replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1")}%`;
+    return `${numericValue.toFixed(2)}%`;
   };
 
   const cards = useMemo(() => [
     {
       title: "Total Requests",
       value: stats.totalRequests,
-      caption: "All traffic processed",
+      caption: "Total traffic",
       icon: Activity,
       change: formatPercent(stats.totalPercent),
       trend: "up",
-      color: "#8B949E",
-      bgColor: "rgba(139, 148, 158, 0.16)"
+      color: "#4299e1",
+      bgColor: "rgba(66, 153, 225, 0.15)"
     },
     {
-      title: "Allowed Requests",
+      title: "Allowed",
       value: stats.allowedRequests,
-      caption: "Passed rate-limit checks",
+      caption: "Passed rate limits",
       icon: CheckCircle,
       change: formatPercent(stats.allowedPercent),
       trend: "up",
-      color: "#3FB950",
-      bgColor: "rgba(63, 185, 80, 0.14)"
+      color: "#48bb78",
+      bgColor: "rgba(72, 187, 120, 0.15)"
     },
     {
-      title: "Blocked Requests",
+      title: "Blocked",
       value: stats.blockedRequests,
-      caption: "Throttled by the limiter",
+      caption: "Throttled requests",
       icon: XCircle,
       change: formatPercent(stats.blockedPercent),
       trend: "down",
-      color: "#F85149",
-      bgColor: "rgba(248, 81, 73, 0.14)"
+      color: "#f56565",
+      bgColor: "rgba(245, 101, 101, 0.15)"
     }
   ], [stats]);
 
@@ -71,17 +70,10 @@ function StatsCards({ stats, loading }) {
         const formattedValue = rawValue === "-" ? rawValue : new Intl.NumberFormat().format(rawValue);
 
         return (
-          <div 
-            key={index} 
-            className="stat-card"
-            style={{ animationDelay: `${index * 0.15}s` }}
-          >
-            <div className="card-pattern" />
-            <div className="card-shine" />
-            
+          <div key={index} className="stat-card">
             <div className="card-header">
               <div className="card-icon-wrapper" style={{ background: card.bgColor }}>
-                <Icon size={24} color={card.color} />
+                <Icon size={20} color={card.color} />
               </div>
             </div>
 
@@ -91,18 +83,16 @@ function StatsCards({ stats, loading }) {
               <p className="card-caption">{card.caption}</p>
             </div>
 
-            <div className="card-footer card-footer--compact">
+            <div className="card-footer">
               <div className={`trend-badge ${card.trend}`}>
                 {card.trend === "up" ? (
-                  <TrendingUp size={16} />
+                  <TrendingUp size={14} />
                 ) : (
-                  <TrendingDown size={16} />
+                  <TrendingDown size={14} />
                 )}
                 <span>{card.change}</span>
               </div>
             </div>
-
-            <div className="card-glow" />
           </div>
         );
       })}
