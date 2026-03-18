@@ -1,666 +1,450 @@
-.gh-login-shell {
-  position: fixed;
-  inset: 0;
-  height: 100vh;
-  overflow: hidden;
-  background:
-    radial-gradient(860px 520px at 12% 14%, rgba(96, 165, 250, 0.2), transparent 50%),
-    radial-gradient(760px 420px at 88% 18%, rgba(56, 189, 248, 0.12), transparent 52%),
-    radial-gradient(680px 360px at 50% 100%, rgba(29, 78, 216, 0.16), transparent 56%),
-    linear-gradient(145deg, #061021 0%, #0a1d3c 45%, #071427 100%);
-  color: #eef4ff;
-  isolation: isolate;
-}
-
-.gh-login-shell::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(123, 173, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(123, 173, 255, 0.06) 1px, transparent 1px);
-  background-size: 52px 52px;
-  opacity: 0.35;
-  pointer-events: none;
-}
-
-.gh-login-shell::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03), transparent 48%);
-  pointer-events: none;
-}
-
-.gh-grid-lines,
-.gh-auth-topbar {
-  display: none;
-}
-
-.gh-halo {
-  position: absolute;
-  border-radius: 999px;
-  pointer-events: none;
-  filter: blur(18px);
-  opacity: 0.9;
-  z-index: 0;
-}
-
-.gh-halo--one {
-  top: 7%;
-  left: 11%;
-  width: 220px;
-  height: 220px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.18), transparent 68%);
-  animation: ghFloatHalo 14s ease-in-out infinite;
-}
-
-.gh-halo--two {
-  bottom: 10%;
-  right: 10%;
-  width: 260px;
-  height: 260px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.2), transparent 70%);
-  animation: ghFloatHalo 16s ease-in-out infinite reverse;
-}
-
-.gh-halo--three {
-  top: 48%;
-  right: 28%;
-  width: 140px;
-  height: 140px;
-  background: radial-gradient(circle, rgba(147, 197, 253, 0.14), transparent 70%);
-  animation: ghPulseHalo 7s ease-in-out infinite;
-}
-
-.gh-main {
-  position: relative;
-  z-index: 1;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 1.75rem;
-}
-
-.gh-stage {
-  width: min(540px, 100%);
-  display: block;
-}
-
-.gh-auth-card {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  border-radius: 26px;
-  padding: 1.95rem 1.7rem 1.4rem;
-  border: 1px solid rgba(132, 182, 255, 0.28);
-  background:
-    linear-gradient(180deg, rgba(7, 19, 40, 0.86), rgba(4, 12, 28, 0.94));
-  box-shadow:
-    0 36px 90px rgba(2, 10, 24, 0.42),
-    0 0 0 1px rgba(83, 143, 255, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(18px);
-  position: relative;
-  overflow: hidden;
-  animation: ghCardReveal 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  transform-origin: center;
-}
-
-.gh-auth-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 22%),
-    radial-gradient(circle at top right, rgba(96, 165, 250, 0.14), transparent 38%);
-  pointer-events: none;
-}
-
-.gh-auth-card::after {
-  content: "";
-  position: absolute;
-  top: -30%;
-  right: -10%;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.16), transparent 68%);
-  filter: blur(10px);
-  pointer-events: none;
-}
-
-.gh-card-orbit {
-  position: absolute;
-  border-radius: 999px;
-  border: 1px solid rgba(126, 180, 255, 0.16);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.gh-card-orbit--one {
-  width: 220px;
-  height: 220px;
-  top: -80px;
-  right: -72px;
-  animation: ghOrbitSpin 18s linear infinite;
-}
-
-.gh-card-orbit--two {
-  width: 150px;
-  height: 150px;
-  bottom: -54px;
-  left: -36px;
-  animation: ghOrbitSpin 12s linear infinite reverse;
-}
-
-.gh-card-shine {
-  position: absolute;
-  inset: -25% auto auto -36%;
-  width: 70%;
-  height: 180%;
-  transform: rotate(18deg);
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.02) 36%,
-    rgba(255, 255, 255, 0.12) 50%,
-    rgba(255, 255, 255, 0.02) 64%,
-    transparent 100%
-  );
-  opacity: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.gh-auth-card:hover .gh-card-shine {
-  animation: ghSweepCard 1.15s ease;
-}
-
-.gh-auth-head h3,
-.gh-auth-head p,
-.gh-brand-row,
-.gh-status-strip,
-.gh-form,
-.gh-card-meta,
-.gh-error,
-.gh-footer-note {
-  position: relative;
-  z-index: 1;
-}
-
-.gh-brand-row {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  margin-bottom: 1rem;
-  animation: ghFadeUpSoft 0.75s ease both;
-  animation-delay: 0.06s;
-}
-
-.gh-brand-badge {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #eef7ff;
-  background: linear-gradient(135deg, rgba(120, 199, 255, 0.92), rgba(45, 119, 255, 0.96));
-  box-shadow:
-    0 14px 30px rgba(30, 104, 255, 0.34),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
-}
-
-.gh-brand-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.gh-brand-copy strong {
-  font-size: 0.96rem;
-  letter-spacing: -0.02em;
-}
-
-.gh-brand-copy span {
-  color: rgba(190, 211, 240, 0.72);
-  font-size: 0.74rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.gh-auth-head {
-  animation: ghFadeUpSoft 0.8s ease both;
-  animation-delay: 0.12s;
-}
-
-.gh-kicker {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.48rem 0.82rem;
-  border-radius: 999px;
-  background: rgba(20, 55, 104, 0.64);
-  border: 1px solid rgba(111, 168, 255, 0.22);
-  color: #9fd0ff;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  position: relative;
-  overflow: hidden;
-}
-
-.gh-kicker::before {
-  content: "";
-  width: 9px;
-  height: 9px;
-  margin-right: 0.45rem;
-  border-radius: 50%;
-  background: #71d6ff;
-  box-shadow: 0 0 14px rgba(113, 214, 255, 0.5);
-  animation: ghBlinkDot 1.8s ease-in-out infinite;
-}
-
-.gh-auth-head h3 {
-  margin: 0.7rem 0 0.28rem;
-  font-family: var(--font-display);
-  font-size: 1.9rem;
-  letter-spacing: -0.04em;
-  color: #f7fbff;
-  text-shadow: 0 10px 26px rgba(13, 70, 174, 0.18);
-}
-
-.gh-auth-head p {
+* {
   margin: 0;
-  color: rgba(218, 231, 255, 0.76);
-  font-size: 0.94rem;
-  line-height: 1.48;
-}
-
-.gh-form {
-  display: grid;
-  gap: 0.8rem;
-  margin-top: 1rem;
-  animation: ghFadeUpSoft 0.9s ease both;
-  animation-delay: 0.22s;
-}
-
-.gh-status-strip {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.65rem;
-  margin-top: 0.95rem;
   padding: 0;
-  border: none;
-  background: transparent;
-  animation: ghFadeUpSoft 0.86s ease both;
-  animation-delay: 0.16s;
+  box-sizing: border-box;
 }
 
-.gh-status-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 46px;
-  padding: 0.75rem 0.85rem;
-  border-radius: 14px;
-  border: 1px solid rgba(103, 147, 214, 0.22);
-  background:
-    linear-gradient(180deg, rgba(9, 25, 54, 0.78), rgba(6, 18, 39, 0.92));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 10px 24px rgba(4, 11, 28, 0.2);
-  color: #bcd8f8;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.gh-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #57e2ff;
-  box-shadow: 0 0 14px rgba(87, 226, 255, 0.42);
-  animation: ghBlinkDot 1.9s ease-in-out infinite;
-}
-
-.gh-form label {
-  color: #9fb9dd;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-
-.gh-form input {
+html, body {
+  height: 100%;
   width: 100%;
-  height: 54px;
-  border-radius: 15px;
-  border: 1px solid rgba(102, 144, 207, 0.35);
-  padding: 0 1rem;
-  background:
-    linear-gradient(180deg, rgba(7, 20, 43, 0.92), rgba(6, 17, 37, 0.96));
-  color: #eef5ff;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  overflow: hidden;
 }
 
-.gh-password-field {
-  position: relative;
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+  background: #0a0c10;
 }
 
-.gh-password-field input {
-  padding-right: 3.2rem;
-}
-
-.gh-password-toggle {
-  position: absolute;
-  top: 50%;
-  right: 0.7rem;
-  transform: translateY(-50%);
-  width: 34px;
-  height: 34px;
-  border: none;
-  border-radius: 10px;
-  background: rgba(18, 44, 88, 0.84);
-  color: #9cc9ff;
-  display: inline-flex;
+.login-container {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(135deg, #0b0d12 0%, #13171f 100%);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+/* Background decoration */
+.login-container::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Grid pattern */
+.grid-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* Floating orbs */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.orb-1 {
+  top: -10%;
+  right: -5%;
+  width: 400px;
+  height: 400px;
+  background: rgba(56, 189, 248, 0.15);
+}
+
+.orb-2 {
+  bottom: -10%;
+  left: -5%;
+  width: 450px;
+  height: 450px;
+  background: rgba(99, 102, 241, 0.15);
+}
+
+.orb-3 {
+  top: 40%;
+  left: 30%;
+  width: 300px;
+  height: 300px;
+  background: rgba(139, 92, 246, 0.1);
+}
+
+/* Main card - horizontal layout */
+.login-card {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 2rem;
+  background: rgba(18, 22, 30, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 40px;
+  padding: 2.5rem;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: row;
+  gap: 3rem;
+}
+
+/* Left section - Brand and info */
+.login-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-right: 2rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Admin badge */
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 30px;
+  padding: 0.5rem 1rem;
+  width: fit-content;
+  margin-bottom: 2rem;
+}
+
+.admin-badge span {
+  color: #3b82f6;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.admin-badge svg {
+  width: 14px;
+  height: 14px;
+  color: #3b82f6;
+}
+
+/* Brand section */
+.brand-section {
+  margin-bottom: 3rem;
+}
+
+.logo-wrapper {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.3);
+}
+
+.logo-wrapper svg {
+  color: white;
+  width: 32px;
+  height: 32px;
+}
+
+.brand-section h1 {
+  color: white;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.brand-section p {
+  color: #8b9bb5;
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 300px;
+}
+
+/* Status badges - vertical on left */
+.status-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 40px;
+  width: fit-content;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+}
+
+.status-dot.secure {
+  background: #3b82f6;
+  box-shadow: 0 0 10px #3b82f6;
+}
+
+.status-badge span {
+  color: #b0c0d8;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Right section - Login form */
+.login-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Admin notice */
+.admin-notice {
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-notice svg {
+  color: #3b82f6;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.admin-notice span {
+  color: #b0c0d8;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.admin-notice strong {
+  color: white;
+  font-weight: 600;
+}
+
+/* Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  color: #b0c0d8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper input {
+  width: 100%;
+  height: 52px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 0 1rem;
+  color: white;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.input-wrapper input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.input-wrapper input::placeholder {
+  color: #4a5a72;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: #5f738f;
   cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
 }
 
-.gh-password-toggle:hover {
-  background: rgba(28, 65, 126, 0.92);
-  color: #d9ecff;
-  transform: translateY(-50%) scale(1.04);
+.password-toggle:hover {
+  color: #b0c0d8;
 }
 
-.gh-form input::placeholder {
-  color: rgba(176, 198, 228, 0.45);
-}
-
-.gh-form input:focus {
-  border-color: #63b4ff;
-  box-shadow:
-    0 0 0 4px rgba(99, 180, 255, 0.17),
-    0 14px 28px rgba(10, 25, 56, 0.18);
-  transform: translateY(-1px);
-}
-
-.gh-submit {
-  margin-top: 0.3rem;
-  height: 56px;
+/* Submit button */
+.submit-btn {
+  height: 52px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
   border: none;
   border-radius: 16px;
-  background: linear-gradient(135deg, #8ed2ff, #44abff 46%, #2a7fff 100%);
-  color: #04121f;
-  font-size: 0.92rem;
-  font-weight: 900;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 18px 34px rgba(37, 118, 255, 0.34);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
-  position: relative;
-  overflow: hidden;
-  display: inline-flex;
+  transition: all 0.2s ease;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.65rem;
+  gap: 0.5rem;
+  box-shadow: 0 10px 20px -8px rgba(59, 130, 246, 0.3);
+  margin-top: 0.5rem;
 }
 
-.gh-submit:hover {
+.submit-btn:hover {
   transform: translateY(-2px);
-  filter: brightness(1.04);
-  box-shadow: 0 22px 40px rgba(37, 118, 255, 0.42);
+  box-shadow: 0 15px 25px -8px rgba(59, 130, 246, 0.4);
 }
 
-.gh-submit::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -120%;
-  width: 80%;
-  height: 100%;
-  transform: skewX(-20deg);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent);
-  transition: left 0.55s ease;
+.submit-btn:active {
+  transform: translateY(0);
 }
 
-.gh-submit:hover::after {
-  left: 145%;
-}
-
-.gh-submit:disabled {
-  opacity: 0.8;
+.submit-btn:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
-.gh-submit-spinner {
-  width: 16px;
-  height: 16px;
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
   border-radius: 50%;
-  border: 2px solid rgba(4, 18, 31, 0.24);
-  border-top-color: rgba(4, 18, 31, 0.92);
-  animation: ghSpin 0.8s linear infinite;
+  animation: spin 0.6s linear infinite;
 }
 
-.gh-error {
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error message */
+.error-message {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  margin-top: 0.8rem;
-  padding: 0.8rem 0.9rem;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 14px;
-  border: 1px solid rgba(248, 113, 113, 0.38);
-  background: rgba(127, 29, 29, 0.22);
-  color: #ffb1b1;
+  margin-bottom: 1.5rem;
+}
+
+.error-message svg {
+  color: #ef4444;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.error-message span {
+  color: #fca5a5;
   font-size: 0.9rem;
-  animation: ghFadeUpSoft 0.35s ease both;
 }
 
-.gh-card-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  margin-top: 0.95rem;
-  animation: ghFadeUpSoft 1s ease both;
-  animation-delay: 0.3s;
-}
-
-.gh-meta-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.48rem 0.78rem;
-  border-radius: 999px;
-  border: 1px solid rgba(106, 153, 225, 0.24);
-  background: rgba(9, 25, 54, 0.8);
-  color: #c3daf5;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.gh-footer-note {
-  margin: 0.95rem 0 0;
-  color: rgba(183, 205, 235, 0.6);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+/* Footer */
+.footer-text {
   text-align: center;
-  animation: ghFadeUpSoft 1.06s ease both;
-  animation-delay: 0.34s;
+  color: #4a5a72;
+  font-size: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  letter-spacing: 0.02em;
 }
 
-@keyframes ghPulseDot {
-  0%,
-  100% {
-    opacity: 0.72;
-    transform: scale(1);
+/* Responsive - becomes vertical on smaller screens */
+@media (max-width: 768px) {
+  .login-card {
+    flex-direction: column;
+    max-width: 500px;
+    padding: 2rem;
+    gap: 2rem;
   }
-  50% {
-    opacity: 1;
-    transform: scale(1.15);
+  
+  .login-left {
+    padding-right: 0;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 2rem;
   }
-}
-
-@keyframes ghBlinkDot {
-  0%,
-  100% {
-    opacity: 0.7;
-    transform: scale(1);
+  
+  .brand-section h1 {
+    font-size: 2rem;
   }
-  50% {
-    opacity: 1;
-    transform: scale(1.18);
-  }
-}
-
-@keyframes ghFloatHalo {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(0, -18px, 0) scale(1.06);
+  
+  .status-badges {
+    flex-direction: row;
+    flex-wrap: wrap;
   }
 }
 
-@keyframes ghPulseHalo {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.72;
+@media (max-width: 480px) {
+  .login-card {
+    padding: 1.5rem;
+    margin: 0 1rem;
   }
-  50% {
-    transform: scale(1.16);
-    opacity: 1;
+  
+  .brand-section h1 {
+    font-size: 1.75rem;
   }
-}
-
-@keyframes ghOrbitSpin {
-  from {
-    transform: rotate(0deg);
+  
+  .input-wrapper input {
+    height: 48px;
   }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes ghSpin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes ghCardReveal {
-  from {
-    opacity: 0;
-    transform: translateY(24px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes ghFadeUpSoft {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes ghSweepCard {
-  0% {
-    opacity: 0;
-    transform: translateX(-28%) rotate(18deg);
-  }
-  18% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(180%) rotate(18deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gh-halo,
-  .gh-auth-card,
-  .gh-card-orbit,
-  .gh-auth-head,
-  .gh-brand-row,
-  .gh-status-strip,
-  .gh-form,
-  .gh-card-meta,
-  .gh-footer-note,
-  .gh-error,
-  .gh-kicker::before,
-  .gh-status-dot,
-  .gh-submit-spinner,
-  .gh-auth-card:hover .gh-card-shine {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-@media (max-width: 980px) {
-  .gh-login-shell {
-    position: relative;
-    inset: auto;
-    height: auto;
-    min-height: 100vh;
-  }
-
-  .gh-main {
-    padding: 1.4rem;
-    height: auto;
-    min-height: 100vh;
-  }
-
-  .gh-stage {
-    width: min(460px, 100%);
-  }
-}
-
-@media (max-width: 640px) {
-  .gh-status-strip {
-    grid-template-columns: 1fr;
-  }
-
-  .gh-main {
-    padding: 1rem;
-  }
-
-  .gh-auth-card {
-    height: auto;
-    padding: 1.5rem 1.1rem 1.2rem;
-    border-radius: 22px;
-  }
-
-  .gh-auth-head h3 {
-    font-size: 1.7rem;
+  
+  .submit-btn {
+    height: 48px;
   }
 }

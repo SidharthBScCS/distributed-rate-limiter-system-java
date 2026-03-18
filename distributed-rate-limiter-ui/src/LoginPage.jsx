@@ -1,7 +1,7 @@
-import "./LoginPage.css";
-import { AlertCircle, Eye, EyeOff, Shield } from "lucide-react";
 import { useState } from "react";
+import { Eye, EyeOff, Shield, AlertCircle, Lock, UserCog, CheckCircle } from "lucide-react";
 import { apiUrl } from "./apiBase";
+import "./LoginPage.css";
 
 function LoginPage() {
   const [username, setUsername] = useState("");
@@ -10,8 +10,8 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError("");
     setIsSubmitting(true);
 
@@ -23,126 +23,133 @@ function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      const payload = await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        const message = payload.message;
-        throw new Error(message);
+        throw new Error(data.message || "Access denied");
       }
 
-      if (payload && typeof payload === "object") {
-        window.dispatchEvent(new Event("auth-changed"));
-      }
+      window.dispatchEvent(new Event("auth-changed"));
       window.location.assign("/dashboard");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "";
-      setError(message);
+      setError(err.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="gh-login-shell">
-      <div className="gh-grid-lines" />
-      <div className="gh-halo gh-halo--one" />
-      <div className="gh-halo gh-halo--two" />
-      <div className="gh-halo gh-halo--three" />
-
-      <div className="gh-main">
-        <section className="gh-stage">
-          <div className="gh-auth-card">
-            <div className="gh-card-orbit gh-card-orbit--one" />
-            <div className="gh-card-orbit gh-card-orbit--two" />
-            <div className="gh-card-shine" />
-            <div className="gh-brand-row">
-              <div className="gh-brand-badge">
-                <Shield size={18} strokeWidth={2.1} />
-              </div>
-              <div className="gh-brand-copy">
-                <strong>RateLimiter Console</strong>
-                <span>Protected admin gateway</span>
-              </div>
-            </div>
-            <div className="gh-auth-topbar">
-              <span className="gh-topbar-dot" />
-              <span className="gh-topbar-dot" />
-              <span className="gh-topbar-dot" />
+    <div className="login-container">
+      <div className="grid-pattern" />
+      <div className="orb orb-1" />
+      <div className="orb orb-2" />
+      <div className="orb orb-3" />
+      
+      <div className="login-card">
+        {/* Left Section - Brand & Info */}
+        <div className="login-left">
+          <div>
+            <div className="admin-badge">
+              <Lock size={14} />
+              <span>Admin Portal</span>
             </div>
 
-            {error ? (
-              <div className="gh-error">
-                <AlertCircle size={16} />
-                <span>{error}</span>
+            <div className="brand-section">
+              <div className="logo-wrapper">
+                <Shield />
               </div>
-            ) : null}
+              <h1>RateLimiter</h1>
+              <p>Enterprise-grade API rate limiting and access control</p>
+            </div>
+          </div>
 
-            <div className="gh-status-strip" aria-label="System status">
-              <span className="gh-status-item">
-                <span className="gh-status-dot" />
-                Admin access
-              </span>
-              <span className="gh-status-item">
-                <span className="gh-status-dot" />
-                System secure
-              </span>
-              <span className="gh-status-item">
-                <span className="gh-status-dot" />
-                Redis live
-              </span>
-              <span className="gh-status-item">
-                <span className="gh-status-dot" />
-                Session protected
-              </span>
+          <div className="status-badges">
+            <div className="status-badge">
+              <span className="status-dot" />
+              <span>System Status: Online</span>
+            </div>
+            <div className="status-badge">
+              <span className="status-dot secure" />
+              <span>Security: Active</span>
+            </div>
+            <div className="status-badge">
+              <span className="status-dot" />
+              <span>Redis: Connected</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Section - Login Form */}
+        <div className="login-right">
+          <div className="admin-notice">
+            <UserCog size={20} />
+            <span>Restricted to <strong>authorized administrators</strong> only</span>
+          </div>
+
+          {error && (
+            <div className="error-message">
+              <AlertCircle />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form className="login-form" onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="username">Admin Username</label>
+              <div className="input-wrapper">
+                <input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter your username"
+                  autoComplete="username"
+                />
+              </div>
             </div>
 
-            <form className="gh-form" onSubmit={handleSubmit}>
-              <label htmlFor="username">Username</label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                autoComplete="username"
-                placeholder="Enter admin username"
-              />
-
-              <label htmlFor="password">Password</label>
-              <div className="gh-password-field">
+            <div className="form-group">
+              <label htmlFor="password">Admin Password</label>
+              <div className="input-wrapper">
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoComplete="current-password"
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
-                  className="gh-password-toggle"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
-                  aria-pressed={showPassword}
-                  onClick={() => setShowPassword((value) => !value)}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+            </div>
 
-              <button className="gh-submit" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <span className="gh-submit-spinner" />
-                    Signing in...
-                  </>
-                ) : (
-                  "Enter Dashboard"
-                )}
-              </button>
-            </form>
+            <button 
+              type="submit" 
+              className="submit-btn" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="spinner" />
+                  Authenticating...
+                </>
+              ) : (
+                "Access Dashboard"
+              )}
+            </button>
+          </form>
 
-            <p className="gh-footer-note">Authorized admin access only</p>
-          </div>
-        </section>
+          <p className="footer-text">
+            © 2026 RateLimiter · Secure Admin Access
+          </p>
+        </div>
       </div>
     </div>
   );
