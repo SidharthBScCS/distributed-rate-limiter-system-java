@@ -54,7 +54,13 @@ function StatsCards({ stats, loading }) {
   ], [stats]);
 
   if (loading) {
-    return <div className="cards-skeleton" />;
+    return (
+      <div className="cards-skeleton">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    );
   }
 
   return (
@@ -68,12 +74,14 @@ function StatsCards({ stats, loading }) {
           <div 
             key={index} 
             className="stat-card"
-            style={{ animationDelay: `${index * 0.1}s` }}
+            style={{ animationDelay: `${index * 0.15}s` }}
           >
+            <div className="card-pattern" />
             <div className="card-shine" />
+            
             <div className="card-header">
               <div className="card-icon-wrapper" style={{ background: card.bgColor }}>
-                <Icon size={22} color={card.color} />
+                <Icon size={24} color={card.color} />
               </div>
             </div>
 
@@ -86,15 +94,15 @@ function StatsCards({ stats, loading }) {
             <div className="card-footer card-footer--compact">
               <div className={`trend-badge ${card.trend}`}>
                 {card.trend === "up" ? (
-                  <TrendingUp size={14} />
+                  <TrendingUp size={16} />
                 ) : (
-                  <TrendingDown size={14} />
+                  <TrendingDown size={16} />
                 )}
                 <span>{card.change}</span>
               </div>
             </div>
 
-            <div className="card-glow" style={{ background: card.color }} />
+            <div className="card-glow" />
           </div>
         );
       })}
