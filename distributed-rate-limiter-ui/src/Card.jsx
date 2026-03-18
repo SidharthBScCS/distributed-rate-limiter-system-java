@@ -28,8 +28,8 @@ function StatsCards({ stats, loading }) {
       icon: Activity,
       change: formatPercent(stats.totalPercent),
       trend: "up",
-      color: "#8B949E",
-      bgColor: "rgba(139, 148, 158, 0.16)"
+      color: "#4299e1",
+      bgColor: "rgba(66, 153, 225, 0.16)"
     },
     {
       title: "Allowed Requests",
@@ -38,8 +38,8 @@ function StatsCards({ stats, loading }) {
       icon: CheckCircle,
       change: formatPercent(stats.allowedPercent),
       trend: "up",
-      color: "#3FB950",
-      bgColor: "rgba(63, 185, 80, 0.14)"
+      color: "#48bb78",
+      bgColor: "rgba(72, 187, 120, 0.14)"
     },
     {
       title: "Blocked Requests",
@@ -48,8 +48,8 @@ function StatsCards({ stats, loading }) {
       icon: XCircle,
       change: formatPercent(stats.blockedPercent),
       trend: "down",
-      color: "#F85149",
-      bgColor: "rgba(248, 81, 73, 0.14)"
+      color: "#f56565",
+      bgColor: "rgba(245, 101, 101, 0.14)"
     }
   ], [stats]);
 
@@ -74,7 +74,10 @@ function StatsCards({ stats, loading }) {
           <div 
             key={index} 
             className="stat-card"
-            style={{ animationDelay: `${index * 0.15}s` }}
+            style={{ 
+              '--card-index': index,
+              animationDelay: `${index * 0.2}s`
+            }}
           >
             <div className="card-pattern" />
             <div className="card-shine" />
