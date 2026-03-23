@@ -308,29 +308,6 @@ function App() {
               ) : (
                 <div className="dashboard-page">
                   <div className="dashboard-content">
-                    <section className="dashboard-hero">
-                      <div className="dashboard-hero-copy">
-                        <p className="dashboard-eyebrow">Rate limiting overview</p>
-                        <h1>Distributed API control center</h1>
-                        <p className="dashboard-description">
-                          Monitor traffic, review live throttling behavior, and manage API keys from one clean workspace.
-                        </p>
-                      </div>
-                      <div className="dashboard-highlights">
-                        <div className="dashboard-highlight">
-                          <span>Active keys</span>
-                          <strong>{new Intl.NumberFormat().format(dashboardData.apiKeys?.length ?? 0)}</strong>
-                        </div>
-                        <div className="dashboard-highlight">
-                          <span>Default window</span>
-                          <strong>{uiConfig.defaults.windowSeconds}s</strong>
-                        </div>
-                        <div className="dashboard-highlight">
-                          <span>Algorithm</span>
-                          <strong>{uiConfig.defaults.algorithm}</strong>
-                        </div>
-                      </div>
-                    </section>
                     <StatsCards
                       stats={dashboardData.stats}
                       loading={dashboardLoading}

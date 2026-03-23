@@ -6,16 +6,29 @@
 
 .stat-card,
 .cards-skeleton > div {
-  border: 1px solid rgba(121, 145, 196, 0.18);
+  border: 1px solid rgba(69, 255, 211, 0.14);
   border-radius: 24px;
-  background: linear-gradient(180deg, rgba(14, 24, 42, 0.94), rgba(10, 18, 33, 0.92));
-  box-shadow: 0 18px 40px rgba(2, 8, 20, 0.26);
+  background:
+    linear-gradient(180deg, rgba(5, 14, 26, 0.96), rgba(4, 10, 20, 0.94));
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.34);
 }
 
 .stat-card {
   display: grid;
   gap: 18px;
   padding: 22px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 22px;
+  right: 22px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(69, 255, 211, 0.35), transparent);
 }
 
 .card-header {
@@ -31,25 +44,27 @@
   align-items: center;
   justify-content: center;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(121, 145, 196, 0.14);
+  background: rgba(69, 255, 211, 0.06);
+  border: 1px solid rgba(69, 255, 211, 0.14);
 }
 
 .card-title {
-  color: #9db0d1;
+  color: #78b4b4;
+  font-family: var(--font-mono);
   font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
 }
 
 .card-body {
   display: grid;
-  gap: 4px;
+  gap: 6px;
 }
 
 .card-value {
-  color: #f6f9ff;
+  color: #f2fffb;
+  font-family: var(--font-mono);
   font-size: clamp(2rem, 4vw, 3rem);
   line-height: 1;
   letter-spacing: -0.05em;
@@ -57,7 +72,7 @@
 }
 
 .card-caption {
-  color: #8da0c1;
+  color: #7ca6a6;
   font-size: 0.92rem;
 }
 
@@ -65,7 +80,7 @@
   display: flex;
   justify-content: flex-end;
   padding-top: 16px;
-  border-top: 1px solid rgba(121, 145, 196, 0.12);
+  border-top: 1px solid rgba(69, 255, 211, 0.08);
 }
 
 .trend-badge {
@@ -75,18 +90,20 @@
   min-height: 36px;
   padding: 0 14px;
   border-radius: 999px;
-  font-size: 0.84rem;
+  border: 1px solid rgba(69, 255, 211, 0.1);
+  background: rgba(69, 255, 211, 0.04);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.05);
-  color: #d8e5ff;
+  color: #d8fff5;
 }
 
 .trend-badge.up {
-  color: #63d994;
+  color: var(--accent-green);
 }
 
 .trend-badge.down {
-  color: #ff8b95;
+  color: var(--danger);
 }
 
 .cards-skeleton {

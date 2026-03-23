@@ -9,20 +9,21 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  border-right: 1px solid rgba(121, 145, 196, 0.14);
-  background: linear-gradient(180deg, rgba(7, 14, 27, 0.98), rgba(10, 20, 38, 0.96));
-  box-shadow: 22px 0 48px rgba(2, 8, 20, 0.22);
+  border-right: 1px solid rgba(69, 255, 211, 0.12);
+  background:
+    linear-gradient(180deg, rgba(2, 9, 18, 0.98), rgba(4, 13, 24, 0.98));
+  box-shadow: 22px 0 46px rgba(0, 0, 0, 0.28);
 }
 
 .sidebar-brand {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px 16px 18px;
+  padding: 16px;
   margin-bottom: 24px;
+  border: 1px solid rgba(69, 255, 211, 0.14);
   border-radius: 22px;
-  border: 1px solid rgba(121, 145, 196, 0.14);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(8, 20, 35, 0.82);
 }
 
 .brand-logo {
@@ -32,9 +33,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  background: linear-gradient(135deg, #6b9bff, #4bd0e0);
-  box-shadow: 0 14px 28px rgba(58, 118, 224, 0.24);
+  color: #061019;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  box-shadow: 0 0 28px rgba(69, 255, 211, 0.22);
 }
 
 .logo-icon {
@@ -43,19 +44,21 @@
 
 .brand-info h2 {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.48rem;
   line-height: 1;
   letter-spacing: -0.03em;
+  color: #f0fffb;
 }
 
 .brand-info span {
   display: block;
   margin-top: 6px;
-  color: #86dfcf;
-  font-size: 0.78rem;
+  color: #78beb4;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
 }
 
 .sidebar-nav {
@@ -69,7 +72,7 @@
 .nav-item {
   display: block;
   text-decoration: none;
-  color: #97aad0;
+  color: #8eb4b4;
   border: 1px solid transparent;
   border-radius: 18px;
   background: transparent;
@@ -89,8 +92,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(121, 145, 196, 0.12);
+  background: rgba(69, 255, 211, 0.04);
+  border: 1px solid rgba(69, 255, 211, 0.1);
 }
 
 .nav-label {
@@ -99,19 +102,21 @@
 }
 
 .nav-item.active {
-  color: #f5f8ff;
-  border-color: rgba(104, 161, 255, 0.34);
-  background: linear-gradient(90deg, rgba(104, 161, 255, 0.14), rgba(43, 212, 181, 0.07));
+  color: #f0fffb;
+  border-color: rgba(69, 255, 211, 0.24);
+  background: linear-gradient(90deg, rgba(69, 255, 211, 0.08), rgba(83, 183, 255, 0.04));
+  box-shadow: inset 0 0 0 1px rgba(69, 255, 211, 0.06);
 }
 
 .nav-item.active .nav-icon {
-  background: rgba(104, 161, 255, 0.12);
-  border-color: rgba(104, 161, 255, 0.24);
+  color: var(--accent-cyan);
+  background: rgba(69, 255, 211, 0.08);
+  border-color: rgba(69, 255, 211, 0.18);
 }
 
 .sidebar-footer {
   padding-top: 16px;
-  border-top: 1px solid rgba(121, 145, 196, 0.12);
+  border-top: 1px solid rgba(69, 255, 211, 0.1);
 }
 
 .logout-btn {
@@ -121,9 +126,9 @@
   gap: 12px;
   padding: 14px 16px;
   border-radius: 18px;
-  border: 1px solid rgba(241, 111, 125, 0.22);
-  background: rgba(241, 111, 125, 0.06);
-  color: #ff9da8;
+  border: 1px solid rgba(255, 111, 145, 0.2);
+  background: rgba(255, 111, 145, 0.05);
+  color: #ff9dae;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
@@ -137,7 +142,7 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(1, 5, 12, 0.74);
+  background: rgba(1, 6, 12, 0.76);
   backdrop-filter: blur(8px);
 }
 
@@ -146,10 +151,10 @@
   width: min(420px, 100%);
   padding: 28px 24px 24px;
   border-radius: 24px;
-  border: 1px solid rgba(121, 145, 196, 0.18);
-  background: linear-gradient(180deg, #f9fbff, #eef4ff);
-  color: #13213b;
-  box-shadow: 0 24px 60px rgba(5, 10, 20, 0.3);
+  border: 1px solid rgba(69, 255, 211, 0.14);
+  background: linear-gradient(180deg, #0a1626, #08111f);
+  color: #e8fff9;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.36);
 }
 
 .logout-modal-close {
@@ -158,10 +163,10 @@
   right: 14px;
   width: 36px;
   height: 36px;
-  border: 1px solid rgba(19, 33, 59, 0.1);
+  border: 1px solid rgba(69, 255, 211, 0.1);
   border-radius: 12px;
-  background: rgba(19, 33, 59, 0.04);
-  color: #243654;
+  background: rgba(69, 255, 211, 0.04);
+  color: var(--accent-cyan);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -177,7 +182,7 @@
 
 .logout-modal-card p {
   margin-bottom: 22px;
-  color: #52627f;
+  color: #8bb0b0;
   font-size: 1rem;
 }
 
@@ -198,13 +203,13 @@
 }
 
 .logout-cancel-btn {
-  border-color: rgba(19, 33, 59, 0.12);
-  background: #ffffff;
-  color: #2a3d5d;
+  border-color: rgba(69, 255, 211, 0.12);
+  background: rgba(69, 255, 211, 0.04);
+  color: #d7fff4;
 }
 
 .logout-confirm-btn {
-  background: #d93d54;
+  background: #d53f63;
   color: #ffffff;
 }
 
