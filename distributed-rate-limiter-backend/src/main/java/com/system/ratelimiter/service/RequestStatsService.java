@@ -3,6 +3,9 @@ package com.system.ratelimiter.service;
 import com.system.ratelimiter.entity.RequestStats;
 import com.system.ratelimiter.repository.RequestStatsRepository;
 import jakarta.annotation.PostConstruct;
+import java.util.concurrent.atomic.AtomicLong;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,9 +13,21 @@ import org.springframework.transaction.annotation.Transactional;
 public class RequestStatsService {
 
     private final RequestStatsRepository requestStatsRepository;
+    private final AtomicLong totalRequests = new AtomicLong();
+    private final AtomicLong allowedRequests = new AtomicLong();
+    private final AtomicLong blockedRequests = new AtomicLong();
+    private final AtomicLong pendingTotalDelta = new AtomicLong();
+    private final AtomicLong pendingAllowedDelta = new AtomicLong();
+    private final AtomicLong pendingBlockedDelta = new AtomicLong();
+    private final long flushIntervalMs;
+    private volatile Long statsId;
 
-    public RequestStatsService(RequestStatsRepository requestStatsRepository) {
+    public RequestStatsService(
+            RequestStatsRepository requestStatsRepository,
+            @Value("${ratelimiter.stats.flush-ms:5000}") long flushIntervalMs
+    ) {
         this.requestStatsRepository = requestStatsRepository;
+        this.flushIntervalMs = Math.max(1000L, flushIntervalMs);
     }
 
     public RequestStats getOrCreate() {
@@ -28,27 +43,62 @@ public class RequestStatsService {
     }
 
     public RequestStats incrementAllowed(long delta) {
-        RequestStats stats = normalize(getOrCreate());
-        stats.setTotalRequests(safe(stats.getTotalRequests()) + delta);
-        stats.setAllowedRequests(safe(stats.getAllowedRequests()) + delta);
-        return requestStatsRepository.save(stats);
+        long safeDelta = Math.max(0L, delta);
+        totalRequests.addAndGet(safeDelta);
+        allowedRequests.addAndGet(safeDelta);
+        pendingTotalDelta.addAndGet(safeDelta);
+        pendingAllowedDelta.addAndGet(safeDelta);
+        return snapshot();
     }
 
     public RequestStats incrementBlocked(long delta) {
-        RequestStats stats = normalize(getOrCreate());
-        stats.setTotalRequests(safe(stats.getTotalRequests()) + delta);
-        stats.setBlockedRequests(safe(stats.getBlockedRequests()) + delta);
-        return requestStatsRepository.save(stats);
+        long safeDelta = Math.max(0L, delta);
+        totalRequests.addAndGet(safeDelta);
+        blockedRequests.addAndGet(safeDelta);
+        pendingTotalDelta.addAndGet(safeDelta);
+        pendingBlockedDelta.addAndGet(safeDelta);
+        return snapshot();
     }
 
     @PostConstruct
     @Transactional
     public void syncOnStartup() {
-        getOrCreate();
+        RequestStats stats = normalize(getOrCreate());
+        statsId = stats.getId();
+        totalRequests.set(safe(stats.getTotalRequests()));
+        allowedRequests.set(safe(stats.getAllowedRequests()));
+        blockedRequests.set(safe(stats.getBlockedRequests()));
     }
 
     public RequestStats snapshot() {
-        return normalize(getOrCreate());
+        RequestStats snapshot = new RequestStats();
+        snapshot.setTotalRequests(totalRequests.get());
+        snapshot.setAllowedRequests(allowedRequests.get());
+        snapshot.setBlockedRequests(blockedRequests.get());
+        return snapshot;
+    }
+
+    @Scheduled(fixedDelayString = "${ratelimiter.stats.flush-ms:5000}")
+    @Transactional
+    public void flushPending() {
+        long totalDelta = pendingTotalDelta.getAndSet(0L);
+        long allowedDelta = pendingAllowedDelta.getAndSet(0L);
+        long blockedDelta = pendingBlockedDelta.getAndSet(0L);
+        if (totalDelta == 0L && allowedDelta == 0L && blockedDelta == 0L) {
+            return;
+        }
+
+        RequestStats stats = getOrCreate();
+        if (statsId == null) {
+            statsId = stats.getId();
+        }
+
+        int updated = requestStatsRepository.incrementCounters(statsId, totalDelta, allowedDelta, blockedDelta);
+        if (updated == 0) {
+            RequestStats current = normalize(getOrCreate());
+            statsId = current.getId();
+            requestStatsRepository.incrementCounters(statsId, totalDelta, allowedDelta, blockedDelta);
+        }
     }
 
     private RequestStats normalize(RequestStats stats) {

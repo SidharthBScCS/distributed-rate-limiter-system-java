@@ -2,10 +2,17 @@ package com.system.ratelimiter.service;
 
 import com.system.ratelimiter.entity.ApiKey;
 import com.system.ratelimiter.repository.ApiKeyRepository;
+import jakarta.annotation.PostConstruct;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ApiKeyService {
@@ -13,15 +20,25 @@ public class ApiKeyService {
     private final ApiKeyRepository apiKeyRepository;
     private final String defaultAlgorithm;
     private final long blockThreshold;
+    private final long cacheRefreshMs;
+    private final ConcurrentHashMap<String, ApiKey> apiKeyCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ApiKeyDelta> pendingCounterDeltas = new ConcurrentHashMap<>();
 
     public ApiKeyService(
             ApiKeyRepository apiKeyRepository,
             @Value("${ratelimiter.default-algorithm:SLIDING_WINDOW}") String defaultAlgorithm,
-            @Value("${ratelimiter.block-threshold:10}") long blockThreshold
+            @Value("${ratelimiter.block-threshold:10}") long blockThreshold,
+            @Value("${ratelimiter.api-key-cache-refresh-ms:30000}") long cacheRefreshMs
     ) {
         this.apiKeyRepository = apiKeyRepository;
         this.defaultAlgorithm = normalizeOrDefault(defaultAlgorithm, "SLIDING_WINDOW");
         this.blockThreshold = Math.max(0L, blockThreshold);
+        this.cacheRefreshMs = Math.max(5000L, cacheRefreshMs);
+    }
+
+    @PostConstruct
+    public void warmCache() {
+        refreshCache();
     }
 
     public ApiKey createApiKey(String userName, Integer rateLimit, Integer windowSeconds) {
@@ -42,7 +59,9 @@ public class ApiKeyService {
         apiKey.setAllowedRequests(0L);
         apiKey.setBlockedRequests(0L);
 
-        return apiKeyRepository.save(apiKey);
+        ApiKey saved = apiKeyRepository.save(apiKey);
+        apiKeyCache.put(saved.getApiKey(), copyAndNormalize(saved));
+        return saved;
     }
 
     public java.util.List<ApiKey> getAll() {
@@ -55,6 +74,78 @@ public class ApiKeyService {
         return getAll().stream()
                 .filter(this::isRealKey)
                 .toList();
+    }
+
+    public ApiKey getCachedByValue(String apiKeyValue) {
+        if (apiKeyValue == null || apiKeyValue.isBlank()) {
+            return null;
+        }
+        ApiKey cached = apiKeyCache.get(apiKeyValue.trim());
+        if (cached != null) {
+            return copyAndNormalize(cached);
+        }
+        return apiKeyRepository.findByApiKey(apiKeyValue.trim())
+                .map(this::copyAndNormalize)
+                .map(apiKey -> {
+                    apiKeyCache.put(apiKey.getApiKey(), apiKey);
+                    return copyAndNormalize(apiKey);
+                })
+                .orElse(null);
+    }
+
+    public void recordDecision(String apiKeyValue, boolean allowed) {
+        if (apiKeyValue == null || apiKeyValue.isBlank()) {
+            return;
+        }
+        ApiKeyDelta delta = pendingCounterDeltas.computeIfAbsent(apiKeyValue.trim(), ignored -> new ApiKeyDelta());
+        delta.total.incrementAndGet();
+        if (allowed) {
+            delta.allowed.incrementAndGet();
+            delta.status.set("Normal");
+        } else {
+            delta.blocked.incrementAndGet();
+            delta.status.set("Blocked");
+        }
+    }
+
+    @Scheduled(fixedDelayString = "${ratelimiter.api-key-cache-refresh-ms:30000}")
+    public void refreshCache() {
+        Map<String, ApiKey> latest = new ConcurrentHashMap<>();
+        for (ApiKey apiKey : apiKeyRepository.findAll()) {
+            ApiKey normalized = copyAndNormalize(apiKey);
+            latest.put(normalized.getApiKey(), normalized);
+        }
+        apiKeyCache.clear();
+        apiKeyCache.putAll(latest);
+    }
+
+    @Scheduled(fixedDelayString = "${ratelimiter.stats.flush-ms:5000}")
+    @Transactional
+    public void flushPendingCounters() {
+        if (pendingCounterDeltas.isEmpty()) {
+            return;
+        }
+
+        for (Map.Entry<String, ApiKeyDelta> entry : pendingCounterDeltas.entrySet()) {
+            String apiKeyValue = entry.getKey();
+            ApiKeyDelta delta = entry.getValue();
+            long totalDelta = delta.total.getAndSet(0L);
+            long allowedDelta = delta.allowed.getAndSet(0L);
+            long blockedDelta = delta.blocked.getAndSet(0L);
+            String status = delta.status.get();
+
+            if (totalDelta == 0L && allowedDelta == 0L && blockedDelta == 0L) {
+                pendingCounterDeltas.remove(apiKeyValue, delta);
+                continue;
+            }
+
+            apiKeyRepository.incrementCountersAndStatus(apiKeyValue, totalDelta, allowedDelta, blockedDelta, status);
+            apiKeyCache.computeIfPresent(apiKeyValue, (ignored, current) -> applyDelta(current, totalDelta, allowedDelta, blockedDelta, status));
+
+            if (delta.total.get() == 0L && delta.allowed.get() == 0L && delta.blocked.get() == 0L) {
+                pendingCounterDeltas.remove(apiKeyValue, delta);
+            }
+        }
     }
 
     public java.util.List<java.util.Map<String, Object>> getApiKeyStats() {
@@ -82,6 +173,17 @@ public class ApiKeyService {
                 || user.startsWith("sample")
                 || key.startsWith("demo")
                 || key.startsWith("sample"));
+    }
+
+    private ApiKey applyDelta(ApiKey source, long totalDelta, long allowedDelta, long blockedDelta, String status) {
+        ApiKey updated = copyAndNormalize(source);
+        updated.setTotalRequests((updated.getTotalRequests() == null ? 0L : updated.getTotalRequests()) + totalDelta);
+        updated.setAllowedRequests((updated.getAllowedRequests() == null ? 0L : updated.getAllowedRequests()) + allowedDelta);
+        updated.setBlockedRequests((updated.getBlockedRequests() == null ? 0L : updated.getBlockedRequests()) + blockedDelta);
+        if (status != null && !status.isBlank()) {
+            updated.setStatus(status);
+        }
+        return updated;
     }
 
     private String normalizeOrDefault(String algorithm, String fallback) {
@@ -132,5 +234,12 @@ public class ApiKeyService {
         copy.setBlockedRequests(blocked);
         copy.setStatus(total > blockThreshold ? "Blocked" : "Normal");
         return copy;
+    }
+
+    private static final class ApiKeyDelta {
+        private final AtomicLong total = new AtomicLong();
+        private final AtomicLong allowed = new AtomicLong();
+        private final AtomicLong blocked = new AtomicLong();
+        private final AtomicReference<String> status = new AtomicReference<>("Normal");
     }
 }
