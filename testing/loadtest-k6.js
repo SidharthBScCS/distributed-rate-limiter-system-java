@@ -18,6 +18,8 @@ const STAGE_2_DURATION = __ENV.STAGE_2_DURATION || "1m";
 const STAGE_3_DURATION = __ENV.STAGE_3_DURATION || "1m";
 const STAGE_4_DURATION = __ENV.STAGE_4_DURATION || "1m";
 const STAGE_5_DURATION = __ENV.STAGE_5_DURATION || "30s";
+const API_KEY_STRATEGY = (__ENV.API_KEY_STRATEGY || "per-vu").toLowerCase();
+const RANDOM_SEED = Number(__ENV.RANDOM_SEED || "17");
 
 function parseApiKeys(raw) {
   return raw
@@ -80,25 +82,35 @@ function login() {
     return null;
   }
 
-  return response.cookies;
+  return Object.fromEntries(
+    Object.entries(response.cookies).map(([name, values]) => [name, values?.[0]?.value ?? ""])
+  );
+}
+
+function selectApiKey() {
+  if (API_KEY_STRATEGY === "random") {
+    const index = Math.floor((Math.random() + ((__VU + __ITER + RANDOM_SEED) % 13) / 13) * API_KEYS.length) % API_KEYS.length;
+    return API_KEYS[index];
+  }
+  return API_KEYS[(__VU - 1) % API_KEYS.length];
 }
 
 export function setup() {
+  const cookies = login();
+  if (!cookies) {
+    throw new Error("Setup login failed. Check backend status and admin credentials.");
+  }
+
   return {
     keyCount: API_KEYS.length,
     route: ROUTE,
     tokens: TOKENS,
+    cookies,
   };
 }
 
 export default function (data) {
-  const apiKey = API_KEYS[(__VU - 1) % API_KEYS.length];
-  const cookies = login();
-
-  if (!cookies) {
-    limiterSuccessRate.add(false);
-    return;
-  }
+  const apiKey = selectApiKey();
 
   const payload = JSON.stringify({
     apiKey,
@@ -108,10 +120,10 @@ export default function (data) {
 
   const response = http.post(`${BASE}/api/limit/check`, payload, {
     headers: { "Content-Type": "application/json" },
-    cookies,
+    cookies: data.cookies,
     tags: {
       name: "limit_check",
-      api_key_slot: String((__VU - 1) % API_KEYS.length),
+      api_key_slot: String(API_KEYS.indexOf(apiKey)),
       route: data.route,
     },
   });
