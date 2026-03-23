@@ -248,7 +248,7 @@
 
 .table-row {
   animation: rowFadeIn 0.5s ease-out forwards;
-  opacity: 0;
+  opacity: 1;
   transform-origin: top;
 }
 

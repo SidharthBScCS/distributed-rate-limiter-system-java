@@ -2,3 +2,11 @@
 * {
   box-sizing: border-box;
 }
+
+*,
+*::before,
+*::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}

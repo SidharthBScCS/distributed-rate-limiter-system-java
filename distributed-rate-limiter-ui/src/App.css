@@ -57,12 +57,17 @@ body {
   padding: 1.2rem 1.6rem;
   background: transparent;
   transition: margin 0.3s ease;
+  height: 100vh;
   min-height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .right-content.full-width {
   margin-left: 0;
+  height: auto;
   padding: 0;
+  overflow-y: visible;
 }
 
 .right-content.analytics-layout {
@@ -213,6 +218,7 @@ body {
 @media (max-width: 1024px) {
   .right-content {
     margin-left: 0;
+    height: 100dvh;
     padding: 4.5rem 1rem 1rem;
   }
 
