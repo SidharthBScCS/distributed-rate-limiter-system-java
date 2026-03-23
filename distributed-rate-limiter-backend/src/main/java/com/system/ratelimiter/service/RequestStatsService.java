@@ -4,7 +4,6 @@ import com.system.ratelimiter.entity.RequestStats;
 import com.system.ratelimiter.repository.RequestStatsRepository;
 import jakarta.annotation.PostConstruct;
 import java.util.concurrent.atomic.AtomicLong;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,15 +18,10 @@ public class RequestStatsService {
     private final AtomicLong pendingTotalDelta = new AtomicLong();
     private final AtomicLong pendingAllowedDelta = new AtomicLong();
     private final AtomicLong pendingBlockedDelta = new AtomicLong();
-    private final long flushIntervalMs;
     private volatile Long statsId;
 
-    public RequestStatsService(
-            RequestStatsRepository requestStatsRepository,
-            @Value("${ratelimiter.stats.flush-ms:5000}") long flushIntervalMs
-    ) {
+    public RequestStatsService(RequestStatsRepository requestStatsRepository) {
         this.requestStatsRepository = requestStatsRepository;
-        this.flushIntervalMs = Math.max(1000L, flushIntervalMs);
     }
 
     public RequestStats getOrCreate() {

@@ -20,20 +20,17 @@ public class ApiKeyService {
     private final ApiKeyRepository apiKeyRepository;
     private final String defaultAlgorithm;
     private final long blockThreshold;
-    private final long cacheRefreshMs;
     private final ConcurrentHashMap<String, ApiKey> apiKeyCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, ApiKeyDelta> pendingCounterDeltas = new ConcurrentHashMap<>();
 
     public ApiKeyService(
             ApiKeyRepository apiKeyRepository,
             @Value("${ratelimiter.default-algorithm:SLIDING_WINDOW}") String defaultAlgorithm,
-            @Value("${ratelimiter.block-threshold:10}") long blockThreshold,
-            @Value("${ratelimiter.api-key-cache-refresh-ms:30000}") long cacheRefreshMs
+            @Value("${ratelimiter.block-threshold:10}") long blockThreshold
     ) {
         this.apiKeyRepository = apiKeyRepository;
         this.defaultAlgorithm = normalizeOrDefault(defaultAlgorithm, "SLIDING_WINDOW");
         this.blockThreshold = Math.max(0L, blockThreshold);
-        this.cacheRefreshMs = Math.max(5000L, cacheRefreshMs);
     }
 
     @PostConstruct

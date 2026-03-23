@@ -15,22 +15,25 @@ public class DecisionAuditService {
     private final ObjectMapper objectMapper;
     private final String auditKey;
     private final long maxEntries;
+    private final boolean enabled;
 
     public DecisionAuditService(
             StringRedisTemplate redisTemplate,
             ObjectMapper objectMapper,
             @Value("${ratelimiter.redis-prefix:ratelimiter}") String redisPrefix,
-            @Value("${ratelimiter.audit.max-entries:200}") long maxEntries
+            @Value("${ratelimiter.audit.max-entries:200}") long maxEntries,
+            @Value("${ratelimiter.audit.enabled:true}") boolean enabled
     ) {
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
         String prefix = redisPrefix == null || redisPrefix.isBlank() ? "ratelimiter" : redisPrefix.trim();
         this.auditKey = prefix + ":audit:recent";
         this.maxEntries = Math.max(20L, maxEntries);
+        this.enabled = enabled;
     }
 
     public void record(DecisionAuditEntry entry) {
-        if (entry == null) {
+        if (!enabled || entry == null) {
             return;
         }
         try {

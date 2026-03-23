@@ -2,7 +2,6 @@ package com.system.ratelimiter.service;
 
 import com.system.ratelimiter.dto.DecisionAuditEntry;
 import com.system.ratelimiter.entity.ApiKey;
-import com.system.ratelimiter.repository.ApiKeyRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.time.Instant;
@@ -21,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class DistributedRateLimiterService {
 
     private static final String SLIDING_WINDOW = "SLIDING_WINDOW";
+    private static final String STATUS_NORMAL = "Normal";
+    private static final String STATUS_BLOCKED = "Blocked";
 
     private static final String SLIDING_WINDOW_SCRIPT = """
             local now = tonumber(ARGV[1])
@@ -51,7 +52,7 @@ public class DistributedRateLimiterService {
             """;
 
     private final StringRedisTemplate redisTemplate;
-    private final ApiKeyRepository apiKeyRepository;
+    private final ApiKeyService apiKeyService;
     private final RequestStatsService requestStatsService;
     private final DecisionAuditService decisionAuditService;
     private final MeterRegistry meterRegistry;
@@ -60,14 +61,14 @@ public class DistributedRateLimiterService {
 
     public DistributedRateLimiterService(
             StringRedisTemplate redisTemplate,
-            ApiKeyRepository apiKeyRepository,
+            ApiKeyService apiKeyService,
             RequestStatsService requestStatsService,
             DecisionAuditService decisionAuditService,
             MeterRegistry meterRegistry,
             @Value("${ratelimiter.redis-prefix:ratelimiter}") String redisPrefix
     ) {
         this.redisTemplate = redisTemplate;
-        this.apiKeyRepository = apiKeyRepository;
+        this.apiKeyService = apiKeyService;
         this.requestStatsService = requestStatsService;
         this.decisionAuditService = decisionAuditService;
         this.meterRegistry = meterRegistry;
@@ -85,12 +86,13 @@ public class DistributedRateLimiterService {
             throw new IllegalArgumentException("apiKey is required");
         }
 
-        ApiKey apiKey = apiKeyRepository.findByApiKey(apiKeyValue)
-                .orElseThrow(() -> new IllegalArgumentException("API key not found"));
+        ApiKey apiKey = apiKeyService.getCachedByValue(apiKeyValue);
+        if (apiKey == null) {
+            throw new IllegalArgumentException("API key not found");
+        }
 
         int cost = Math.max(1, tokens);
         String routeKey = normalizeRoute(route);
-        apiKey.setAlgorithm(SLIDING_WINDOW);
 
         Decision decision;
         try {
@@ -176,24 +178,12 @@ public class DistributedRateLimiterService {
     }
 
     private void updateStats(ApiKey apiKey, boolean allowed) {
-        long total = apiKey.getTotalRequests() == null ? 0L : apiKey.getTotalRequests();
-        long allowedCount = apiKey.getAllowedRequests() == null ? 0L : apiKey.getAllowedRequests();
-        long blockedCount = apiKey.getBlockedRequests() == null ? 0L : apiKey.getBlockedRequests();
-        apiKey.setTotalRequests(total + 1L);
-        if (allowed) {
-            apiKey.setAllowedRequests(allowedCount + 1L);
-        } else {
-            apiKey.setBlockedRequests(blockedCount + 1L);
-        }
-
         if (allowed) {
             clearBlockMarker(apiKey.getApiKey());
-            apiKey.setStatus("Normal");
         } else {
             setBlockMarker(apiKey.getApiKey(), apiKey.getWindowSeconds());
-            apiKey.setStatus("Blocked");
         }
-        apiKeyRepository.save(apiKey);
+        apiKeyService.recordDecision(apiKey.getApiKey(), allowed);
 
         if (allowed) {
             requestStatsService.incrementAllowed(1L);
@@ -204,9 +194,9 @@ public class DistributedRateLimiterService {
 
     public String resolveCurrentStatus(ApiKey apiKey) {
         if (apiKey == null || apiKey.getApiKey() == null || apiKey.getApiKey().isBlank()) {
-            return "Normal";
+            return STATUS_NORMAL;
         }
-        return hasActiveBlockMarker(apiKey.getApiKey()) ? "Blocked" : "Normal";
+        return hasActiveBlockMarker(apiKey.getApiKey()) ? STATUS_BLOCKED : STATUS_NORMAL;
     }
 
     public long resolveCurrentWindowRequestCount(ApiKey apiKey) {
