@@ -14,8 +14,13 @@ function App() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [uiConfig, setUiConfig] = useState(null);
   const [configError, setConfigError] = useState("");
-  const [dashboardData, setDashboardData] = useState({ stats: {}, apiKeys: [] });
+  const [dashboardData, setDashboardData] = useState({
+    stats: {},
+    apiKeys: [],
+    pagination: { page: 1, size: 10, totalItems: 0, totalPages: 1, filtered: false, search: "" },
+  });
   const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [tableQuery, setTableQuery] = useState({ search: "", page: 1, size: 10 });
   const [toasts, setToasts] = useState([]);
   const seenDecisionKeysRef = useRef(new Set());
   const initializedDecisionFeedRef = useRef(false);
@@ -25,7 +30,7 @@ function App() {
   const isFullWidthPage = location.pathname === "/login";
   const showSidebar = !isFullWidthPage;
 
-  const loadDashboardData = async (force = false) => {
+  const loadDashboardData = async (force = false, queryOverride = null) => {
     if (isFullWidthPage) {
       return false;
     }
@@ -39,7 +44,16 @@ function App() {
     }
     dashboardRequestInFlightRef.current = true;
     try {
-      const response = await fetch(apiUrl("/api/view/dashboard"), {
+      const query = queryOverride ?? tableQuery;
+      const params = new URLSearchParams({
+        page: String(query.page ?? 1),
+        size: String(query.size ?? 10),
+      });
+      if (query.search?.trim()) {
+        params.set("search", query.search.trim());
+      }
+
+      const response = await fetch(apiUrl(`/api/view/dashboard?${params.toString()}`), {
         credentials: "include",
       });
       if (!response.ok) {
@@ -53,6 +67,7 @@ function App() {
       setDashboardData({
         stats: data?.stats ?? {},
         apiKeys: data?.apiKeys ?? [],
+        pagination: data?.pagination ?? { page: 1, size: 10, totalItems: 0, totalPages: 1, filtered: false, search: "" },
       });
       lastDashboardLoadAtRef.current = Date.now();
       return true;
@@ -114,7 +129,7 @@ function App() {
     }
     loadDashboardData(true);
     return undefined;
-  }, [isFullWidthPage, uiConfig]);
+  }, [isFullWidthPage, uiConfig, tableQuery]);
 
   // Refresh data periodically
   useEffect(() => {
@@ -317,6 +332,8 @@ function App() {
                       loading={dashboardLoading}
                       defaults={uiConfig.defaults}
                       onDashboardRefresh={loadDashboardData}
+                      tableQuery={tableQuery}
+                      onTableQueryChange={setTableQuery}
                     />
                   </div>
                 </div>

@@ -2,11 +2,15 @@ package com.system.ratelimiter.controller;
 
 import com.system.ratelimiter.dto.RateLimitCheckRequest;
 import com.system.ratelimiter.dto.RateLimitDecisionResponse;
+import com.system.ratelimiter.entity.ApiKey;
+import com.system.ratelimiter.entity.RequestStats;
 import com.system.ratelimiter.service.ApiKeyService;
 import com.system.ratelimiter.service.DecisionAuditService;
 import com.system.ratelimiter.service.DistributedRateLimiterService;
 import com.system.ratelimiter.service.RequestStatsService;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -109,5 +114,54 @@ class ApiKeyControllerTest {
         assertEquals(true, response.getBody().allowed());
         assertEquals("ALLOWED", response.getBody().reason());
         assertEquals(6L, response.getBody().remainingRequests());
+    }
+
+    @Test
+    void getDashboardView_appliesSearchAndPaginationOnBackend() {
+        ApiKey alpha = new ApiKey();
+        alpha.setId(1L);
+        alpha.setApiKey("key-alpha");
+        alpha.setUserName("Alpha");
+        alpha.setRateLimit(10);
+        alpha.setWindowSeconds(60);
+        alpha.setAlgorithm("SLIDING_WINDOW");
+
+        ApiKey beta = new ApiKey();
+        beta.setId(2L);
+        beta.setApiKey("key-beta");
+        beta.setUserName("Beta");
+        beta.setRateLimit(20);
+        beta.setWindowSeconds(60);
+        beta.setAlgorithm("SLIDING_WINDOW");
+
+        RequestStats stats = new RequestStats();
+        stats.setTotalRequests(15L);
+        stats.setAllowedRequests(12L);
+        stats.setBlockedRequests(3L);
+
+        when(requestStatsService.snapshot()).thenReturn(stats);
+        when(apiKeyService.getAllRealKeys()).thenReturn(List.of(alpha, beta));
+        when(distributedRateLimiterService.resolveCurrentWindowRequestCount(alpha)).thenReturn(4L);
+        when(distributedRateLimiterService.resolveCurrentWindowRequestCount(beta)).thenReturn(8L);
+        when(distributedRateLimiterService.resolveCurrentStatus(alpha)).thenReturn("Normal");
+        when(distributedRateLimiterService.resolveCurrentStatus(beta)).thenReturn("Blocked");
+
+        ResponseEntity<Map<String, Object>> response = controller.getDashboardView("beta", 1, 1);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+
+        List<?> apiKeys = (List<?>) response.getBody().get("apiKeys");
+        assertEquals(1, apiKeys.size());
+        assertTrue(apiKeys.get(0) instanceof Map);
+        Map<?, ?> row = (Map<?, ?>) apiKeys.get(0);
+        assertEquals("Beta", row.get("userName"));
+
+        assertTrue(response.getBody().get("pagination") instanceof Map);
+        Map<?, ?> pagination = (Map<?, ?>) response.getBody().get("pagination");
+        assertEquals(1, pagination.get("page"));
+        assertEquals(1, pagination.get("size"));
+        assertEquals(1, pagination.get("totalItems"));
+        assertEquals("beta", pagination.get("search"));
     }
 }

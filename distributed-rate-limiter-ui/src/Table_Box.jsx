@@ -3,12 +3,9 @@ import { Plus, Copy, Search } from "lucide-react";
 import { apiUrl } from "./apiBase";
 import "./Table_Box.css";
 
-function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh }) {
+function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQuery, onTableQueryChange }) {
   const defaultRateLimit = defaults.rateLimit;
   const defaultWindowSeconds = defaults.windowSeconds;
-  const rowsPerPage = 10;
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [formState, setFormState] = useState({
     userName: "",
@@ -24,19 +21,17 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh }) {
     userName: "",
   });
 
-  const keys = [...(dashboardData?.apiKeys ?? [])].sort((left, right) => {
-    const usageDiff = Number(right.usagePercentage ?? 0) - Number(left.usagePercentage ?? 0);
-    if (usageDiff !== 0) {
-      return usageDiff;
-    }
-
-    const requestDiff = Number(right.requestCount ?? 0) - Number(left.requestCount ?? 0);
-    if (requestDiff !== 0) {
-      return requestDiff;
-    }
-
-    return String(left.userName ?? "").localeCompare(String(right.userName ?? ""));
-  });
+  const keys = dashboardData?.apiKeys ?? [];
+  const pagination = dashboardData?.pagination ?? {
+    page: 1,
+    size: 10,
+    totalItems: 0,
+    totalPages: 1,
+    filtered: false,
+    search: "",
+  };
+  const searchTerm = tableQuery?.search ?? "";
+  const currentPage = pagination.page ?? 1;
 
   const formatUsage = (value) => {
     const numericValue = Number(value ?? 0);
@@ -49,6 +44,19 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh }) {
     const rounded = numericValue >= 10 ? numericValue.toFixed(1) : numericValue.toFixed(2);
     return `${rounded.replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1")}%`;
   };
+
+  useEffect(() => {
+    const nextSearch = pagination.search ?? "";
+    const nextPage = pagination.page ?? 1;
+    const nextSize = pagination.size ?? tableQuery?.size ?? 10;
+    if (
+      nextSearch !== (tableQuery?.search ?? "")
+      || nextPage !== (tableQuery?.page ?? 1)
+      || nextSize !== (tableQuery?.size ?? 10)
+    ) {
+      onTableQueryChange({ search: nextSearch, page: nextPage, size: nextSize });
+    }
+  }, [onTableQueryChange, pagination.page, pagination.search, pagination.size, tableQuery?.page, tableQuery?.search, tableQuery?.size]);
 
   useEffect(() => {
     if (!isCreateModalOpen) {
@@ -117,32 +125,12 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh }) {
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-  const filteredKeys = keys.filter((key) => {
-    if (!normalizedSearch) {
-      return true;
-    }
-    return [
-      key.apiKey,
-      key.userName,
-      key.status,
-      key.algorithm,
-      String(key.rateLimit),
-      String(key.windowSeconds),
-    ]
-      .filter(Boolean)
-      .some((value) => String(value).toLowerCase().includes(normalizedSearch));
-  });
-
-  useEffect(() => {
-    const totalPages = Math.max(1, Math.ceil(filteredKeys.length / rowsPerPage));
-    setCurrentPage((page) => Math.min(page, totalPages));
-  }, [filteredKeys.length]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredKeys.length / rowsPerPage));
+  const totalPages = Math.max(1, pagination.totalPages ?? 1);
+  const totalItems = pagination.totalItems ?? keys.length;
+  const pageSize = pagination.size ?? tableQuery?.size ?? 10;
   const safeCurrentPage = Math.min(currentPage, totalPages);
-  const startIndex = (safeCurrentPage - 1) * rowsPerPage;
-  const visibleKeys = filteredKeys.slice(startIndex, startIndex + rowsPerPage);
+  const startIndex = totalItems === 0 ? 0 : ((safeCurrentPage - 1) * pageSize) + 1;
+  const endIndex = Math.min(safeCurrentPage * pageSize, totalItems);
 
   if (loading) {
     return <div className="table-skeleton" />;
@@ -177,7 +165,7 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh }) {
       const created = await response.json();
 
       if (typeof onDashboardRefresh === "function") {
-        await onDashboardRefresh();
+        await onDashboardRefresh(true);
       }
       setIsCreateModalOpen(false);
       setSuccessModal({
@@ -211,7 +199,11 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh }) {
           <input
             type="text"
             value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
+            onChange={(event) => onTableQueryChange({
+              ...(tableQuery ?? { size: 10 }),
+              search: event.target.value,
+              page: 1,
+            })}
             placeholder="Search by API key, user, status, limit, or window"
           />
         </label>
@@ -231,12 +223,12 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh }) {
             </tr>
           </thead>
           <tbody>
-            {filteredKeys.length === 0 ? (
+            {keys.length === 0 ? (
               <tr>
                 <td colSpan="7" className="empty-state">
                   <div className="empty-content">
-                    <h3>{keys.length === 0 ? "NO API KEY FOUND" : "NO MATCHING API KEY"}</h3>
-                    {keys.length === 0 ? (
+                    <h3>{totalItems === 0 && !searchTerm.trim() ? "NO API KEY FOUND" : "NO MATCHING API KEY"}</h3>
+                    {totalItems === 0 && !searchTerm.trim() ? (
                       <button className="empty-action-btn" onClick={openCreateModal}>
                         <Plus size={16} />
                         Create First API Key
@@ -246,7 +238,7 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh }) {
                 </td>
               </tr>
             ) : (
-              visibleKeys.map((key) => {
+              keys.map((key) => {
                 const statusColor = key.statusColor;
                 const usage = key.usagePercentage;
                 const usageColor = key.usageColor;
@@ -319,19 +311,25 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh }) {
           <button
             type="button"
             className="pagination-btn"
-            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            onClick={() => onTableQueryChange({
+              ...(tableQuery ?? { search: "", size: pageSize }),
+              page: Math.max(1, safeCurrentPage - 1),
+            })}
             disabled={safeCurrentPage === 1}
           >
             Previous
           </button>
           <span className="pagination-status">
-            Showing {filteredKeys.length === 0 ? 0 : startIndex + 1}-{Math.min(startIndex + rowsPerPage, filteredKeys.length)} of {filteredKeys.length}
-            {searchTerm.trim() ? ` (filtered from ${keys.length})` : ""}
+            Showing {totalItems === 0 ? 0 : startIndex}-{endIndex} of {totalItems}
+            {searchTerm.trim() ? " (filtered)" : ""}
           </span>
           <button
             type="button"
             className="pagination-btn"
-            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            onClick={() => onTableQueryChange({
+              ...(tableQuery ?? { search: "", size: pageSize }),
+              page: Math.min(totalPages, safeCurrentPage + 1),
+            })}
             disabled={safeCurrentPage === totalPages}
           >
             Next
