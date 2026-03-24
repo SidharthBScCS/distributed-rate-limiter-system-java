@@ -3,6 +3,8 @@ package com.system.ratelimiter.service;
 import com.system.ratelimiter.dto.DecisionAuditEntry;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ public class DecisionAuditService {
     private final String auditKey;
     private final long maxEntries;
     private final boolean enabled;
+    private final CopyOnWriteArrayList<Consumer<DecisionAuditEntry>> blockedDecisionListeners = new CopyOnWriteArrayList<>();
 
     public DecisionAuditService(
             StringRedisTemplate redisTemplate,
@@ -40,8 +43,15 @@ public class DecisionAuditService {
             String payload = objectMapper.writeValueAsString(entry);
             redisTemplate.opsForList().leftPush(auditKey, payload);
             redisTemplate.opsForList().trim(auditKey, 0, maxEntries - 1);
+            notifyBlockedDecision(entry);
         } catch (Exception ignored) {
             // Audit logging is best-effort and must not impact limiter decisions.
+        }
+    }
+
+    public void registerBlockedDecisionListener(Consumer<DecisionAuditEntry> listener) {
+        if (listener != null) {
+            blockedDecisionListeners.add(listener);
         }
     }
 
@@ -68,5 +78,18 @@ public class DecisionAuditService {
             }
         }
         return entries;
+    }
+
+    private void notifyBlockedDecision(DecisionAuditEntry entry) {
+        if (entry.allowed()) {
+            return;
+        }
+        for (Consumer<DecisionAuditEntry> listener : blockedDecisionListeners) {
+            try {
+                listener.accept(entry);
+            } catch (Exception ignored) {
+                // Ignore listener failures; audit storage has already completed.
+            }
+        }
     }
 }

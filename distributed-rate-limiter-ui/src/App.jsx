@@ -22,8 +22,6 @@ function App() {
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [tableQuery, setTableQuery] = useState({ search: "", page: 1, size: 10 });
   const [toasts, setToasts] = useState([]);
-  const seenDecisionKeysRef = useRef(new Set());
-  const initializedDecisionFeedRef = useRef(false);
   const dashboardRequestInFlightRef = useRef(false);
   const lastDashboardLoadAtRef = useRef(0);
   const isAnalyticsPage = location.pathname === "/analytics";
@@ -142,52 +140,44 @@ function App() {
     const onTick = () => {
       loadDashboardData();
     };
+    const onAlert = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (!payload?.id) {
+          return;
+        }
+        setToasts((current) => {
+          if (current.some((toast) => toast.id === payload.id)) {
+            return current;
+          }
+          const next = [
+            ...current,
+            {
+              id: payload.id,
+              title: payload.title ?? "Too many requests (429)",
+              message: payload.message ?? "Rate limit exceeded.",
+            },
+          ];
+          return next.slice(-4);
+        });
+        window.setTimeout(() => {
+          setToasts((current) => current.filter((toast) => toast.id !== payload.id));
+        }, 4000);
+      } catch {
+        // Ignore malformed event payloads.
+      }
+    };
 
     source.addEventListener("tick", onTick);
+    source.addEventListener("alert", onAlert);
     source.onerror = () => {
       source.close();
     };
 
     return () => {
       source.removeEventListener("tick", onTick);
+      source.removeEventListener("alert", onAlert);
       source.close();
-    };
-  }, [isFullWidthPage, uiConfig]);
-
-  useEffect(() => {
-    if (isFullWidthPage || !uiConfig) {
-      return undefined;
-    }
-
-    const intervalMs = Math.max(500, Number(uiConfig.refreshIntervalMs) || 1000);
-    const intervalId = window.setInterval(() => {
-      loadDashboardData();
-    }, intervalMs);
-
-    return () => window.clearInterval(intervalId);
-  }, [isFullWidthPage, uiConfig]);
-
-  useEffect(() => {
-    if (isFullWidthPage || !uiConfig) {
-      return undefined;
-    }
-
-    const handleWindowFocus = () => {
-      loadDashboardData(true);
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        loadDashboardData(true);
-      }
-    };
-
-    window.addEventListener("focus", handleWindowFocus);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener("focus", handleWindowFocus);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [isFullWidthPage, uiConfig]);
 
@@ -197,80 +187,6 @@ function App() {
     }, 0);
     return () => window.clearTimeout(timeoutId);
   }, [location.pathname]);
-
-  useEffect(() => {
-    if (isFullWidthPage || !uiConfig) {
-      return undefined;
-    }
-
-    let cancelled = false;
-
-    const pushToast = (entry) => {
-      const toastId = `${entry.apiKey}-${entry.evaluatedAt}`;
-      const shortKey = String(entry.apiKey ?? "").slice(0, 12);
-      setToasts((current) => {
-        const next = [
-          ...current,
-          {
-            id: toastId,
-            title: "Too many requests (429)",
-            message: `API key ${shortKey} exceeded the sliding window limit.`,
-          },
-        ];
-        return next.slice(-4);
-      });
-
-      window.setTimeout(() => {
-        setToasts((current) => current.filter((toast) => toast.id !== toastId));
-      }, 4000);
-    };
-
-    const loadRecentDecisions = async () => {
-      try {
-        const response = await fetch(apiUrl("/api/analytics/recent-decisions"), {
-          credentials: "include",
-        });
-        if (!response.ok) {
-          return;
-        }
-        const entries = await response.json();
-        if (cancelled || !Array.isArray(entries)) {
-          return;
-        }
-
-        if (!initializedDecisionFeedRef.current) {
-          entries.forEach((entry) => {
-            if (entry?.apiKey && entry?.evaluatedAt) {
-              seenDecisionKeysRef.current.add(`${entry.apiKey}-${entry.evaluatedAt}`);
-            }
-          });
-          initializedDecisionFeedRef.current = true;
-          return;
-        }
-
-        entries
-          .slice()
-          .reverse()
-          .forEach((entry) => {
-            const decisionKey = `${entry?.apiKey}-${entry?.evaluatedAt}`;
-            if (!entry?.allowed && entry?.apiKey && entry?.evaluatedAt && !seenDecisionKeysRef.current.has(decisionKey)) {
-              seenDecisionKeysRef.current.add(decisionKey);
-              pushToast(entry);
-            }
-          });
-      } catch {
-        // Toast feed is best-effort; ignore transient polling failures.
-      }
-    };
-
-    loadRecentDecisions();
-    const intervalId = window.setInterval(loadRecentDecisions, 5000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(intervalId);
-    };
-  }, [isFullWidthPage, uiConfig]);
 
   return (
     <>
