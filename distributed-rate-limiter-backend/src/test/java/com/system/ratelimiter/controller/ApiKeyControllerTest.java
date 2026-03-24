@@ -156,6 +156,8 @@ class ApiKeyControllerTest {
         assertTrue(apiKeys.get(0) instanceof Map);
         Map<?, ?> row = (Map<?, ?>) apiKeys.get(0);
         assertEquals("Beta", row.get("userName"));
+        assertEquals("8 req", row.get("requestCountLabel"));
+        assertEquals("40%", row.get("usageLabel"));
 
         assertTrue(response.getBody().get("pagination") instanceof Map);
         Map<?, ?> pagination = (Map<?, ?>) response.getBody().get("pagination");
@@ -163,5 +165,9 @@ class ApiKeyControllerTest {
         assertEquals(1, pagination.get("size"));
         assertEquals(1, pagination.get("totalItems"));
         assertEquals("beta", pagination.get("search"));
+
+        assertTrue(response.getBody().get("stats") instanceof Map);
+        Map<?, ?> statsBody = (Map<?, ?>) response.getBody().get("stats");
+        assertTrue(statsBody.get("cards") instanceof List);
     }
 }

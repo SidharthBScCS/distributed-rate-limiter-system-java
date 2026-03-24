@@ -10,6 +10,7 @@ import com.system.ratelimiter.service.DecisionAuditService;
 import com.system.ratelimiter.service.DistributedRateLimiterService;
 import com.system.ratelimiter.service.RequestStatsService;
 import jakarta.validation.Valid;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -102,6 +103,11 @@ public class ApiKeyController {
 
         double allowedPercent = total == 0 ? 0.0 : (allowed * 100.0) / total;
         double blockedPercent = total == 0 ? 0.0 : (blocked * 100.0) / total;
+        List<Map<String, Object>> statCards = List.of(
+                statCard("Total Requests", total, "All requests processed", formatPercent(total == 0 ? 0.0 : 100.0), total > 0 ? "up" : "down", "#94a3b8"),
+                statCard("Allowed", allowed, "Passed rate limits", formatPercent(allowedPercent), allowedPercent > 0 ? "up" : "down", "#4ade80"),
+                statCard("Blocked", blocked, "Throttled requests", formatPercent(blockedPercent), blockedPercent > 0 ? "down" : "up", "#f87171")
+        );
 
         List<Map<String, Object>> apiKeys = allKeys.stream()
                 .map(apiKey -> {
@@ -118,8 +124,14 @@ public class ApiKeyController {
                     row.put("algorithm", apiKey.getAlgorithm());
                     row.put("requestCount", requestCount);
                     row.put("usagePercentage", usagePercentage);
+                    row.put("requestCountLabel", NumberFormat.getIntegerInstance().format(requestCount) + " req");
+                    row.put("rateLimitLabel", rateLimit + "/window");
+                    row.put("windowLabel", (apiKey.getWindowSeconds() == null ? 0 : apiKey.getWindowSeconds()) + "s");
+                    row.put("algorithmLabel", apiKey.getAlgorithm() == null || apiKey.getAlgorithm().isBlank() ? "-" : apiKey.getAlgorithm());
+                    row.put("usageLabel", formatUsagePercentage(usagePercentage));
                     row.put("usageColor", usageColor(usagePercentage));
                     row.put("status", status);
+                    row.put("statusLabel", status == null || status.isBlank() ? "Unknown" : status);
                     row.put("statusColor", statusColor(status));
                     return row;
                 })
@@ -136,11 +148,15 @@ public class ApiKeyController {
         return Map.of(
                 "stats", Map.of(
                         "totalRequests", total,
+                        "totalRequestsLabel", NumberFormat.getIntegerInstance().format(total),
                         "allowedRequests", allowed,
+                        "allowedRequestsLabel", NumberFormat.getIntegerInstance().format(allowed),
                         "blockedRequests", blocked,
+                        "blockedRequestsLabel", NumberFormat.getIntegerInstance().format(blocked),
                         "totalPercent", total == 0 ? 0.0 : 100.0,
                         "allowedPercent", allowedPercent,
-                        "blockedPercent", blockedPercent
+                        "blockedPercent", blockedPercent,
+                        "cards", statCards
                 ),
                 "apiKeys", pageRows,
                 "pagination", Map.of(
@@ -329,6 +345,47 @@ public class ApiKeyController {
         if (percentage > 90) return "#ef4444";
         if (percentage > 70) return "#f59e0b";
         return "#10b981";
+    }
+
+    private static Map<String, Object> statCard(
+            String title,
+            long value,
+            String caption,
+            String changeLabel,
+            String trend,
+            String color
+    ) {
+        return Map.of(
+                "title", title,
+                "value", value,
+                "valueLabel", NumberFormat.getIntegerInstance().format(value),
+                "caption", caption,
+                "changeLabel", changeLabel,
+                "trend", trend,
+                "color", color
+        );
+    }
+
+    private static String formatPercent(double value) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            return "0%";
+        }
+        return value >= 10.0
+                ? String.format(java.util.Locale.ROOT, "%.1f%%", value)
+                : String.format(java.util.Locale.ROOT, "%.2f%%", value);
+    }
+
+    private static String formatUsagePercentage(double value) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            return "0%";
+        }
+        if (value == 100.0d) {
+            return "100%";
+        }
+        String formatted = value >= 10.0d
+                ? String.format(java.util.Locale.ROOT, "%.1f", value)
+                : String.format(java.util.Locale.ROOT, "%.2f", value);
+        return formatted.replaceAll("\\.0+$", "").replaceAll("(\\.\\d*[1-9])0+$", "$1") + "%";
     }
 
     private static String normalizeSearch(String search) {

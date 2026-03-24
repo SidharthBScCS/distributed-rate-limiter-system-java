@@ -33,18 +33,6 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
   const searchTerm = tableQuery?.search ?? "";
   const currentPage = pagination.page ?? 1;
 
-  const formatUsage = (value) => {
-    const numericValue = Number(value ?? 0);
-    if (!Number.isFinite(numericValue)) {
-      return "0%";
-    }
-    if (numericValue === 100) {
-      return "100%";
-    }
-    const rounded = numericValue >= 10 ? numericValue.toFixed(1) : numericValue.toFixed(2);
-    return `${rounded.replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1")}%`;
-  };
-
   useEffect(() => {
     const nextSearch = pagination.search ?? "";
     const nextPage = pagination.page ?? 1;
@@ -243,8 +231,8 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
                 const usage = key.usagePercentage;
                 const usageColor = key.usageColor;
                 const fullApiKey = key.apiKey;
-                const usageLabel = formatUsage(usage);
-                const algorithmLabel = key.algorithm ?? "-";
+                const usageLabel = key.usageLabel ?? "0%";
+                const algorithmLabel = key.algorithmLabel ?? "-";
 
                 return (
                   <tr key={key.id} className="table-row">
@@ -264,11 +252,10 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
                       <span className="user-name">{key.userName}</span>
                     </td>
                     <td>
-                      <span className="rate-value">{key.rateLimit}</span>
-                      <span className="rate-unit">/window</span>
+                      <span className="rate-value">{key.rateLimitLabel ?? key.rateLimit}</span>
                     </td>
                     <td>
-                      <span className="window-value">{key.windowSeconds}s</span>
+                      <span className="window-value">{key.windowLabel ?? `${key.windowSeconds}s`}</span>
                     </td>
                     <td>
                       <code className="algo-code">{algorithmLabel}</code>
@@ -276,7 +263,7 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
                     <td>
                       <div className="usage-cell">
                         <div className="usage-header">
-                          <span>{key.requestCount} req</span>
+                          <span>{key.requestCountLabel ?? `${key.requestCount} req`}</span>
                           <span style={{ color: usageColor }}>
                             {usageLabel}
                           </span>
@@ -295,7 +282,7 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
                     <td>
                       <div className="status-cell" style={{ background: `${statusColor}22` }}>
                         <span className="status-dot" style={{ background: statusColor }} />
-                        <span style={{ color: statusColor }}>{key.status}</span>
+                        <span style={{ color: statusColor }}>{key.statusLabel ?? key.status}</span>
                       </div>
                     </td>
                   </tr>

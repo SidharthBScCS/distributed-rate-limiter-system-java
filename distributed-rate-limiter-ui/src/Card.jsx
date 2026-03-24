@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { 
   Activity, 
   CheckCircle, 
@@ -9,43 +8,15 @@ import {
 import "./Cards.css";
 
 function StatsCards({ stats, loading }) {
-  const formatPercent = (value) => {
-    const numericValue = Number(value ?? 0);
-    if (!Number.isFinite(numericValue)) return "0%";
-    return numericValue >= 10 
-      ? `${numericValue.toFixed(1)}%` 
-      : `${numericValue.toFixed(2)}%`;
-  };
-
-  const cards = useMemo(() => [
-    {
-      title: "Total Requests",
-      value: stats.totalRequests,
-      caption: "All requests processed",
-      icon: Activity,
-      change: formatPercent(stats.totalPercent),
-      trend: stats.totalPercent > 0 ? "up" : "down",
-      color: "#94a3b8"
-    },
-    {
-      title: "Allowed",
-      value: stats.allowedRequests,
-      caption: "Passed rate limits",
-      icon: CheckCircle,
-      change: formatPercent(stats.allowedPercent),
-      trend: stats.allowedPercent > 0 ? "up" : "down",
-      color: "#4ade80"
-    },
-    {
-      title: "Blocked",
-      value: stats.blockedRequests,
-      caption: "Throttled requests",
-      icon: XCircle,
-      change: formatPercent(stats.blockedPercent),
-      trend: stats.blockedPercent > 0 ? "down" : "up",
-      color: "#f87171"
-    }
-  ], [stats]);
+  const cards = (stats?.cards ?? []).map((card) => ({
+    ...card,
+    icon:
+      card.title === "Total Requests"
+        ? Activity
+        : card.title === "Allowed"
+          ? CheckCircle
+          : XCircle,
+  }));
 
   if (loading) {
     return (
@@ -61,8 +32,7 @@ function StatsCards({ stats, loading }) {
     <div className="stats-grid">
       {cards.map((card, index) => {
         const Icon = card.icon;
-        const rawValue = card.value ?? "-";
-        const formattedValue = rawValue === "-" ? rawValue : new Intl.NumberFormat().format(rawValue);
+        const formattedValue = card.valueLabel ?? "-";
 
         return (
           <div key={index} className="stat-card">
@@ -85,7 +55,7 @@ function StatsCards({ stats, loading }) {
                 ) : (
                   <TrendingDown size={14} />
                 )}
-                <span>{card.change}</span>
+                <span>{card.changeLabel}</span>
               </div>
             </div>
           </div>
