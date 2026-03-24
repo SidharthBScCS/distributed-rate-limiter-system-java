@@ -17,7 +17,7 @@ class ApiKeyServiceTest {
     @Test
     void getAll_returnsNormalizedCopiesWithoutWritingBackOnRead() {
         ApiKeyRepository repository = mock(ApiKeyRepository.class);
-        ApiKeyService service = new ApiKeyService(repository, "SLIDING_WINDOW", 10);
+        ApiKeyService service = new ApiKeyService(repository, "SLIDING_WINDOW");
 
         ApiKey stored = new ApiKey();
         stored.setId(7L);
@@ -40,9 +40,9 @@ class ApiKeyServiceTest {
         assertNotSame(stored, normalized);
         assertEquals(7L, normalized.getId());
         assertEquals("SLIDING_WINDOW", normalized.getAlgorithm());
-        assertEquals(10L, normalized.getAllowedRequests());
-        assertEquals(10L, normalized.getBlockedRequests());
-        assertEquals("Blocked", normalized.getStatus());
+        assertEquals(20L, normalized.getAllowedRequests());
+        assertEquals(0L, normalized.getBlockedRequests());
+        assertEquals("Normal", normalized.getStatus());
 
         assertEquals(20L, stored.getAllowedRequests());
         assertEquals(0L, stored.getBlockedRequests());

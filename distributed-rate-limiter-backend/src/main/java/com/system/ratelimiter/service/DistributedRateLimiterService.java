@@ -3,11 +3,9 @@ package com.system.ratelimiter.service;
 import com.system.ratelimiter.dto.DecisionAuditEntry;
 import com.system.ratelimiter.entity.ApiKey;
 import io.micrometer.core.instrument.MeterRegistry;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.RedisSystemException;
@@ -31,6 +29,7 @@ public class DistributedRateLimiterService {
             local requestId = ARGV[5]
 
             redis.call('ZREMRANGEBYSCORE', KEYS[1], 0, now - windowMs)
+            redis.call('ZREMRANGEBYSCORE', KEYS[2], 0, now - windowMs)
             local count = tonumber(redis.call('ZCARD', KEYS[1]))
 
             if count + cost > limit then
@@ -40,14 +39,20 @@ public class DistributedRateLimiterService {
                 local retryMs = (oldestTs + windowMs) - now
                 if retryMs < 1 then retryMs = 1 end
                 local retrySeconds = math.ceil(retryMs / 1000.0)
-            redis.call('PEXPIRE', KEYS[1], windowMs)
-            return {0, retrySeconds, 2, count, limit}
+                redis.call('PEXPIRE', KEYS[1], windowMs)
+                redis.call('PEXPIRE', KEYS[2], windowMs)
+                redis.call('PSETEX', KEYS[3], retryMs, '1')
+                return {0, retrySeconds, 2, count, limit}
             end
 
             for i = 1, cost do
-                redis.call('ZADD', KEYS[1], now, requestId .. ':' .. i)
+                local member = requestId .. ':' .. i
+                redis.call('ZADD', KEYS[1], now, member)
+                redis.call('ZADD', KEYS[2], now, member)
             end
             redis.call('PEXPIRE', KEYS[1], windowMs)
+            redis.call('PEXPIRE', KEYS[2], windowMs)
+            redis.call('DEL', KEYS[3])
             return {1, 0, 0, count + cost, limit}
             """;
 
@@ -129,10 +134,15 @@ public class DistributedRateLimiterService {
     }
 
     private Decision slidingWindowDecision(ApiKey apiKey, String route, int cost) {
-        String windowKey = redisPrefix + ":sliding:" + apiKey.getApiKey() + ":" + route;
+        String apiKeyValue = apiKey.getApiKey();
+        String windowKey = routeWindowKey(apiKeyValue, route);
         List<Long> result = redisTemplate.execute(
                 slidingWindowScript,
-                List.of(windowKey),
+                List.of(
+                        windowKey,
+                        globalWindowKey(apiKeyValue),
+                        blockMarkerKey(apiKeyValue)
+                ),
                 Long.toString(System.currentTimeMillis()),
                 Long.toString(windowMs(apiKey)),
                 Integer.toString(Math.max(1, apiKey.getRateLimit())),
@@ -178,11 +188,6 @@ public class DistributedRateLimiterService {
     }
 
     private void updateStats(ApiKey apiKey, boolean allowed) {
-        if (allowed) {
-            clearBlockMarker(apiKey.getApiKey());
-        } else {
-            setBlockMarker(apiKey.getApiKey(), apiKey.getWindowSeconds());
-        }
         apiKeyService.recordDecision(apiKey.getApiKey(), allowed);
 
         if (allowed) {
@@ -203,7 +208,7 @@ public class DistributedRateLimiterService {
         if (apiKey == null || apiKey.getApiKey() == null || apiKey.getApiKey().isBlank()) {
             return 0L;
         }
-        return Math.max(0L, sumSlidingWindowCount(apiKey.getApiKey(), windowMs(apiKey)));
+        return Math.max(0L, currentWindowCount(apiKey.getApiKey(), windowMs(apiKey)));
     }
 
     private boolean hasActiveBlockMarker(String apiKeyValue) {
@@ -214,50 +219,29 @@ public class DistributedRateLimiterService {
         }
     }
 
-    private void setBlockMarker(String apiKeyValue, Integer windowSeconds) {
-        try {
-            Duration ttl = Duration.ofSeconds(Math.max(1, windowSeconds == null ? 60 : windowSeconds));
-            redisTemplate.opsForValue().set(blockMarkerKey(apiKeyValue), "1", ttl);
-        } catch (Exception ignored) {
-            // Ignore marker failures; limiter decision has already been made.
-        }
-    }
-
-    private void clearBlockMarker(String apiKeyValue) {
-        try {
-            redisTemplate.delete(blockMarkerKey(apiKeyValue));
-        } catch (Exception ignored) {
-            // Ignore marker cleanup failures.
-        }
-    }
-
     private String blockMarkerKey(String apiKeyValue) {
         return redisPrefix + ":status:block:" + apiKeyValue;
     }
 
-    private long sumSlidingWindowCount(String apiKeyValue, long windowMs) {
-        Set<String> keys;
+    private String globalWindowKey(String apiKeyValue) {
+        return redisPrefix + ":sliding:" + apiKeyValue + ":global";
+    }
+
+    private String routeWindowKey(String apiKeyValue, String route) {
+        return redisPrefix + ":sliding:" + apiKeyValue + ":" + route;
+    }
+
+    private long currentWindowCount(String apiKeyValue, long windowMs) {
+        String key = globalWindowKey(apiKeyValue);
         try {
-            keys = redisTemplate.keys(redisPrefix + ":sliding:" + apiKeyValue + ":*");
+            long now = System.currentTimeMillis();
+            long minScore = Math.max(0L, now - Math.max(1L, windowMs));
+            redisTemplate.opsForZSet().removeRangeByScore(key, 0, minScore);
+            Long count = redisTemplate.opsForZSet().zCard(key);
+            return count == null ? 0L : count;
         } catch (Exception ex) {
             return 0L;
         }
-        if (keys == null || keys.isEmpty()) {
-            return 0L;
-        }
-        long now = System.currentTimeMillis();
-        long minScore = Math.max(0L, now - Math.max(1L, windowMs));
-        long sum = 0L;
-        for (String key : keys) {
-            try {
-                redisTemplate.opsForZSet().removeRangeByScore(key, 0, minScore);
-                Long value = redisTemplate.opsForZSet().zCard(key);
-                sum += value == null ? 0L : value;
-            } catch (Exception ignored) {
-                // Ignore per-key lookup failures and continue summing the rest.
-            }
-        }
-        return sum;
     }
 
     private long windowMs(ApiKey apiKey) {

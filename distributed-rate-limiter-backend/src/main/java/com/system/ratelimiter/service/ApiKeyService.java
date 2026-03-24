@@ -19,18 +19,15 @@ public class ApiKeyService {
 
     private final ApiKeyRepository apiKeyRepository;
     private final String defaultAlgorithm;
-    private final long blockThreshold;
     private final ConcurrentHashMap<String, ApiKey> apiKeyCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, ApiKeyDelta> pendingCounterDeltas = new ConcurrentHashMap<>();
 
     public ApiKeyService(
             ApiKeyRepository apiKeyRepository,
-            @Value("${ratelimiter.default-algorithm:SLIDING_WINDOW}") String defaultAlgorithm,
-            @Value("${ratelimiter.block-threshold:10}") long blockThreshold
+            @Value("${ratelimiter.default-algorithm:SLIDING_WINDOW}") String defaultAlgorithm
     ) {
         this.apiKeyRepository = apiKeyRepository;
         this.defaultAlgorithm = normalizeOrDefault(defaultAlgorithm, "SLIDING_WINDOW");
-        this.blockThreshold = Math.max(0L, blockThreshold);
     }
 
     @PostConstruct
@@ -209,27 +206,15 @@ public class ApiKeyService {
         long allowed = source.getAllowedRequests() == null ? 0L : source.getAllowedRequests();
         long blocked = source.getBlockedRequests() == null ? 0L : source.getBlockedRequests();
 
-        if (total > blockThreshold && blocked == 0L && allowed == total) {
-            blocked = total - blockThreshold;
-            allowed = Math.max(0L, total - blocked);
-        }
-
-        if (total > blockThreshold) {
-            long minimumBlocked = total - blockThreshold;
-            if (blocked < minimumBlocked) {
-                blocked = minimumBlocked;
-                allowed = Math.max(0L, total - blocked);
-            }
-        }
-
         if (allowed + blocked != total) {
-            blocked = Math.max(0L, total - allowed);
+            blocked = Math.max(0L, blocked);
+            allowed = Math.max(0L, total - blocked);
         }
 
         copy.setTotalRequests(total);
         copy.setAllowedRequests(allowed);
         copy.setBlockedRequests(blocked);
-        copy.setStatus(total > blockThreshold ? "Blocked" : "Normal");
+        copy.setStatus(source.getStatus() == null || source.getStatus().isBlank() ? "Normal" : source.getStatus());
         return copy;
     }
 
