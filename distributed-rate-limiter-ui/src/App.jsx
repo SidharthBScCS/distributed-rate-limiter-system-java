@@ -1,14 +1,14 @@
 import Sidebar from "./Sidebar";
-import StatsCards from "./Card";
+import StatsCards from "./Components/Card";
 import ApiTable from "./Table_Box";
-import Analytics from "./Analytics";
-import LoginPage from "./LoginPage";
+import Analytics from "./Components/Analytics";
+import LoginPage from "./Components/LoginPage";
 import { useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { apiUrl } from "./apiBase";
 import "./App.css";
-import Settings from "./Settings";
+import Settings from "./Components/Settings";
 
 function App() {
   const location = useLocation();
