@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, AlertCircle, Shield, Lock } from "lucide-react";
 import { apiUrl } from "../apiBase";
-import "./LoginPage.css";
+import "../LoginPage.css";
 
 function LoginPage() {
   const [username, setUsername] = useState("");

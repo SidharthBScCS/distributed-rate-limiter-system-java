@@ -7,8 +7,8 @@ import {
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
-import { apiUrl } from "./apiBase";
-import "./Sidebar.css";
+import { apiUrl } from "../apiBase.js";
+import "../Sidebar.css";
 
 function Sidebar({ isMobileOpen }) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);

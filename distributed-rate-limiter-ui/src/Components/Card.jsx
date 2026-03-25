@@ -5,7 +5,7 @@ import {
   TrendingUp,
   TrendingDown
 } from "lucide-react";
-import "./Cards.css";
+import "../Cards.css";
 
 function StatsCards({ stats, loading }) {
   const cards = (stats?.cards ?? []).map((card) => ({

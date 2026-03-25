@@ -1,8 +1,8 @@
-import Sidebar from "./Sidebar";
-import StatsCards from "./Components/Card";
-import ApiTable from "./Table_Box";
-import Analytics from "./Components/Analytics";
-import LoginPage from "./Components/LoginPage";
+import Sidebar from "../src/Components/Sidebar";
+import StatsCards from "../src/Components/Card";
+import ApiTable from "../src/Components/Table_Box";
+import Analytics from "../src/Components/Analytics";
+import LoginPage from "../src/Components/LoginPage";
 import { useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";

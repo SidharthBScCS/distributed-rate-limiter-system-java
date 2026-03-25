@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Copy, Search } from "lucide-react";
-import { apiUrl } from "./apiBase";
-import "./Table_Box.css";
+import { apiUrl } from "../apiBase.js";
+import "../Table_Box.css";
 
 function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQuery, onTableQueryChange }) {
   const defaultRateLimit = defaults.rateLimit;
