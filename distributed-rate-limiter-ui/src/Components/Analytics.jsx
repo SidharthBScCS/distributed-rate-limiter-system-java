@@ -1,5 +1,5 @@
 import React from "react";
-import "../Analytics.css";
+import "../Styles/Analytics.css";
 
 function Analytics({ grafanaDashboardUrl }) {
   const [embedBlocked, setEmbedBlocked] = React.useState(false);

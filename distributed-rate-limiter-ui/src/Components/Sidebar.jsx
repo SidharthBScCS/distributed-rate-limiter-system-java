@@ -8,7 +8,7 @@ import {
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import { apiUrl } from "../apiBase.js";
-import "../Sidebar.css";
+import "../Styles/Sidebar.css";
 
 function Sidebar({ isMobileOpen }) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
