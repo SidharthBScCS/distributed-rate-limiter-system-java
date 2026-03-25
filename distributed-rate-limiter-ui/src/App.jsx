@@ -8,6 +8,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { apiUrl } from "./apiBase";
 import "./App.css";
+import Settings from "./Settings";
 
 function App() {
   const location = useLocation();
