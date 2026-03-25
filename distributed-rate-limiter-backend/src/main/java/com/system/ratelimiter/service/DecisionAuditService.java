@@ -45,7 +45,7 @@ public class DecisionAuditService {
             redisTemplate.opsForList().trim(auditKey, 0, maxEntries - 1);
             notifyBlockedDecision(entry);
         } catch (Exception ignored) {
-            // Audit logging is best-effort and must not impact limiter decisions.
+            
         }
     }
 
@@ -74,7 +74,7 @@ public class DecisionAuditService {
             try {
                 entries.add(objectMapper.readValue(value, DecisionAuditEntry.class));
             } catch (Exception ignored) {
-                // Skip malformed audit entries instead of failing the endpoint.
+               
             }
         }
         return entries;
@@ -88,7 +88,7 @@ public class DecisionAuditService {
             try {
                 listener.accept(entry);
             } catch (Exception ignored) {
-                // Ignore listener failures; audit storage has already completed.
+               
             }
         }
     }

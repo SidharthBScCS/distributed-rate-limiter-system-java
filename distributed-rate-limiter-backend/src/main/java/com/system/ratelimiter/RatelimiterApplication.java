@@ -14,8 +14,7 @@ public class RatelimiterApplication {
 	}
 
 	private static void normalizeCloudEnvironment() {
-		// Local-first setup: datasource comes directly from application.properties.
-		// Keep only Redis URL normalization.
+		
 		normalizeRedisConfig();
 	}
 
@@ -54,7 +53,7 @@ public class RatelimiterApplication {
 				}
 			}
 		} catch (IllegalArgumentException ignored) {
-			// Keep original env values when REDIS_URL is malformed.
+			
 		}
 	}
 
