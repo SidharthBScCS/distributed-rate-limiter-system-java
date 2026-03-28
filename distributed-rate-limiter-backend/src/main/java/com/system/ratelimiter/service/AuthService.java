@@ -1,6 +1,7 @@
 package com.system.ratelimiter.service;
 
 import java.util.Objects;
+import java.util.Locale;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,10 @@ public class AuthService {
         if (username == null || username.isBlank() || password == null) {
             return false;
         }
-        return Objects.equals(adminUsername, username) && Objects.equals(adminPassword, password);
+        String normalizedUsername = username.trim().toLowerCase(Locale.ROOT);
+        String configuredUsername = adminUsername == null ? "" : adminUsername.trim().toLowerCase(Locale.ROOT);
+        String providedPassword = password.trim();
+        String configuredPassword = adminPassword == null ? "" : adminPassword.trim();
+        return Objects.equals(configuredUsername, normalizedUsername) && Objects.equals(configuredPassword, providedPassword);
     }
 }

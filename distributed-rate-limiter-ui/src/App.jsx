@@ -47,9 +47,9 @@ function App() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [uiConfig, setUiConfig] = useState(null);
   const [configError, setConfigError] = useState("");
-  const [dashboardData, setDashboardData] = useState<DashboardResponse>(DEFAULT_DASHBOARD_RESPONSE);
+  const [dashboardData, setDashboardData] = useState(DEFAULT_DASHBOARD_RESPONSE);
   const [dashboardLoading, setDashboardLoading] = useState(true);
-  const [tableQuery, setTableQuery] = useState<TableQuery>({ search: "", page: 1, size: 10 });
+  const [tableQuery, setTableQuery] = useState({ search: "", page: 1, size: 10 });
   const [toasts, setToasts] = useState([]);
   const dashboardRequestInFlightRef = useRef(false);
   const lastDashboardLoadAtRef = useRef(0);
