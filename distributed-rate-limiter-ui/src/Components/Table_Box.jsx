@@ -1,36 +1,7 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Copy, Search } from "lucide-react";
-import { apiUrl } from "../apiBase";
-import type {
-  ApiErrorResponse,
-  CreateApiKeyPayload,
-  CreatedApiKeyResponse,
-  DashboardResponse,
-  PublicUiDefaults,
-  TableQuery,
-} from "../types";
+import { apiUrl } from "../apiBase.js";
 import "../Styles/Table_Box.css";
-
-interface ApiTableProps {
-  dashboardData: DashboardResponse;
-  loading: boolean;
-  defaults: PublicUiDefaults;
-  onDashboardRefresh: (force?: boolean, queryOverride?: TableQuery | null) => Promise<boolean>;
-  tableQuery: TableQuery;
-  onTableQueryChange: React.Dispatch<React.SetStateAction<TableQuery>>;
-}
-
-interface CreateFormState {
-  userName: string;
-  rateLimit: number;
-  windowSeconds: number;
-}
-
-interface SuccessModalState {
-  open: boolean;
-  apiKey: string;
-  userName: string;
-}
 
 function ApiTable({
   dashboardData,
@@ -39,7 +10,7 @@ function ApiTable({
   onDashboardRefresh,
   tableQuery,
   onTableQueryChange,
-}: ApiTableProps) {
+}) {
   const defaultRateLimit = defaults.rateLimit;
   const defaultWindowSeconds = defaults.windowSeconds;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -51,7 +22,7 @@ function ApiTable({
   const [createError, setCreateError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedText, setCopiedText] = useState("");
-  const [successModal, setSuccessModal] = useState<SuccessModalState>({
+  const [successModal, setSuccessModal] = useState({
     open: false,
     apiKey: "",
     userName: "",
@@ -85,7 +56,7 @@ function ApiTable({
     const anyModalOpen = isCreateModalOpen || successModal.open;
     document.body.style.overflow = anyModalOpen ? "hidden" : "";
 
-    const onKeyDown = (event: KeyboardEvent) => {
+    const onKeyDown = (event) => {
       if (event.key === "Escape") {
         if (successModal.open) {
           setSuccessModal({ open: false, apiKey: "", userName: "" });
@@ -104,7 +75,7 @@ function ApiTable({
     };
   }, [isCreateModalOpen, successModal.open, isSubmitting]);
 
-  const handleCopy = async (text: string): Promise<void> => {
+  const handleCopy = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedText("Copied to clipboard");
@@ -115,7 +86,7 @@ function ApiTable({
     }
   };
 
-  const openCreateModal = (): void => {
+  const openCreateModal = () => {
     setCreateError("");
     setFormState({
       userName: "",
@@ -125,12 +96,12 @@ function ApiTable({
     setIsCreateModalOpen(true);
   };
 
-  const closeCreateModal = (): void => {
+  const closeCreateModal = () => {
     if (isSubmitting) return;
     setIsCreateModalOpen(false);
   };
 
-  const updateField = <K extends keyof CreateFormState>(field: K, value: CreateFormState[K]): void => {
+  const updateField = (field, value) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -145,12 +116,12 @@ function ApiTable({
     return <div className="table-skeleton" />;
   }
 
-  const handleCreateApiKey = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleCreateApiKey = async (event) => {
     event.preventDefault();
     setCreateError("");
     setIsSubmitting(true);
 
-    const payload: CreateApiKeyPayload = {
+    const payload = {
       userName: formState.userName,
       rateLimit: Number(formState.rateLimit),
       windowSeconds: Number(formState.windowSeconds),
@@ -167,10 +138,10 @@ function ApiTable({
       });
 
       if (!response.ok) {
-        const body: ApiErrorResponse = await response.json();
+        const body = await response.json();
         throw new Error(body.message);
       }
-      const created: CreatedApiKeyResponse = await response.json();
+      const created = await response.json();
 
       await onDashboardRefresh(true);
       setIsCreateModalOpen(false);

@@ -1,23 +1,13 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, BarChart3, Shield, LogOut, X, type LucideIcon } from "lucide-react";
-import { apiUrl } from "../apiBase";
+import { LayoutDashboard, BarChart3, Shield, LogOut, X } from "lucide-react";
+import { apiUrl } from "../apiBase.js";
 import "../Styles/Sidebar.css";
 
-interface SidebarProps {
-  isMobileOpen: boolean;
-}
-
-interface MenuItem {
-  icon: LucideIcon;
-  label: string;
-  path: string;
-}
-
-function Sidebar({ isMobileOpen }: SidebarProps) {
+function Sidebar({ isMobileOpen }) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const menuItems: MenuItem[] = [
+  const menuItems = [
     {
       icon: LayoutDashboard,
       label: "Dashboard",
@@ -30,7 +20,7 @@ function Sidebar({ isMobileOpen }: SidebarProps) {
     },
   ];
 
-  const handleLogout = async (): Promise<void> => {
+  const handleLogout = async () => {
     try {
       await fetch(apiUrl("/api/auth/logout"), {
         method: "POST",

@@ -4,18 +4,11 @@ import {
   XCircle,
   TrendingUp,
   TrendingDown,
-  type LucideIcon,
 } from "lucide-react";
-import type { DashboardStats } from "../types";
 import "../Styles/Cards.css";
 
-interface StatsCardsProps {
-  stats: DashboardStats;
-  loading: boolean;
-}
-
-function StatsCards({ stats, loading }: StatsCardsProps) {
-  const iconByKey: Record<string, LucideIcon> = {
+function StatsCards({ stats, loading }) {
+  const iconByKey = {
     activity: Activity,
     "check-circle": CheckCircle,
     "x-circle": XCircle,
@@ -29,9 +22,9 @@ function StatsCards({ stats, loading }: StatsCardsProps) {
   if (loading) {
     return (
       <div className="cards-skeleton">
-        <div />
-        <div />
-        <div />
+        <div></div>
+        <div></div>
+        <div></div>
       </div>
     );
   }

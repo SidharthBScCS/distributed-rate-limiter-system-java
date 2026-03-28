@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { Row, Col, Nav, Form, Button, Card } from "react-bootstrap";
 
-type SettingsTab = "profile" | "security" | "notifications";
-
 function Settings() {
-  const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
+  const [activeTab, setActiveTab] = useState("profile");
 
   return (
     <div className="settings-page">

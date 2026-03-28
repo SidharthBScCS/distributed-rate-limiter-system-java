@@ -1,25 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import Sidebar from "./Components/Sidebar";
-import StatsCards from "./Components/Card";
-import ApiTable from "./Components/Table_Box";
-import Analytics from "./Components/Analytics";
-import LoginPage from "./Components/LoginPage";
-import { apiUrl } from "./apiBase";
-import type {
-  ApiErrorResponse,
-  DashboardAlertEvent,
-  DashboardPagination,
-  DashboardResponse,
-  DashboardStats,
-  PublicConfig,
-  TableQuery,
-  ToastItem,
-} from "./types";
+import Sidebar from "./Components/Sidebar.jsx";
+import StatsCards from "./Components/Card.jsx";
+import ApiTable from "./Components/Table_Box.jsx";
+import Analytics from "./Components/Analytics.jsx";
+import LoginPage from "./Components/LoginPage.jsx";
+import { apiUrl } from "./apiBase.js";
 import "./App.css";
 
-const DEFAULT_PAGINATION: DashboardPagination = {
+const DEFAULT_PAGINATION = {
   page: 1,
   size: 10,
   totalItems: 0,
@@ -28,7 +18,7 @@ const DEFAULT_PAGINATION: DashboardPagination = {
   search: "",
 };
 
-const DEFAULT_DASHBOARD_STATS: DashboardStats = {
+const DEFAULT_DASHBOARD_STATS = {
   totalRequests: 0,
   totalRequestsLabel: "0",
   allowedRequests: 0,
@@ -41,7 +31,7 @@ const DEFAULT_DASHBOARD_STATS: DashboardStats = {
   cards: [],
 };
 
-const DEFAULT_DASHBOARD_RESPONSE: DashboardResponse = {
+const DEFAULT_DASHBOARD_RESPONSE = {
   stats: DEFAULT_DASHBOARD_STATS,
   apiKeys: [],
   pagination: DEFAULT_PAGINATION,
@@ -55,19 +45,19 @@ const DEFAULT_DASHBOARD_RESPONSE: DashboardResponse = {
 function App() {
   const location = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [uiConfig, setUiConfig] = useState<PublicConfig | null>(null);
+  const [uiConfig, setUiConfig] = useState(null);
   const [configError, setConfigError] = useState("");
   const [dashboardData, setDashboardData] = useState<DashboardResponse>(DEFAULT_DASHBOARD_RESPONSE);
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [tableQuery, setTableQuery] = useState<TableQuery>({ search: "", page: 1, size: 10 });
-  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const [toasts, setToasts] = useState([]);
   const dashboardRequestInFlightRef = useRef(false);
   const lastDashboardLoadAtRef = useRef(0);
   const isAnalyticsPage = location.pathname === "/analytics";
   const isFullWidthPage = location.pathname === "/login";
   const showSidebar = !isFullWidthPage;
 
-  const loadDashboardData = async (force = false, queryOverride: TableQuery | null = null): Promise<boolean> => {
+  const loadDashboardData = async (force = false, queryOverride = null) => {
     if (isFullWidthPage) {
       return false;
     }
@@ -100,7 +90,7 @@ function App() {
         }
         return false;
       }
-      const data: DashboardResponse = await response.json();
+      const data = await response.json();
       setDashboardData({
         stats: data?.stats ?? DEFAULT_DASHBOARD_STATS,
         apiKeys: data?.apiKeys ?? [],
@@ -118,7 +108,7 @@ function App() {
     }
   };
 
-  const loadUiConfig = async (): Promise<boolean> => {
+  const loadUiConfig = async () => {
     try {
       const response = await fetch(apiUrl("/api/config"), {
         credentials: "include",
@@ -131,7 +121,7 @@ function App() {
         setConfigError(`Failed to load backend config (HTTP ${response.status}).`);
         return false;
       }
-      const data: PublicConfig = await response.json();
+      const data = await response.json();
       setUiConfig(data);
       setConfigError("");
       return true;
@@ -181,9 +171,9 @@ function App() {
       void loadDashboardData();
     };
 
-    const onAlert = (event: MessageEvent<string>) => {
+    const onAlert = (event) => {
       try {
-        const payload: DashboardAlertEvent = JSON.parse(event.data);
+        const payload = JSON.parse(event.data);
         if (!payload?.id) {
           return;
         }
@@ -191,7 +181,7 @@ function App() {
           if (current.some((toast) => toast.id === payload.id)) {
             return current;
           }
-          const next: ToastItem[] = [
+          const next = [
             ...current,
             {
               id: payload.id,
@@ -210,14 +200,14 @@ function App() {
     };
 
     source.addEventListener("tick", onTick);
-    source.addEventListener("alert", onAlert as EventListener);
+    source.addEventListener("alert", onAlert);
     source.onerror = () => {
       source.close();
     };
 
     return () => {
       source.removeEventListener("tick", onTick);
-      source.removeEventListener("alert", onAlert as EventListener);
+      source.removeEventListener("alert", onAlert);
       source.close();
     };
   }, [isFullWidthPage, uiConfig]);

@@ -1,11 +1,7 @@
 import { useState } from "react";
 import "../Styles/Analytics.css";
 
-interface AnalyticsProps {
-  grafanaDashboardUrl: string;
-}
-
-function Analytics({ grafanaDashboardUrl }: AnalyticsProps) {
+function Analytics({ grafanaDashboardUrl }) {
   const [embedBlocked, setEmbedBlocked] = useState(false);
 
   return (

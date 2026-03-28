@@ -1,7 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Eye, EyeOff, AlertCircle, Shield, Lock } from "lucide-react";
-import { apiUrl } from "../apiBase";
-import type { ApiErrorResponse, LoginResponse } from "../types";
+import { apiUrl } from "../apiBase.js";
 import "../Styles/LoginPage.css";
 
 function LoginPage() {
@@ -11,7 +10,7 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
     setIsSubmitting(true);
@@ -24,10 +23,10 @@ function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      const data: LoginResponse | ApiErrorResponse = await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error("message" in data ? data.message || "Access denied" : "Access denied");
+        throw new Error(data.message || "Access denied");
       }
 
       window.dispatchEvent(new Event("auth-changed"));
