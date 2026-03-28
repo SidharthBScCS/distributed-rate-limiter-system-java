@@ -1,5 +1,6 @@
 package com.system.ratelimiter.controller;
 
+import com.system.ratelimiter.dto.DashboardViewResponse;
 import com.system.ratelimiter.dto.RateLimitCheckRequest;
 import com.system.ratelimiter.dto.RateLimitDecisionResponse;
 import com.system.ratelimiter.entity.ApiKey;
@@ -10,7 +11,6 @@ import com.system.ratelimiter.service.DistributedRateLimiterService;
 import com.system.ratelimiter.service.RequestStatsService;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -146,28 +146,23 @@ class ApiKeyControllerTest {
         when(distributedRateLimiterService.resolveCurrentStatus(alpha)).thenReturn("Normal");
         when(distributedRateLimiterService.resolveCurrentStatus(beta)).thenReturn("Blocked");
 
-        ResponseEntity<Map<String, Object>> response = controller.getDashboardView("beta", 1, 1);
+        ResponseEntity<DashboardViewResponse> response = controller.getDashboardView("beta", 1, 1);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
 
-        List<?> apiKeys = (List<?>) response.getBody().get("apiKeys");
+        List<?> apiKeys = response.getBody().apiKeys();
         assertEquals(1, apiKeys.size());
-        assertTrue(apiKeys.get(0) instanceof Map);
-        Map<?, ?> row = (Map<?, ?>) apiKeys.get(0);
-        assertEquals("Beta", row.get("userName"));
-        assertEquals("8 req", row.get("requestCountLabel"));
-        assertEquals("40%", row.get("usageLabel"));
+        assertEquals("Beta", response.getBody().apiKeys().get(0).userName());
+        assertEquals("8 req", response.getBody().apiKeys().get(0).requestCountLabel());
+        assertEquals("40%", response.getBody().apiKeys().get(0).usageLabel());
 
-        assertTrue(response.getBody().get("pagination") instanceof Map);
-        Map<?, ?> pagination = (Map<?, ?>) response.getBody().get("pagination");
-        assertEquals(1, pagination.get("page"));
-        assertEquals(1, pagination.get("size"));
-        assertEquals(1, pagination.get("totalItems"));
-        assertEquals("beta", pagination.get("search"));
+        assertEquals(1, response.getBody().pagination().page());
+        assertEquals(1, response.getBody().pagination().size());
+        assertEquals(1, response.getBody().pagination().totalItems());
+        assertEquals("beta", response.getBody().pagination().search());
 
-        assertTrue(response.getBody().get("stats") instanceof Map);
-        Map<?, ?> statsBody = (Map<?, ?>) response.getBody().get("stats");
-        assertTrue(statsBody.get("cards") instanceof List);
+        assertEquals(3, response.getBody().stats().cards().size());
+        assertEquals("check-circle", response.getBody().stats().cards().get(1).iconKey());
     }
 }

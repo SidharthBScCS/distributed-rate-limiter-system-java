@@ -1,4 +1,14 @@
 package com.system.ratelimiter.controller;
+import com.system.ratelimiter.dto.AnalyticsSummaryDto;
+import com.system.ratelimiter.dto.AnalyticsViewResponse;
+import com.system.ratelimiter.dto.ApiErrorResponse;
+import com.system.ratelimiter.dto.ApiKeyStatsItemDto;
+import com.system.ratelimiter.dto.DashboardApiKeyRowDto;
+import com.system.ratelimiter.dto.DashboardPaginationDto;
+import com.system.ratelimiter.dto.DashboardSourcesDto;
+import com.system.ratelimiter.dto.DashboardStatCardDto;
+import com.system.ratelimiter.dto.DashboardStatsDto;
+import com.system.ratelimiter.dto.DashboardViewResponse;
 import com.system.ratelimiter.dto.RateLimitCheckRequest;
 import com.system.ratelimiter.dto.CreateApiKeyRequest;
 import com.system.ratelimiter.dto.DecisionAuditEntry;
@@ -13,11 +23,8 @@ import jakarta.validation.Valid;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -68,12 +75,12 @@ public class ApiKeyController {
     }
 
     @GetMapping("/analytics/keys")
-    public ResponseEntity<List<Map<String, Object>>> getApiKeyStats() {
+    public ResponseEntity<List<ApiKeyStatsItemDto>> getApiKeyStats() {
         return ResponseEntity.ok(apiKeyService.getApiKeyStats());
     }
 
     @GetMapping("/view/dashboard")
-    public ResponseEntity<Map<String, Object>> getDashboardView(
+    public ResponseEntity<DashboardViewResponse> getDashboardView(
             @RequestParam(name = "search", required = false) String search,
             @RequestParam(name = "page", required = false, defaultValue = "1") int page,
             @RequestParam(name = "size", required = false, defaultValue = "10") int size
@@ -88,13 +95,13 @@ public class ApiKeyController {
             return ResponseEntity.ok(cached.payload());
         }
 
-        Map<String, Object> response = buildDashboardView(normalizedSearch, safePage, safeSize);
+        DashboardViewResponse response = buildDashboardView(normalizedSearch, safePage, safeSize);
         dashboardCache.entrySet().removeIf(entry -> now - entry.getValue().createdAtMs() >= dashboardCacheTtlMs);
         dashboardCache.put(cacheKey, new CachedDashboardView(response, now));
         return ResponseEntity.ok(response);
     }
 
-    private Map<String, Object> buildDashboardView(String search, int page, int size) {
+    private DashboardViewResponse buildDashboardView(String search, int page, int size) {
         RequestStats statsSnapshot = requestStatsService.snapshot();
         List<ApiKey> allKeys = apiKeyService.getAllRealKeys();
         long total = statsSnapshot.getTotalRequests() == null ? 0L : statsSnapshot.getTotalRequests();
@@ -103,37 +110,37 @@ public class ApiKeyController {
 
         double allowedPercent = total == 0 ? 0.0 : (allowed * 100.0) / total;
         double blockedPercent = total == 0 ? 0.0 : (blocked * 100.0) / total;
-        List<Map<String, Object>> statCards = List.of(
-                statCard("Total Requests", total, "All requests processed", formatPercent(total == 0 ? 0.0 : 100.0), total > 0 ? "up" : "down", "#94a3b8"),
-                statCard("Allowed", allowed, "Passed rate limits", formatPercent(allowedPercent), allowedPercent > 0 ? "up" : "down", "#4ade80"),
-                statCard("Blocked", blocked, "Throttled requests", formatPercent(blockedPercent), blockedPercent > 0 ? "down" : "up", "#f87171")
+        List<DashboardStatCardDto> statCards = List.of(
+                statCard("Total Requests", total, "All requests processed", formatPercent(total == 0 ? 0.0 : 100.0), total > 0 ? "up" : "down", "#94a3b8", "activity"),
+                statCard("Allowed", allowed, "Passed rate limits", formatPercent(allowedPercent), allowedPercent > 0 ? "up" : "down", "#4ade80", "check-circle"),
+                statCard("Blocked", blocked, "Throttled requests", formatPercent(blockedPercent), blockedPercent > 0 ? "down" : "up", "#f87171", "x-circle")
         );
 
-        List<Map<String, Object>> apiKeys = allKeys.stream()
+        List<DashboardApiKeyRowDto> apiKeys = allKeys.stream()
                 .map(apiKey -> {
                     long requestCount = distributedRateLimiterService.resolveCurrentWindowRequestCount(apiKey);
                     int rateLimit = apiKey.getRateLimit() == null || apiKey.getRateLimit() <= 0 ? 1 : apiKey.getRateLimit();
                     double usagePercentage = Math.min((requestCount * 100.0) / rateLimit, 100.0);
                     String status = distributedRateLimiterService.resolveCurrentStatus(apiKey);
-                    Map<String, Object> row = new LinkedHashMap<>();
-                    row.put("id", apiKey.getId());
-                    row.put("apiKey", apiKey.getApiKey());
-                    row.put("userName", apiKey.getUserName());
-                    row.put("rateLimit", apiKey.getRateLimit());
-                    row.put("windowSeconds", apiKey.getWindowSeconds());
-                    row.put("algorithm", apiKey.getAlgorithm());
-                    row.put("requestCount", requestCount);
-                    row.put("usagePercentage", usagePercentage);
-                    row.put("requestCountLabel", NumberFormat.getIntegerInstance().format(requestCount) + " req");
-                    row.put("rateLimitLabel", rateLimit + "/window");
-                    row.put("windowLabel", (apiKey.getWindowSeconds() == null ? 0 : apiKey.getWindowSeconds()) + "s");
-                    row.put("algorithmLabel", apiKey.getAlgorithm() == null || apiKey.getAlgorithm().isBlank() ? "-" : apiKey.getAlgorithm());
-                    row.put("usageLabel", formatUsagePercentage(usagePercentage));
-                    row.put("usageColor", usageColor(usagePercentage));
-                    row.put("status", status);
-                    row.put("statusLabel", status == null || status.isBlank() ? "Unknown" : status);
-                    row.put("statusColor", statusColor(status));
-                    return row;
+                    return new DashboardApiKeyRowDto(
+                            apiKey.getId(),
+                            apiKey.getApiKey(),
+                            apiKey.getUserName(),
+                            apiKey.getRateLimit(),
+                            apiKey.getWindowSeconds(),
+                            apiKey.getAlgorithm(),
+                            requestCount,
+                            usagePercentage,
+                            NumberFormat.getIntegerInstance().format(requestCount) + " req",
+                            rateLimit + "/window",
+                            (apiKey.getWindowSeconds() == null ? 0 : apiKey.getWindowSeconds()) + "s",
+                            apiKey.getAlgorithm() == null || apiKey.getAlgorithm().isBlank() ? "-" : apiKey.getAlgorithm(),
+                            formatUsagePercentage(usagePercentage),
+                            usageColor(usagePercentage),
+                            status,
+                            status == null || status.isBlank() ? "Unknown" : status,
+                            statusColor(status)
+                    );
                 })
                 .filter(row -> matchesDashboardSearch(row, search))
                 .toList();
@@ -143,35 +150,35 @@ public class ApiKeyController {
         int safePage = Math.min(Math.max(1, page), totalPages);
         int startIndex = Math.min((safePage - 1) * size, totalApiKeys);
         int endIndex = Math.min(startIndex + size, totalApiKeys);
-        List<Map<String, Object>> pageRows = apiKeys.subList(startIndex, endIndex);
+        List<DashboardApiKeyRowDto> pageRows = apiKeys.subList(startIndex, endIndex);
 
-        return Map.of(
-                "stats", Map.of(
-                        "totalRequests", total,
-                        "totalRequestsLabel", NumberFormat.getIntegerInstance().format(total),
-                        "allowedRequests", allowed,
-                        "allowedRequestsLabel", NumberFormat.getIntegerInstance().format(allowed),
-                        "blockedRequests", blocked,
-                        "blockedRequestsLabel", NumberFormat.getIntegerInstance().format(blocked),
-                        "totalPercent", total == 0 ? 0.0 : 100.0,
-                        "allowedPercent", allowedPercent,
-                        "blockedPercent", blockedPercent,
-                        "cards", statCards
+        return new DashboardViewResponse(
+                new DashboardStatsDto(
+                        total,
+                        NumberFormat.getIntegerInstance().format(total),
+                        allowed,
+                        NumberFormat.getIntegerInstance().format(allowed),
+                        blocked,
+                        NumberFormat.getIntegerInstance().format(blocked),
+                        total == 0 ? 0.0 : 100.0,
+                        allowedPercent,
+                        blockedPercent,
+                        statCards
                 ),
-                "apiKeys", pageRows,
-                "pagination", Map.of(
-                        "page", safePage,
-                        "size", size,
-                        "totalItems", totalApiKeys,
-                        "totalPages", totalPages,
-                        "filtered", !search.isEmpty(),
-                        "search", search
+                pageRows,
+                new DashboardPaginationDto(
+                        safePage,
+                        size,
+                        totalApiKeys,
+                        totalPages,
+                        !search.isEmpty(),
+                        search
                 ),
-                "sources", Map.of(
-                        "postgres", "request_stats totals, api_keys metadata and persisted counters",
-                        "redis", "live window counters and block markers"
+                new DashboardSourcesDto(
+                        "request_stats totals, api_keys metadata and persisted counters",
+                        "live window counters and block markers"
                 ),
-                "generatedAt", java.time.Instant.now().toString()
+                java.time.Instant.now().toString()
         );
     }
 
@@ -222,35 +229,16 @@ public class ApiKeyController {
 
     @PostMapping("/keys")
     public ResponseEntity<ApiKey> createApiKey(@Valid @RequestBody CreateApiKeyRequest request) {
-        int rateLimit = parsePositiveInt(request.getRateLimit(), "rateLimit");
-        int windowSeconds = parsePositiveInt(request.getWindowSeconds(), "windowSeconds");
         ApiKey created = apiKeyService.createApiKey(
                 request.getUserName(),
-                rateLimit,
-                windowSeconds
+                request.getRateLimit(),
+                request.getWindowSeconds()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    private static int parsePositiveInt(String value, String field) {
-        String raw = value == null ? "" : value.trim();
-        if (raw.isEmpty()) {
-            throw new IllegalArgumentException(field + " is required");
-        }
-        final int parsed;
-        try {
-            parsed = Integer.parseInt(raw);
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException(field + " must be a valid integer");
-        }
-        if (parsed < 1) {
-            throw new IllegalArgumentException(field + " must be >= 1");
-        }
-        return parsed;
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = "Invalid request.";
         FieldError error = ex.getBindingResult().getFieldError();
         if (error != null && error.getDefaultMessage() != null) {
@@ -258,50 +246,50 @@ public class ApiKeyController {
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .header(HttpHeaders.CONTENT_TYPE, "application/json")
-                .body(Map.of("message", message));
+                .body(new ApiErrorResponse(message));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
+    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
         String message = ex.getMessage() == null ? "Invalid request." : ex.getMessage();
         HttpStatus status = "API key not found".equalsIgnoreCase(message)
                 ? HttpStatus.NOT_FOUND
                 : HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status)
                 .header(HttpHeaders.CONTENT_TYPE, "application/json")
-                .body(Map.of("message", message));
+                .body(new ApiErrorResponse(message));
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException ex) {
+    public ResponseEntity<ApiErrorResponse> handleIllegalState(IllegalStateException ex) {
         String message = ex.getMessage() == null ? "Service unavailable." : ex.getMessage();
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .header(HttpHeaders.CONTENT_TYPE, "application/json")
-                .body(Map.of("message", message));
+                .body(new ApiErrorResponse(message));
     }
 
     @GetMapping("/analytics/view")
-    public ResponseEntity<Map<String, Object>> getAnalyticsView() {
-        List<Map<String, Object>> raw = apiKeyService.getApiKeyStats();
-        List<Map<String, Object>> top = raw.stream()
-                .sorted(Comparator.comparingLong(item -> -1L * ((Number) item.getOrDefault("totalRequests", 0)).longValue()))
+    public ResponseEntity<AnalyticsViewResponse> getAnalyticsView() {
+        List<ApiKeyStatsItemDto> raw = apiKeyService.getApiKeyStats();
+        List<ApiKeyStatsItemDto> top = raw.stream()
+                .sorted(Comparator.comparingLong(ApiKeyStatsItemDto::totalRequests).reversed())
                 .limit(7)
                 .toList();
 
         List<String> labels = top.stream()
-                .map(item -> String.valueOf(item.getOrDefault("userName", "Unknown")))
+                .map(item -> item.userName() == null || item.userName().isBlank() ? "Unknown" : item.userName())
                 .toList();
 
         List<Long> totals = top.stream()
-                .map(item -> ((Number) item.getOrDefault("totalRequests", 0)).longValue())
+                .map(ApiKeyStatsItemDto::totalRequests)
                 .toList();
 
         List<Long> allowed = top.stream()
-                .map(item -> ((Number) item.getOrDefault("allowedRequests", 0)).longValue())
+                .map(ApiKeyStatsItemDto::allowedRequests)
                 .toList();
 
         List<Long> blocked = top.stream()
-                .map(item -> ((Number) item.getOrDefault("blockedRequests", 0)).longValue())
+                .map(ApiKeyStatsItemDto::blockedRequests)
                 .toList();
 
         long sumTotal = totals.stream().mapToLong(Long::longValue).sum();
@@ -319,17 +307,13 @@ public class ApiKeyController {
             if (value > maxValue) maxValue = value;
         }
 
-        return ResponseEntity.ok(Map.of(
-                "labels", labels,
-                "totalRequests", totals,
-                "successRequests", allowed,
-                "blockedRequests", blocked,
-                "summary", Map.of(
-                        "total", sumTotal,
-                        "success", sumAllowed,
-                        "blocked", sumBlocked
-                ),
-                "maxValue", maxValue
+        return ResponseEntity.ok(new AnalyticsViewResponse(
+                labels,
+                totals,
+                allowed,
+                blocked,
+                new AnalyticsSummaryDto(sumTotal, sumAllowed, sumBlocked),
+                maxValue
         ));
     }
 
@@ -347,22 +331,24 @@ public class ApiKeyController {
         return "#10b981";
     }
 
-    private static Map<String, Object> statCard(
+    private static DashboardStatCardDto statCard(
             String title,
             long value,
             String caption,
             String changeLabel,
             String trend,
-            String color
+            String color,
+            String iconKey
     ) {
-        return Map.of(
-                "title", title,
-                "value", value,
-                "valueLabel", NumberFormat.getIntegerInstance().format(value),
-                "caption", caption,
-                "changeLabel", changeLabel,
-                "trend", trend,
-                "color", color
+        return new DashboardStatCardDto(
+                title,
+                value,
+                NumberFormat.getIntegerInstance().format(value),
+                caption,
+                changeLabel,
+                trend,
+                color,
+                iconKey
         );
     }
 
@@ -392,17 +378,17 @@ public class ApiKeyController {
         return search == null ? "" : search.trim().toLowerCase();
     }
 
-    private static boolean matchesDashboardSearch(Map<String, Object> row, String search) {
+    private static boolean matchesDashboardSearch(DashboardApiKeyRowDto row, String search) {
         if (search == null || search.isEmpty()) {
             return true;
         }
         return List.of(
-                        row.get("apiKey"),
-                        row.get("userName"),
-                        row.get("status"),
-                        row.get("algorithm"),
-                        row.get("rateLimit"),
-                        row.get("windowSeconds")
+                        row.apiKey(),
+                        row.userName(),
+                        row.status(),
+                        row.algorithm(),
+                        row.rateLimit(),
+                        row.windowSeconds()
                 ).stream()
                 .filter(value -> value != null)
                 .map(String::valueOf)
@@ -414,29 +400,29 @@ public class ApiKeyController {
         return search + "|" + page + "|" + size;
     }
 
-    private static List<Map<String, Object>> mergeSortApiKeysByUsage(List<Map<String, Object>> apiKeys) {
+    private static List<DashboardApiKeyRowDto> mergeSortApiKeysByUsage(List<DashboardApiKeyRowDto> apiKeys) {
         if (apiKeys == null || apiKeys.size() <= 1) {
             return apiKeys == null ? List.of() : apiKeys;
         }
 
         int midpoint = apiKeys.size() / 2;
-        List<Map<String, Object>> left = mergeSortApiKeysByUsage(new ArrayList<>(apiKeys.subList(0, midpoint)));
-        List<Map<String, Object>> right = mergeSortApiKeysByUsage(new ArrayList<>(apiKeys.subList(midpoint, apiKeys.size())));
+        List<DashboardApiKeyRowDto> left = mergeSortApiKeysByUsage(new ArrayList<>(apiKeys.subList(0, midpoint)));
+        List<DashboardApiKeyRowDto> right = mergeSortApiKeysByUsage(new ArrayList<>(apiKeys.subList(midpoint, apiKeys.size())));
 
         return mergeApiKeyLists(left, right);
     }
 
-    private static List<Map<String, Object>> mergeApiKeyLists(
-            List<Map<String, Object>> left,
-            List<Map<String, Object>> right
+    private static List<DashboardApiKeyRowDto> mergeApiKeyLists(
+            List<DashboardApiKeyRowDto> left,
+            List<DashboardApiKeyRowDto> right
     ) {
-        List<Map<String, Object>> merged = new ArrayList<>(left.size() + right.size());
+        List<DashboardApiKeyRowDto> merged = new ArrayList<>(left.size() + right.size());
         int leftIndex = 0;
         int rightIndex = 0;
 
         while (leftIndex < left.size() && rightIndex < right.size()) {
-            Map<String, Object> leftRow = left.get(leftIndex);
-            Map<String, Object> rightRow = right.get(rightIndex);
+            DashboardApiKeyRowDto leftRow = left.get(leftIndex);
+            DashboardApiKeyRowDto rightRow = right.get(rightIndex);
 
             if (compareApiKeyRows(leftRow, rightRow) <= 0) {
                 merged.add(leftRow);
@@ -458,36 +444,28 @@ public class ApiKeyController {
         return merged;
     }
 
-    private static int compareApiKeyRows(Map<String, Object> leftRow, Map<String, Object> rightRow) {
+    private static int compareApiKeyRows(DashboardApiKeyRowDto leftRow, DashboardApiKeyRowDto rightRow) {
         int usageComparison = Double.compare(
-                toDouble(rightRow.get("usagePercentage")),
-                toDouble(leftRow.get("usagePercentage"))
+                rightRow.usagePercentage(),
+                leftRow.usagePercentage()
         );
         if (usageComparison != 0) {
             return usageComparison;
         }
 
         int requestCountComparison = Long.compare(
-                toLong(rightRow.get("requestCount")),
-                toLong(leftRow.get("requestCount"))
+                rightRow.requestCount(),
+                leftRow.requestCount()
         );
         if (requestCountComparison != 0) {
             return requestCountComparison;
         }
 
         return String.CASE_INSENSITIVE_ORDER.compare(
-                String.valueOf(leftRow.getOrDefault("userName", "")),
-                String.valueOf(rightRow.getOrDefault("userName", ""))
+                String.valueOf(leftRow.userName()),
+                String.valueOf(rightRow.userName())
         );
     }
 
-    private static double toDouble(Object value) {
-        return value instanceof Number number ? number.doubleValue() : 0.0;
-    }
-
-    private static long toLong(Object value) {
-        return value instanceof Number number ? number.longValue() : 0L;
-    }
-
-    private record CachedDashboardView(Map<String, Object> payload, long createdAtMs) {}
+    private record CachedDashboardView(DashboardViewResponse payload, long createdAtMs) {}
 }

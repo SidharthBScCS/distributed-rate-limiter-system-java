@@ -1,6 +1,7 @@
 package com.system.ratelimiter.controller;
 
-import java.util.Map;
+import com.system.ratelimiter.dto.PublicConfigResponse;
+import com.system.ratelimiter.dto.PublicUiDefaultsDto;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -34,15 +35,15 @@ public class PublicConfigController {
     }
 
     @GetMapping("/config")
-    public ResponseEntity<Map<String, Object>> getFrontendConfig() {
-        return ResponseEntity.ok(Map.of(
-                "grafanaDashboardUrl", grafanaDashboardUrl,
-                "refreshIntervalMs", refreshIntervalMs,
-                "allowedAlgorithms", allowedAlgorithms,
-                "defaults", Map.of(
-                        "rateLimit", defaultRateLimit,
-                        "windowSeconds", defaultWindowSeconds,
-                        "algorithm", defaultAlgorithm
+    public ResponseEntity<PublicConfigResponse> getFrontendConfig() {
+        return ResponseEntity.ok(new PublicConfigResponse(
+                grafanaDashboardUrl,
+                refreshIntervalMs,
+                allowedAlgorithms,
+                new PublicUiDefaultsDto(
+                        defaultRateLimit,
+                        defaultWindowSeconds,
+                        defaultAlgorithm
                 )
         ));
     }

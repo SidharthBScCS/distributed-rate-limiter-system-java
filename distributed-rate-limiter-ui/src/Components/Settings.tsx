@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Row, Col, Nav, Form, Button, Card } from "react-bootstrap";
 
+type SettingsTab = "profile" | "security" | "notifications";
+
 function Settings() {
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
 
   return (
     <div className="settings-page">
@@ -10,15 +12,9 @@ function Settings() {
         <Col md={3}>
           <Card className="p-3">
             <Nav className="flex-column">
-              <Nav.Link onClick={() => setActiveTab("profile")}>
-                Profile
-              </Nav.Link>
-              <Nav.Link onClick={() => setActiveTab("security")}>
-                Security
-              </Nav.Link>
-              <Nav.Link onClick={() => setActiveTab("notifications")}>
-                Notifications
-              </Nav.Link>
+              <Nav.Link onClick={() => setActiveTab("profile")}>Profile</Nav.Link>
+              <Nav.Link onClick={() => setActiveTab("security")}>Security</Nav.Link>
+              <Nav.Link onClick={() => setActiveTab("notifications")}>Notifications</Nav.Link>
             </Nav>
           </Card>
         </Col>

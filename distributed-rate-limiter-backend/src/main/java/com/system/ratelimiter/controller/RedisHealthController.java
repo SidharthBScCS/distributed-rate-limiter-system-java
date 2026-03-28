@@ -1,6 +1,6 @@
 package com.system.ratelimiter.controller;
 
-import java.util.Map;
+import com.system.ratelimiter.dto.RedisHealthResponse;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -21,21 +21,23 @@ public class RedisHealthController {
     }
 
     @GetMapping("/redis")
-    public ResponseEntity<Map<String, Object>> redisHealth() {
+    public ResponseEntity<RedisHealthResponse> redisHealth() {
         try {
             String pong = redisTemplate.execute((RedisConnection connection) -> connection.ping());
             boolean up = "PONG".equalsIgnoreCase(pong);
             HttpStatus status = up ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE;
-            return ResponseEntity.status(status).body(Map.of(
-                    "service", "redis",
-                    "status", up ? "UP" : "DOWN",
-                    "ping", pong == null ? "" : pong
+            return ResponseEntity.status(status).body(new RedisHealthResponse(
+                    "redis",
+                    up ? "UP" : "DOWN",
+                    pong == null ? "" : pong,
+                    null
             ));
         } catch (DataAccessException ex) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(
-                    "service", "redis",
-                    "status", "DOWN",
-                    "error", ex.getMostSpecificCause() == null ? ex.getMessage() : ex.getMostSpecificCause().getMessage()
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new RedisHealthResponse(
+                    "redis",
+                    "DOWN",
+                    "",
+                    ex.getMostSpecificCause() == null ? ex.getMessage() : ex.getMostSpecificCause().getMessage()
             ));
         }
     }

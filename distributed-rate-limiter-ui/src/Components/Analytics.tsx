@@ -1,8 +1,12 @@
-import React from "react";
+import { useState } from "react";
 import "../Styles/Analytics.css";
 
-function Analytics({ grafanaDashboardUrl }) {
-  const [embedBlocked, setEmbedBlocked] = React.useState(false);
+interface AnalyticsProps {
+  grafanaDashboardUrl: string;
+}
+
+function Analytics({ grafanaDashboardUrl }: AnalyticsProps) {
+  const [embedBlocked, setEmbedBlocked] = useState(false);
 
   return (
     <div className="analytics-page page-full-bleed">
@@ -23,9 +27,7 @@ function Analytics({ grafanaDashboardUrl }) {
             ) : null}
           </div>
         ) : (
-          <div className="grafana-empty">
-            Grafana dashboard URL is not configured on backend.
-          </div>
+          <div className="grafana-empty">Grafana dashboard URL is not configured on backend.</div>
         )}
       </section>
     </div>

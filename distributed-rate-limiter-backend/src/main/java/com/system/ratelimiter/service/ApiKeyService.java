@@ -1,5 +1,6 @@
 package com.system.ratelimiter.service;
 
+import com.system.ratelimiter.dto.ApiKeyStatsItemDto;
 import com.system.ratelimiter.entity.ApiKey;
 import com.system.ratelimiter.repository.ApiKeyRepository;
 import jakarta.annotation.PostConstruct;
@@ -142,16 +143,16 @@ public class ApiKeyService {
         }
     }
 
-    public java.util.List<java.util.Map<String, Object>> getApiKeyStats() {
+    public java.util.List<ApiKeyStatsItemDto> getApiKeyStats() {
         java.util.List<ApiKey> apiKeys = getAllRealKeys();
 
         return apiKeys.stream()
-                .map(apiKey -> java.util.Map.<String, Object>of(
-                        "userName", apiKey.getUserName(),
-                        "totalRequests", apiKey.getTotalRequests() == null ? 0L : apiKey.getTotalRequests(),
-                        "allowedRequests", apiKey.getAllowedRequests() == null ? 0L : apiKey.getAllowedRequests(),
-                        "blockedRequests", apiKey.getBlockedRequests() == null ? 0L : apiKey.getBlockedRequests(),
-                        "algorithm", normalizeOrDefault(apiKey.getAlgorithm(), defaultAlgorithm)
+                .map(apiKey -> new ApiKeyStatsItemDto(
+                        apiKey.getUserName(),
+                        apiKey.getTotalRequests() == null ? 0L : apiKey.getTotalRequests(),
+                        apiKey.getAllowedRequests() == null ? 0L : apiKey.getAllowedRequests(),
+                        apiKey.getBlockedRequests() == null ? 0L : apiKey.getBlockedRequests(),
+                        normalizeOrDefault(apiKey.getAlgorithm(), defaultAlgorithm)
                 ))
                 .toList();
     }

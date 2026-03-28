@@ -1,13 +1,49 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Plus, Copy, Search } from "lucide-react";
-import { apiUrl } from "../apiBase.js";
+import { apiUrl } from "../apiBase";
+import type {
+  ApiErrorResponse,
+  CreateApiKeyPayload,
+  CreatedApiKeyResponse,
+  DashboardResponse,
+  PublicUiDefaults,
+  TableQuery,
+} from "../types";
 import "../Styles/Table_Box.css";
 
-function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQuery, onTableQueryChange }) {
+interface ApiTableProps {
+  dashboardData: DashboardResponse;
+  loading: boolean;
+  defaults: PublicUiDefaults;
+  onDashboardRefresh: (force?: boolean, queryOverride?: TableQuery | null) => Promise<boolean>;
+  tableQuery: TableQuery;
+  onTableQueryChange: React.Dispatch<React.SetStateAction<TableQuery>>;
+}
+
+interface CreateFormState {
+  userName: string;
+  rateLimit: number;
+  windowSeconds: number;
+}
+
+interface SuccessModalState {
+  open: boolean;
+  apiKey: string;
+  userName: string;
+}
+
+function ApiTable({
+  dashboardData,
+  loading,
+  defaults,
+  onDashboardRefresh,
+  tableQuery,
+  onTableQueryChange,
+}: ApiTableProps) {
   const defaultRateLimit = defaults.rateLimit;
   const defaultWindowSeconds = defaults.windowSeconds;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [formState, setFormState] = useState({
+  const [formState, setFormState] = useState<CreateFormState>({
     userName: "",
     rateLimit: defaultRateLimit,
     windowSeconds: defaultWindowSeconds,
@@ -15,36 +51,25 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
   const [createError, setCreateError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedText, setCopiedText] = useState("");
-  const [successModal, setSuccessModal] = useState({
+  const [successModal, setSuccessModal] = useState<SuccessModalState>({
     open: false,
     apiKey: "",
     userName: "",
   });
 
-  const keys = dashboardData?.apiKeys ?? [];
-  const pagination = dashboardData?.pagination ?? {
-    page: 1,
-    size: 10,
-    totalItems: 0,
-    totalPages: 1,
-    filtered: false,
-    search: "",
-  };
-  const searchTerm = tableQuery?.search ?? "";
-  const currentPage = pagination.page ?? 1;
+  const keys = dashboardData.apiKeys ?? [];
+  const pagination = dashboardData.pagination;
+  const searchTerm = tableQuery.search;
+  const currentPage = pagination.page;
 
   useEffect(() => {
-    const nextSearch = pagination.search ?? "";
-    const nextPage = pagination.page ?? 1;
-    const nextSize = pagination.size ?? tableQuery?.size ?? 10;
-    if (
-      nextSearch !== (tableQuery?.search ?? "")
-      || nextPage !== (tableQuery?.page ?? 1)
-      || nextSize !== (tableQuery?.size ?? 10)
-    ) {
+    const nextSearch = pagination.search;
+    const nextPage = pagination.page;
+    const nextSize = pagination.size ?? tableQuery.size ?? 10;
+    if (nextSearch !== tableQuery.search || nextPage !== tableQuery.page || nextSize !== tableQuery.size) {
       onTableQueryChange({ search: nextSearch, page: nextPage, size: nextSize });
     }
-  }, [onTableQueryChange, pagination.page, pagination.search, pagination.size, tableQuery?.page, tableQuery?.search, tableQuery?.size]);
+  }, [onTableQueryChange, pagination.page, pagination.search, pagination.size, tableQuery.page, tableQuery.search, tableQuery.size]);
 
   useEffect(() => {
     if (!isCreateModalOpen) {
@@ -58,13 +83,9 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
 
   useEffect(() => {
     const anyModalOpen = isCreateModalOpen || successModal.open;
-    if (anyModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = anyModalOpen ? "hidden" : "";
 
-    const onKeyDown = (event) => {
+    const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (successModal.open) {
           setSuccessModal({ open: false, apiKey: "", userName: "" });
@@ -83,7 +104,7 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
     };
   }, [isCreateModalOpen, successModal.open, isSubmitting]);
 
-  const handleCopy = async (text) => {
+  const handleCopy = async (text: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedText("Copied to clipboard");
@@ -94,7 +115,7 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
     }
   };
 
-  const openCreateModal = () => {
+  const openCreateModal = (): void => {
     setCreateError("");
     setFormState({
       userName: "",
@@ -104,35 +125,35 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
     setIsCreateModalOpen(true);
   };
 
-  const closeCreateModal = () => {
+  const closeCreateModal = (): void => {
     if (isSubmitting) return;
     setIsCreateModalOpen(false);
   };
 
-  const updateField = (field, value) => {
+  const updateField = <K extends keyof CreateFormState>(field: K, value: CreateFormState[K]): void => {
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
   const totalPages = Math.max(1, pagination.totalPages ?? 1);
   const totalItems = pagination.totalItems ?? keys.length;
-  const pageSize = pagination.size ?? tableQuery?.size ?? 10;
+  const pageSize = pagination.size ?? tableQuery.size ?? 10;
   const safeCurrentPage = Math.min(currentPage, totalPages);
-  const startIndex = totalItems === 0 ? 0 : ((safeCurrentPage - 1) * pageSize) + 1;
+  const startIndex = totalItems === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
   const endIndex = Math.min(safeCurrentPage * pageSize, totalItems);
 
   if (loading) {
     return <div className="table-skeleton" />;
   }
 
-  const handleCreateApiKey = async (event) => {
+  const handleCreateApiKey = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     setCreateError("");
     setIsSubmitting(true);
 
-    const payload = {
+    const payload: CreateApiKeyPayload = {
       userName: formState.userName,
-      rateLimit: formState.rateLimit,
-      windowSeconds: formState.windowSeconds,
+      rateLimit: Number(formState.rateLimit),
+      windowSeconds: Number(formState.windowSeconds),
     };
 
     try {
@@ -146,15 +167,12 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
       });
 
       if (!response.ok) {
-        const body = await response.json();
-        const message = body.message;
-        throw new Error(message);
+        const body: ApiErrorResponse = await response.json();
+        throw new Error(body.message);
       }
-      const created = await response.json();
+      const created: CreatedApiKeyResponse = await response.json();
 
-      if (typeof onDashboardRefresh === "function") {
-        await onDashboardRefresh(true);
-      }
+      await onDashboardRefresh(true);
       setIsCreateModalOpen(false);
       setSuccessModal({
         open: true,
@@ -187,11 +205,13 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
           <input
             type="text"
             value={searchTerm}
-            onChange={(event) => onTableQueryChange({
-              ...(tableQuery ?? { size: 10 }),
-              search: event.target.value,
-              page: 1,
-            })}
+            onChange={(event) =>
+              onTableQueryChange({
+                ...tableQuery,
+                search: event.target.value,
+                page: 1,
+              })
+            }
             placeholder="Search by API key, user, status, limit, or window"
           />
         </label>
@@ -213,7 +233,7 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
           <tbody>
             {keys.length === 0 ? (
               <tr>
-                <td colSpan="7" className="empty-state">
+                <td colSpan={7} className="empty-state">
                   <div className="empty-content">
                     <h3>{totalItems === 0 && !searchTerm.trim() ? "NO API KEY FOUND" : "NO MATCHING API KEY"}</h3>
                     {totalItems === 0 && !searchTerm.trim() ? (
@@ -227,23 +247,15 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
               </tr>
             ) : (
               keys.map((key) => {
-                const statusColor = key.statusColor;
                 const usage = key.usagePercentage;
-                const usageColor = key.usageColor;
                 const fullApiKey = key.apiKey;
-                const usageLabel = key.usageLabel ?? "0%";
-                const algorithmLabel = key.algorithmLabel ?? "-";
 
                 return (
                   <tr key={key.id} className="table-row">
                     <td>
                       <div className="key-cell">
                         <code className="key-code">{fullApiKey}</code>
-                        <button
-                          className="action-btn"
-                          onClick={() => handleCopy(fullApiKey)}
-                          aria-label="Copy API key"
-                        >
+                        <button className="action-btn" onClick={() => handleCopy(fullApiKey)} aria-label="Copy API key">
                           <Copy size={14} />
                         </button>
                       </div>
@@ -252,37 +264,35 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
                       <span className="user-name">{key.userName}</span>
                     </td>
                     <td>
-                      <span className="rate-value">{key.rateLimitLabel ?? key.rateLimit}</span>
+                      <span className="rate-value">{key.rateLimitLabel}</span>
                     </td>
                     <td>
-                      <span className="window-value">{key.windowLabel ?? `${key.windowSeconds}s`}</span>
+                      <span className="window-value">{key.windowLabel}</span>
                     </td>
                     <td>
-                      <code className="algo-code">{algorithmLabel}</code>
+                      <code className="algo-code">{key.algorithmLabel}</code>
                     </td>
                     <td>
                       <div className="usage-cell">
                         <div className="usage-header">
-                          <span>{key.requestCountLabel ?? `${key.requestCount} req`}</span>
-                          <span style={{ color: usageColor }}>
-                            {usageLabel}
-                          </span>
+                          <span>{key.requestCountLabel}</span>
+                          <span style={{ color: key.usageColor }}>{key.usageLabel}</span>
                         </div>
                         <div className="usage-bar">
                           <div
                             className="usage-progress"
                             style={{
                               width: `${usage}%`,
-                              background: usageColor,
+                              background: key.usageColor,
                             }}
                           />
                         </div>
                       </div>
                     </td>
                     <td>
-                      <div className="status-cell" style={{ background: `${statusColor}22` }}>
-                        <span className="status-dot" style={{ background: statusColor }} />
-                        <span style={{ color: statusColor }}>{key.statusLabel ?? key.status}</span>
+                      <div className="status-cell" style={{ background: `${key.statusColor}22` }}>
+                        <span className="status-dot" style={{ background: key.statusColor }} />
+                        <span style={{ color: key.statusColor }}>{key.statusLabel}</span>
                       </div>
                     </td>
                   </tr>
@@ -298,10 +308,12 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
           <button
             type="button"
             className="pagination-btn"
-            onClick={() => onTableQueryChange({
-              ...(tableQuery ?? { search: "", size: pageSize }),
-              page: Math.max(1, safeCurrentPage - 1),
-            })}
+            onClick={() =>
+              onTableQueryChange({
+                ...tableQuery,
+                page: Math.max(1, safeCurrentPage - 1),
+              })
+            }
             disabled={safeCurrentPage === 1}
           >
             Previous
@@ -313,10 +325,12 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
           <button
             type="button"
             className="pagination-btn"
-            onClick={() => onTableQueryChange({
-              ...(tableQuery ?? { search: "", size: pageSize }),
-              page: Math.min(totalPages, safeCurrentPage + 1),
-            })}
+            onClick={() =>
+              onTableQueryChange({
+                ...tableQuery,
+                page: Math.min(totalPages, safeCurrentPage + 1),
+              })
+            }
             disabled={safeCurrentPage === totalPages}
           >
             Next
@@ -343,7 +357,7 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
                 <input
                   type="number"
                   value={formState.rateLimit}
-                  onChange={(event) => updateField("rateLimit", event.target.value)}
+                  onChange={(event) => updateField("rateLimit", Number(event.target.value))}
                 />
               </label>
 
@@ -352,16 +366,16 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
                 <input
                   type="number"
                   value={formState.windowSeconds}
-                  onChange={(event) => updateField("windowSeconds", event.target.value)}
+                  onChange={(event) => updateField("windowSeconds", Number(event.target.value))}
                 />
               </label>
 
               {createError ? <p className="create-error">{createError}</p> : null}
 
               <div className="modal-actions">
-              <button type="button" className="secondary-btn" onClick={closeCreateModal} disabled={isSubmitting}>
-                Cancel
-              </button>
+                <button type="button" className="secondary-btn" onClick={closeCreateModal} disabled={isSubmitting}>
+                  Cancel
+                </button>
                 <button type="submit" className="create-btn" disabled={isSubmitting}>
                   {isSubmitting ? "Creating..." : "Create API Key"}
                 </button>
@@ -408,4 +422,3 @@ function ApiTable({ dashboardData, loading, defaults, onDashboardRefresh, tableQ
 }
 
 export default ApiTable;
-

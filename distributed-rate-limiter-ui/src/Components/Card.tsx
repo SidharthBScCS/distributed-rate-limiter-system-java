@@ -1,41 +1,49 @@
-import { 
-  Activity, 
-  CheckCircle, 
+import {
+  Activity,
+  CheckCircle,
   XCircle,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  type LucideIcon,
 } from "lucide-react";
+import type { DashboardStats } from "../types";
 import "../Styles/Cards.css";
 
-function StatsCards({ stats, loading }) {
+interface StatsCardsProps {
+  stats: DashboardStats;
+  loading: boolean;
+}
+
+function StatsCards({ stats, loading }: StatsCardsProps) {
+  const iconByKey: Record<string, LucideIcon> = {
+    activity: Activity,
+    "check-circle": CheckCircle,
+    "x-circle": XCircle,
+  };
+
   const cards = (stats?.cards ?? []).map((card) => ({
     ...card,
-    icon:
-      card.title === "Total Requests"
-        ? Activity
-        : card.title === "Allowed"
-          ? CheckCircle
-          : XCircle,
+    icon: iconByKey[card.iconKey] ?? Activity,
   }));
 
   if (loading) {
     return (
       <div className="cards-skeleton">
-        <div></div>
-        <div></div>
-        <div></div>
+        <div />
+        <div />
+        <div />
       </div>
     );
   }
 
   return (
     <div className="stats-grid">
-      {cards.map((card, index) => {
+      {cards.map((card) => {
         const Icon = card.icon;
         const formattedValue = card.valueLabel ?? "-";
 
         return (
-          <div key={index} className="stat-card">
+          <div key={`${card.title}-${card.iconKey}`} className="stat-card">
             <div className="card-header">
               <div className="card-icon-wrapper">
                 <Icon size={20} color={card.color} />
@@ -50,11 +58,7 @@ function StatsCards({ stats, loading }) {
 
             <div className="card-footer">
               <div className={`trend-badge ${card.trend}`}>
-                {card.trend === "up" ? (
-                  <TrendingUp size={14} />
-                ) : (
-                  <TrendingDown size={14} />
-                )}
+                {card.trend === "up" ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                 <span>{card.changeLabel}</span>
               </div>
             </div>

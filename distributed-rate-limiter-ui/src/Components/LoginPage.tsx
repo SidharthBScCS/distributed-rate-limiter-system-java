@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Eye, EyeOff, AlertCircle, Shield, Lock } from "lucide-react";
 import { apiUrl } from "../apiBase";
+import type { ApiErrorResponse, LoginResponse } from "../types";
 import "../Styles/LoginPage.css";
 
 function LoginPage() {
@@ -10,8 +11,8 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault();
     setError("");
     setIsSubmitting(true);
 
@@ -23,16 +24,16 @@ function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await response.json();
+      const data: LoginResponse | ApiErrorResponse = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Access denied");
+        throw new Error("message" in data ? data.message || "Access denied" : "Access denied");
       }
 
       window.dispatchEvent(new Event("auth-changed"));
       window.location.assign("/dashboard");
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Access denied");
     } finally {
       setIsSubmitting(false);
     }
@@ -100,7 +101,7 @@ function LoginPage() {
                   id="username"
                   type="text"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(event) => setUsername(event.target.value)}
                   placeholder="ENTER USERNAME"
                   autoComplete="username"
                 />
@@ -114,7 +115,7 @@ function LoginPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(event) => setPassword(event.target.value)}
                   placeholder="ENTER PASSWORD"
                   autoComplete="current-password"
                 />

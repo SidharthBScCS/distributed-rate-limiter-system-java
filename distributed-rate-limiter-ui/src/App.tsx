@@ -1,34 +1,73 @@
-import Sidebar from "../src/Components/Sidebar";
-import StatsCards from "../src/Components/Card";
-import ApiTable from "../src/Components/Table_Box";
-import Analytics from "../src/Components/Analytics";
-import LoginPage from "../src/Components/LoginPage";
 import { useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import Sidebar from "./Components/Sidebar";
+import StatsCards from "./Components/Card";
+import ApiTable from "./Components/Table_Box";
+import Analytics from "./Components/Analytics";
+import LoginPage from "./Components/LoginPage";
 import { apiUrl } from "./apiBase";
+import type {
+  ApiErrorResponse,
+  DashboardAlertEvent,
+  DashboardPagination,
+  DashboardResponse,
+  DashboardStats,
+  PublicConfig,
+  TableQuery,
+  ToastItem,
+} from "./types";
 import "./App.css";
+
+const DEFAULT_PAGINATION: DashboardPagination = {
+  page: 1,
+  size: 10,
+  totalItems: 0,
+  totalPages: 1,
+  filtered: false,
+  search: "",
+};
+
+const DEFAULT_DASHBOARD_STATS: DashboardStats = {
+  totalRequests: 0,
+  totalRequestsLabel: "0",
+  allowedRequests: 0,
+  allowedRequestsLabel: "0",
+  blockedRequests: 0,
+  blockedRequestsLabel: "0",
+  totalPercent: 0,
+  allowedPercent: 0,
+  blockedPercent: 0,
+  cards: [],
+};
+
+const DEFAULT_DASHBOARD_RESPONSE: DashboardResponse = {
+  stats: DEFAULT_DASHBOARD_STATS,
+  apiKeys: [],
+  pagination: DEFAULT_PAGINATION,
+  sources: {
+    postgres: "",
+    redis: "",
+  },
+  generatedAt: "",
+};
 
 function App() {
   const location = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [uiConfig, setUiConfig] = useState(null);
+  const [uiConfig, setUiConfig] = useState<PublicConfig | null>(null);
   const [configError, setConfigError] = useState("");
-  const [dashboardData, setDashboardData] = useState({
-    stats: {},
-    apiKeys: [],
-    pagination: { page: 1, size: 10, totalItems: 0, totalPages: 1, filtered: false, search: "" },
-  });
+  const [dashboardData, setDashboardData] = useState<DashboardResponse>(DEFAULT_DASHBOARD_RESPONSE);
   const [dashboardLoading, setDashboardLoading] = useState(true);
-  const [tableQuery, setTableQuery] = useState({ search: "", page: 1, size: 10 });
-  const [toasts, setToasts] = useState([]);
+  const [tableQuery, setTableQuery] = useState<TableQuery>({ search: "", page: 1, size: 10 });
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
   const dashboardRequestInFlightRef = useRef(false);
   const lastDashboardLoadAtRef = useRef(0);
   const isAnalyticsPage = location.pathname === "/analytics";
   const isFullWidthPage = location.pathname === "/login";
   const showSidebar = !isFullWidthPage;
 
-  const loadDashboardData = async (force = false, queryOverride = null) => {
+  const loadDashboardData = async (force = false, queryOverride: TableQuery | null = null): Promise<boolean> => {
     if (isFullWidthPage) {
       return false;
     }
@@ -47,7 +86,7 @@ function App() {
         page: String(query.page ?? 1),
         size: String(query.size ?? 10),
       });
-      if (query.search?.trim()) {
+      if (query.search.trim()) {
         params.set("search", query.search.trim());
       }
 
@@ -61,11 +100,13 @@ function App() {
         }
         return false;
       }
-      const data = await response.json();
+      const data: DashboardResponse = await response.json();
       setDashboardData({
-        stats: data?.stats ?? {},
+        stats: data?.stats ?? DEFAULT_DASHBOARD_STATS,
         apiKeys: data?.apiKeys ?? [],
-        pagination: data?.pagination ?? { page: 1, size: 10, totalItems: 0, totalPages: 1, filtered: false, search: "" },
+        pagination: data?.pagination ?? DEFAULT_PAGINATION,
+        sources: data?.sources ?? DEFAULT_DASHBOARD_RESPONSE.sources,
+        generatedAt: data?.generatedAt ?? "",
       });
       lastDashboardLoadAtRef.current = Date.now();
       return true;
@@ -77,7 +118,7 @@ function App() {
     }
   };
 
-  const loadUiConfig = async () => {
+  const loadUiConfig = async (): Promise<boolean> => {
     try {
       const response = await fetch(apiUrl("/api/config"), {
         credentials: "include",
@@ -90,7 +131,7 @@ function App() {
         setConfigError(`Failed to load backend config (HTTP ${response.status}).`);
         return false;
       }
-      const data = await response.json();
+      const data: PublicConfig = await response.json();
       setUiConfig(data);
       setConfigError("");
       return true;
@@ -105,7 +146,7 @@ function App() {
       return undefined;
     }
     const configTimeoutId = window.setTimeout(() => {
-      loadUiConfig();
+      void loadUiConfig();
     }, 0);
     return () => {
       window.clearTimeout(configTimeoutId);
@@ -114,8 +155,8 @@ function App() {
 
   useEffect(() => {
     const onAuthChanged = () => {
-      loadUiConfig();
-      loadDashboardData();
+      void loadUiConfig();
+      void loadDashboardData();
     };
     window.addEventListener("auth-changed", onAuthChanged);
     return () => window.removeEventListener("auth-changed", onAuthChanged);
@@ -125,11 +166,10 @@ function App() {
     if (isFullWidthPage || !uiConfig) {
       return undefined;
     }
-    loadDashboardData(true);
+    void loadDashboardData(true);
     return undefined;
   }, [isFullWidthPage, uiConfig, tableQuery]);
 
-  // Refresh data periodically
   useEffect(() => {
     if (isFullWidthPage || !uiConfig) {
       return undefined;
@@ -138,11 +178,12 @@ function App() {
     const source = new EventSource(apiUrl("/api/stream/dashboard"), { withCredentials: true });
 
     const onTick = () => {
-      loadDashboardData();
+      void loadDashboardData();
     };
-    const onAlert = (event) => {
+
+    const onAlert = (event: MessageEvent<string>) => {
       try {
-        const payload = JSON.parse(event.data);
+        const payload: DashboardAlertEvent = JSON.parse(event.data);
         if (!payload?.id) {
           return;
         }
@@ -150,7 +191,7 @@ function App() {
           if (current.some((toast) => toast.id === payload.id)) {
             return current;
           }
-          const next = [
+          const next: ToastItem[] = [
             ...current,
             {
               id: payload.id,
@@ -169,14 +210,14 @@ function App() {
     };
 
     source.addEventListener("tick", onTick);
-    source.addEventListener("alert", onAlert);
+    source.addEventListener("alert", onAlert as EventListener);
     source.onerror = () => {
       source.close();
     };
 
     return () => {
       source.removeEventListener("tick", onTick);
-      source.removeEventListener("alert", onAlert);
+      source.removeEventListener("alert", onAlert as EventListener);
       source.close();
     };
   }, [isFullWidthPage, uiConfig]);
@@ -196,7 +237,7 @@ function App() {
             type="button"
             className="mobile-nav-toggle"
             aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
-            onClick={() => setMobileNavOpen((v) => !v)}
+            onClick={() => setMobileNavOpen((value) => !value)}
           >
             {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -216,69 +257,57 @@ function App() {
             </div>
           </div>
         ) : (
-        <Routes>
-          <Route
-            path="/"
-            element={<Navigate to="/dashboard" replace />}
-          />
-          
-          <Route
-            path="/login"
-            element={<LoginPage />}
-          />
-          
-          <Route
-            path="/dashboard"
-            element={
-              !uiConfig ? (
-                <div className="page-container">
-                  <div className="analytics-empty-state">
-                    <p>{configError || "Loading configuration..."}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="dashboard-page">
-                  <div className="dashboard-content">
-                    <StatsCards
-                      stats={dashboardData.stats}
-                      loading={dashboardLoading}
-                    />
-                    <ApiTable
-                      dashboardData={dashboardData}
-                      loading={dashboardLoading}
-                      defaults={uiConfig.defaults}
-                      onDashboardRefresh={loadDashboardData}
-                      tableQuery={tableQuery}
-                      onTableQueryChange={setTableQuery}
-                    />
-                  </div>
-                </div>
-              )
-            }
-          />
-          
-          <Route
-            path="/analytics"
-            element={
-              !uiConfig ? (
-                <div className="page-container">
-                  <div className="analytics-empty-state">
-                    <p>{configError || "Loading configuration..."}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="page-container analytics-page-container">
-                  <Analytics grafanaDashboardUrl={uiConfig.grafanaDashboardUrl} />
-                </div>
-              )
-            }
-          />
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-          <Route
-            path="*"
-            element={<Navigate to="/dashboard" replace />}
-          />
-        </Routes>
+            <Route path="/login" element={<LoginPage />} />
+
+            <Route
+              path="/dashboard"
+              element={
+                !uiConfig ? (
+                  <div className="page-container">
+                    <div className="analytics-empty-state">
+                      <p>{configError || "Loading configuration..."}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="dashboard-page">
+                    <div className="dashboard-content">
+                      <StatsCards stats={dashboardData.stats} loading={dashboardLoading} />
+                      <ApiTable
+                        dashboardData={dashboardData}
+                        loading={dashboardLoading}
+                        defaults={uiConfig.defaults}
+                        onDashboardRefresh={loadDashboardData}
+                        tableQuery={tableQuery}
+                        onTableQueryChange={setTableQuery}
+                      />
+                    </div>
+                  </div>
+                )
+              }
+            />
+
+            <Route
+              path="/analytics"
+              element={
+                !uiConfig ? (
+                  <div className="page-container">
+                    <div className="analytics-empty-state">
+                      <p>{configError || "Loading configuration..."}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="page-container analytics-page-container">
+                    <Analytics grafanaDashboardUrl={uiConfig.grafanaDashboardUrl} />
+                  </div>
+                )
+              }
+            />
+
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
         )}
       </div>
 
