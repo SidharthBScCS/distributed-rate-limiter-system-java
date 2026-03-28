@@ -14,7 +14,7 @@ function ApiTable({
   const defaultRateLimit = defaults.rateLimit;
   const defaultWindowSeconds = defaults.windowSeconds;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [formState, setFormState] = useState<CreateFormState>({
+  const [formState, setFormState] = useState({
     userName: "",
     rateLimit: defaultRateLimit,
     windowSeconds: defaultWindowSeconds,

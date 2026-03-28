@@ -10,7 +10,9 @@ import com.system.ratelimiter.service.DecisionAuditService;
 import com.system.ratelimiter.service.DistributedRateLimiterService;
 import com.system.ratelimiter.service.RequestStatsService;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -138,13 +140,13 @@ class ApiKeyControllerTest {
         stats.setTotalRequests(15L);
         stats.setAllowedRequests(12L);
         stats.setBlockedRequests(3L);
+        Map<String, DistributedRateLimiterService.DashboardLiveSnapshot> liveSnapshots = new LinkedHashMap<>();
+        liveSnapshots.put("key-alpha", new DistributedRateLimiterService.DashboardLiveSnapshot("Normal", 4L));
+        liveSnapshots.put("key-beta", new DistributedRateLimiterService.DashboardLiveSnapshot("Blocked", 8L));
 
         when(requestStatsService.snapshot()).thenReturn(stats);
         when(apiKeyService.getAllRealKeys()).thenReturn(List.of(alpha, beta));
-        when(distributedRateLimiterService.resolveCurrentWindowRequestCount(alpha)).thenReturn(4L);
-        when(distributedRateLimiterService.resolveCurrentWindowRequestCount(beta)).thenReturn(8L);
-        when(distributedRateLimiterService.resolveCurrentStatus(alpha)).thenReturn("Normal");
-        when(distributedRateLimiterService.resolveCurrentStatus(beta)).thenReturn("Blocked");
+        when(distributedRateLimiterService.snapshotDashboardState(List.of(alpha, beta))).thenReturn(liveSnapshots);
 
         ResponseEntity<DashboardViewResponse> response = controller.getDashboardView("beta", 1, 1);
 

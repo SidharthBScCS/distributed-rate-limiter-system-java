@@ -104,6 +104,7 @@ public class ApiKeyController {
     private DashboardViewResponse buildDashboardView(String search, int page, int size) {
         RequestStats statsSnapshot = requestStatsService.snapshot();
         List<ApiKey> allKeys = apiKeyService.getAllRealKeys();
+        var liveSnapshots = distributedRateLimiterService.snapshotDashboardState(allKeys);
         long total = statsSnapshot.getTotalRequests() == null ? 0L : statsSnapshot.getTotalRequests();
         long allowed = statsSnapshot.getAllowedRequests() == null ? 0L : statsSnapshot.getAllowedRequests();
         long blocked = statsSnapshot.getBlockedRequests() == null ? 0L : statsSnapshot.getBlockedRequests();
@@ -118,10 +119,14 @@ public class ApiKeyController {
 
         List<DashboardApiKeyRowDto> apiKeys = allKeys.stream()
                 .map(apiKey -> {
-                    long requestCount = distributedRateLimiterService.resolveCurrentWindowRequestCount(apiKey);
+                    var liveSnapshot = liveSnapshots.getOrDefault(
+                            apiKey.getApiKey(),
+                            new DistributedRateLimiterService.DashboardLiveSnapshot("Normal", 0L)
+                    );
+                    long requestCount = liveSnapshot.requestCount();
                     int rateLimit = apiKey.getRateLimit() == null || apiKey.getRateLimit() <= 0 ? 1 : apiKey.getRateLimit();
                     double usagePercentage = Math.min((requestCount * 100.0) / rateLimit, 100.0);
-                    String status = distributedRateLimiterService.resolveCurrentStatus(apiKey);
+                    String status = liveSnapshot.status();
                     return new DashboardApiKeyRowDto(
                             apiKey.getId(),
                             apiKey.getApiKey(),

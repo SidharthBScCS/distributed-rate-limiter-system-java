@@ -4,11 +4,14 @@ import com.system.ratelimiter.dto.DecisionAuditEntry;
 import com.system.ratelimiter.entity.ApiKey;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.RedisSystemException;
+import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -211,6 +214,56 @@ public class DistributedRateLimiterService {
         return Math.max(0L, currentWindowCount(apiKey.getApiKey(), windowMs(apiKey)));
     }
 
+    public Map<String, DashboardLiveSnapshot> snapshotDashboardState(List<ApiKey> apiKeys) {
+        if (apiKeys == null || apiKeys.isEmpty()) {
+            return Map.of();
+        }
+
+        List<ApiKey> validKeys = apiKeys.stream()
+                .filter(apiKey -> apiKey != null && apiKey.getApiKey() != null && !apiKey.getApiKey().isBlank())
+                .toList();
+        if (validKeys.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Object> pipelineResults;
+        try {
+            pipelineResults = redisTemplate.executePipelined((SessionCallback<Object>) operations -> {
+                long now = System.currentTimeMillis();
+                for (ApiKey apiKey : validKeys) {
+                    String apiKeyValue = apiKey.getApiKey();
+                    operations.hasKey(blockMarkerKey(apiKeyValue));
+                    operations.opsForZSet().count(
+                            globalWindowKey(apiKeyValue),
+                            Math.max(0L, now - Math.max(1L, windowMs(apiKey))),
+                            Double.POSITIVE_INFINITY
+                    );
+                }
+                return null;
+            });
+        } catch (Exception ex) {
+            Map<String, DashboardLiveSnapshot> fallback = new LinkedHashMap<>();
+            for (ApiKey apiKey : validKeys) {
+                fallback.put(apiKey.getApiKey(), new DashboardLiveSnapshot(
+                        resolveCurrentStatus(apiKey),
+                        resolveCurrentWindowRequestCount(apiKey)
+                ));
+            }
+            return fallback;
+        }
+
+        Map<String, DashboardLiveSnapshot> snapshots = new LinkedHashMap<>();
+        int index = 0;
+        for (ApiKey apiKey : validKeys) {
+            Object statusResult = index < pipelineResults.size() ? pipelineResults.get(index++) : null;
+            Object countResult = index < pipelineResults.size() ? pipelineResults.get(index++) : null;
+            String status = isTruthy(statusResult) ? STATUS_BLOCKED : STATUS_NORMAL;
+            long requestCount = Math.max(0L, toLong(countResult));
+            snapshots.put(apiKey.getApiKey(), new DashboardLiveSnapshot(status, requestCount));
+        }
+        return snapshots;
+    }
+
     private boolean hasActiveBlockMarker(String apiKeyValue) {
         try {
             return Boolean.TRUE.equals(redisTemplate.hasKey(blockMarkerKey(apiKeyValue)));
@@ -248,6 +301,30 @@ public class DistributedRateLimiterService {
         return Math.max(1, apiKey.getWindowSeconds() == null ? 60 : apiKey.getWindowSeconds()) * 1000L;
     }
 
+    private boolean isTruthy(Object value) {
+        if (value instanceof Boolean bool) {
+            return bool;
+        }
+        if (value instanceof Number number) {
+            return number.longValue() > 0L;
+        }
+        return value != null && Boolean.parseBoolean(String.valueOf(value));
+    }
+
+    private long toLong(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value == null) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return 0L;
+        }
+    }
+
     private String normalizeRoute(String route) {
         String value = route == null ? "global" : route.trim().toLowerCase(Locale.ROOT);
         if (value.isEmpty()) {
@@ -267,5 +344,10 @@ public class DistributedRateLimiterService {
             long remainingRequests,
             Instant evaluatedAt,
             String route
+    ) {}
+
+    public record DashboardLiveSnapshot(
+            String status,
+            long requestCount
     ) {}
 }
