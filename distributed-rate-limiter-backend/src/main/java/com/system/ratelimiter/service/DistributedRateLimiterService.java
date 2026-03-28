@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.RedisSystemException;
+import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -228,7 +229,7 @@ public class DistributedRateLimiterService {
 
         List<Object> pipelineResults;
         try {
-            pipelineResults = redisTemplate.executePipelined((SessionCallback<Object>) operations -> {
+            pipelineResults = redisTemplate.executePipelined((SessionCallback<Object>) (RedisOperations<String, String> operations) -> {
                 long now = System.currentTimeMillis();
                 for (ApiKey apiKey : validKeys) {
                     String apiKeyValue = apiKey.getApiKey();
