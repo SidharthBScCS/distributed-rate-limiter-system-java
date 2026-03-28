@@ -20,6 +20,8 @@
   --danger: #ff6f91;
   --warning: #ffc857;
   --shadow-panel: 0 24px 60px rgba(0, 0, 0, 0.42);
+  --transition-smooth: 220ms ease;
+  --transition-slow: 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 * {
@@ -50,6 +52,35 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  position: relative;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: auto;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(18px);
+}
+
+body::before {
+  top: -120px;
+  right: 6%;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(83, 183, 255, 0.16), transparent 68%);
+}
+
+body::after {
+  left: -120px;
+  bottom: -80px;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(69, 255, 211, 0.14), transparent 66%);
 }
 
 .right-content {
@@ -57,7 +88,7 @@ body {
   height: 100vh;
   min-height: 100vh;
   overflow-y: auto;
-  padding: 28px;
+  padding: 30px 30px 36px;
 }
 
 .right-content.full-width {
@@ -87,9 +118,10 @@ body {
 
 .dashboard-content {
   display: grid;
-  gap: 22px;
-  padding-top: 6px;
+  gap: 24px;
+  padding-top: 8px;
   padding-bottom: 28px;
+  animation: fadeSlideIn var(--transition-slow) both;
 }
 
 .analytics-empty-state {
@@ -143,6 +175,7 @@ body {
 .mobile-nav-overlay.open {
   opacity: 1;
   pointer-events: auto;
+  transition: opacity var(--transition-smooth);
 }
 
 .toast-stack {
@@ -161,6 +194,7 @@ body {
   border: 1px solid transparent;
   box-shadow: 0 18px 36px rgba(1, 4, 9, 0.34);
   backdrop-filter: blur(8px);
+  animation: toastIn 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .app-toast strong {
@@ -192,6 +226,28 @@ body {
 ::-webkit-scrollbar-thumb {
   background: rgba(69, 255, 211, 0.34);
   border-radius: 999px;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @media (max-width: 1024px) {
