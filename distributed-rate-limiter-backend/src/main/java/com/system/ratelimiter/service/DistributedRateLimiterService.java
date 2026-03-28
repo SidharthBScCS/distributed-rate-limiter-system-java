@@ -229,18 +229,21 @@ public class DistributedRateLimiterService {
 
         List<Object> pipelineResults;
         try {
-            pipelineResults = redisTemplate.executePipelined((SessionCallback<Object>) (RedisOperations<String, String> operations) -> {
-                long now = System.currentTimeMillis();
-                for (ApiKey apiKey : validKeys) {
-                    String apiKeyValue = apiKey.getApiKey();
-                    operations.hasKey(blockMarkerKey(apiKeyValue));
-                    operations.opsForZSet().count(
-                            globalWindowKey(apiKeyValue),
-                            Math.max(0L, now - Math.max(1L, windowMs(apiKey))),
-                            Double.POSITIVE_INFINITY
-                    );
+            pipelineResults = redisTemplate.executePipelined(new SessionCallback<>() {
+                @Override
+                public Object execute(RedisOperations operations) {
+                    long now = System.currentTimeMillis();
+                    for (ApiKey apiKey : validKeys) {
+                        String apiKeyValue = apiKey.getApiKey();
+                        operations.hasKey(blockMarkerKey(apiKeyValue));
+                        operations.opsForZSet().count(
+                                globalWindowKey(apiKeyValue),
+                                Math.max(0L, now - Math.max(1L, windowMs(apiKey))),
+                                Double.POSITIVE_INFINITY
+                        );
+                    }
+                    return null;
                 }
-                return null;
             });
         } catch (Exception ex) {
             Map<String, DashboardLiveSnapshot> fallback = new LinkedHashMap<>();
