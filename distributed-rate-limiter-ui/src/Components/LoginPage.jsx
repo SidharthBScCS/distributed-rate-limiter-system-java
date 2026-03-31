@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, EyeOff, AlertCircle, Shield, Lock } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, Lock } from "lucide-react";
 import { apiUrl } from "../apiBase.js";
 import "../Styles/LoginPage.css";
 
@@ -9,6 +9,7 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -39,89 +40,68 @@ function LoginPage() {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-noise" />
-      <div className="login-scanlines" />
-
-      <div className="login-code login-code--left" aria-hidden="true">
-        <span>0040BC41</span>
-        <span>apiKey.lookup()</span>
-        <span>traffic.audit()</span>
-        <span>REQUEST DETECTED</span>
-        <span>window=60s</span>
-        <span>blocked=FALSE</span>
-        <span>limit.status=OK</span>
-        <span>redis.sync()</span>
-        <span>cluster.node()</span>
-        <span>operator.auth()</span>
-      </div>
-
-      <div className="login-code login-code--right" aria-hidden="true">
-        <span>TRACE ENABLED</span>
-        <span>sliding_window()</span>
-        <span>policy=ACTIVE</span>
-        <span>alert=NONE</span>
-        <span>shield=ONLINE</span>
-        <span>analytics.ready()</span>
-        <span>session.secure()</span>
-        <span>rate_limit.enforce()</span>
-        <span>throughput=HIGH</span>
-        <span>access.console()</span>
-      </div>
-
-      <div className="login-terminal">
-        <div className="terminal-header">
-          <div className="terminal-brand">
-            <Shield size={15} />
-            <span>Distributed Rate Limiter</span>
-          </div>
-          <span className="terminal-status">secure console</span>
-        </div>
-
-        <div className="terminal-panel">
-          <div className="terminal-title-block">
-            <span className="terminal-kicker">administrator authentication required</span>
-            <h1>ENTER PASSWORD</h1>
-            <p>Authenticate to access the rate limiting control system.</p>
+    <div className="login-page">
+      <div className="login-card">
+        <div className="card-content">
+          {/* Logo / product badge */}
+          <div className="product-badge">
+            <div className="badge-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <span className="product-name">Rate Limiter</span>
           </div>
 
-          {error ? (
-            <div className="error-message">
-              <AlertCircle size={16} />
+          {/* Headings */}
+          <div className="heading-group">
+            <h1>Sign in to your account</h1>
+            <p className="subhead">Manage your API rate limits efficiently</p>
+          </div>
+
+          {/* Error message */}
+          {error && (
+            <div className="error-alert">
+              <AlertCircle size={18} />
               <span>{error}</span>
             </div>
-          ) : null}
+          )}
 
-          <form className="login-form" onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="username">Operator ID</label>
+          {/* Form – all original handlers preserved */}
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="input-field">
+              <label htmlFor="username">Username</label>
               <div className="input-wrapper">
                 <input
                   id="username"
                   type="text"
                   value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  placeholder="ENTER USERNAME"
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g., operator@rate-limiter"
                   autoComplete="username"
+                  required
                 />
               </div>
             </div>
 
-            <div className="form-group">
+            <div className="input-field">
               <label htmlFor="password">Password</label>
               <div className="input-wrapper">
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="ENTER PASSWORD"
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="················"
                   autoComplete="current-password"
+                  required
                 />
                 <button
                   type="button"
                   className="password-toggle"
-                  onClick={() => setShowPassword((value) => !value)}
+                  onClick={() => setShowPassword((prev) => !prev)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -129,24 +109,39 @@ function LoginPage() {
               </div>
             </div>
 
-            <div className="login-links">
-              <span className="login-link-muted">
-                <Lock size={12} />
-                session protected
-              </span>
+            {/* Extras: remember me + forgot password */}
+            <div className="form-extras">
+              <label className="remember-checkbox">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <span>Remember me</span>
+              </label>
+              <a href="#" className="forgot-link" onClick={(e) => e.preventDefault()}>
+                Forgot password?
+              </a>
             </div>
 
+            {/* Submit button – loading state preserved */}
             <button type="submit" className="submit-btn" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <span className="spinner" />
-                  AUTHENTICATING
+                  <span className="spinner"></span>
+                  Signing in...
                 </>
               ) : (
-                "INITIALIZE ACCESS"
+                "Sign in"
               )}
             </button>
           </form>
+
+          {/* subtle footer */}
+          <div className="login-footer">
+            <Lock size={12} />
+            <span>Secure, encrypted session</span>
+          </div>
         </div>
       </div>
     </div>
