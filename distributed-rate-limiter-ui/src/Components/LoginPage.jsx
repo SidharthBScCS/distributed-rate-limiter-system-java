@@ -9,7 +9,6 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -27,13 +26,13 @@ function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Access denied");
+        throw new Error(data.message || "Authentication failed");
       }
 
       window.dispatchEvent(new Event("auth-changed"));
       window.location.assign("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Access denied");
+      setError(err instanceof Error ? err.message : "Authentication failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -43,33 +42,30 @@ function LoginPage() {
     <div className="login-page">
       <div className="login-card">
         <div className="card-content">
-          {/* Logo / product badge */}
-          <div className="product-badge">
+
+          {/* System Identity */}
+          <div className="system-header">
             <div className="badge-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <Lock size={16} />
             </div>
-            <span className="product-name">Rate Limiter</span>
+            <span className="system-name">API Rate Limiter</span>
           </div>
 
-          {/* Headings */}
+          {/* Heading */}
           <div className="heading-group">
-            <h1>Sign in to your account</h1>
-            <p className="subhead">Manage your API rate limits efficiently</p>
+            <h1>Admin Access</h1>
+            <p className="subhead">Authorized personnel only</p>
           </div>
 
-          {/* Error message */}
+          {/* Error */}
           {error && (
             <div className="error-alert">
-              <AlertCircle size={18} />
+              <AlertCircle size={16} />
               <span>{error}</span>
             </div>
           )}
 
-          {/* Form – all original handlers preserved */}
+          {/* Form */}
           <form className="auth-form" onSubmit={handleSubmit}>
             <div className="input-field">
               <label htmlFor="username">Username</label>
@@ -79,7 +75,6 @@ function LoginPage() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g., operator@rate-limiter"
                   autoComplete="username"
                   required
                 />
@@ -94,54 +89,37 @@ function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="················"
                   autoComplete="current-password"
                   required
+                  autoFocus
                 />
                 <button
                   type="button"
                   className="password-toggle"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
-            {/* Extras: remember me + forgot password */}
-            <div className="form-extras">
-              <label className="remember-checkbox">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                <span>Remember me</span>
-              </label>
-              <a href="#" className="forgot-link" onClick={(e) => e.preventDefault()}>
-                Forgot password?
-              </a>
-            </div>
-
-            {/* Submit button – loading state preserved */}
             <button type="submit" className="submit-btn" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <span className="spinner"></span>
-                  Signing in...
+                  Authenticating...
                 </>
               ) : (
-                "Sign in"
+                "Enter System"
               )}
             </button>
           </form>
 
-          {/* subtle footer */}
+          {/* Footer */}
           <div className="login-footer">
-            <Lock size={12} />
-            <span>Secure, encrypted session</span>
+            <span>Secure session enforced</span>
           </div>
+
         </div>
       </div>
     </div>
