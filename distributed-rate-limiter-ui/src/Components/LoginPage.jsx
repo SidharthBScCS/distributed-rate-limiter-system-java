@@ -43,12 +43,23 @@ function LoginPage() {
   return (
     <div className="login-container">
 
-      {/* LEFT PANEL */}
       <div className="left-panel">
         <div className="left-content">
-          <div className="logo-shape"></div>
-          <h2>RateLimiter</h2>
-          <p>API Traffic Control System</p>
+
+          <div className="logo-row">
+            <div className="logo-shape"></div>
+              <h2>RateLimiter</h2>
+          </div>
+
+          <div className="system-info">
+            <h3>API Traffic Control</h3>
+            <p>Secure rate limiting and traffic governance for distributed systems.</p>
+          </div>
+
+          <div className="status-badge">
+            ● System Secure
+          </div>
+
         </div>
       </div>
 
