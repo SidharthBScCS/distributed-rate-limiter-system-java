@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, EyeOff, AlertCircle, Lock } from "lucide-react";
+import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { apiUrl } from "../apiBase.js";
 import "../Styles/LoginPage.css";
 
@@ -39,25 +39,26 @@ function LoginPage() {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <div className="card-content">
+    <div className="login-container">
 
-          {/* System Identity */}
-          <div className="system-header">
-            <div className="badge-icon">
-              <Lock size={16} />
-            </div>
-            <span className="system-name">API Rate Limiter</span>
-          </div>
+      {/* LEFT PANEL */}
+      <div className="left-panel">
+        <div className="brand">
+          <div className="logo-shape"></div>
+          <h2>RateLimiter</h2>
+        </div>
+      </div>
 
-          {/* Heading */}
-          <div className="heading-group">
-            <h1>Admin Access</h1>
-            <p className="subhead">Authorized personnel only</p>
-          </div>
+      {/* DIVIDER */}
+      <div className="divider"></div>
 
-          {/* Error */}
+      {/* RIGHT PANEL */}
+      <div className="right-panel">
+        <div className="form-wrapper">
+
+          <h1>Welcome</h1>
+          <p className="subtitle">Admin access to dashboard</p>
+
           {error && (
             <div className="error-alert">
               <AlertCircle size={16} />
@@ -65,60 +66,43 @@ function LoginPage() {
             </div>
           )}
 
-          {/* Form */}
-          <form className="auth-form" onSubmit={handleSubmit}>
-            <div className="input-field">
-              <label htmlFor="username">Username</label>
-              <div className="input-wrapper">
-                <input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  required
-                />
-              </div>
+          <form onSubmit={handleSubmit} className="auth-form">
+
+            <input
+              id="username"
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
+              required
+            />
+
+            <div className="password-field">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label="Toggle password visibility"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
 
-            <div className="input-field">
-              <label htmlFor="password">Password</label>
-              <div className="input-wrapper">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
-                  autoFocus
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            <button type="submit" className="submit-btn" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <span className="spinner"></span>
-                  Authenticating...
-                </>
-              ) : (
-                "Enter System"
-              )}
+            <button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Authenticating..." : "Login"}
             </button>
-          </form>
 
-          {/* Footer */}
-          <div className="login-footer">
-            <span>Secure session enforced</span>
-          </div>
+          </form>
 
         </div>
       </div>
