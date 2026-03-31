@@ -12,6 +12,8 @@ function LoginPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
+
     setError("");
     setIsSubmitting(true);
 
@@ -23,16 +25,16 @@ function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await response.json();
+      
 
       if (!response.ok) {
-        throw new Error(data.message || "Authentication failed");
+        throw new Error("Authentication failed");
       }
 
       window.dispatchEvent(new Event("auth-changed"));
       window.location.assign("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Authentication failed");
+      setError(err.message || "Authentication failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -43,9 +45,10 @@ function LoginPage() {
 
       {/* LEFT PANEL */}
       <div className="left-panel">
-        <div className="brand">
+        <div className="left-content">
           <div className="logo-shape"></div>
           <h2>RateLimiter</h2>
+          <p>API Traffic Control System</p>
         </div>
       </div>
 
@@ -54,10 +57,10 @@ function LoginPage() {
 
       {/* RIGHT PANEL */}
       <div className="right-panel">
-        <div className="form-wrapper">
+        <div className={`form-wrapper ${isSubmitting ? "loading" : ""}`}>
 
-          <h1>Welcome</h1>
-          <p className="subtitle">Admin access to dashboard</p>
+          <h1>Admin Access</h1>
+          <p className="subtitle">Restricted system • Authorized only</p>
 
           {error && (
             <div className="error-alert">
@@ -74,6 +77,7 @@ function LoginPage() {
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              autoFocus
               autoComplete="username"
               required
             />
@@ -92,13 +96,18 @@ function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
+                aria-label="Toggle password visibility"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
 
             <button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Authenticating..." : "Login"}
+              {isSubmitting ? (
+                <span className="spinner"></span>
+              ) : (
+                "Enter System"
+              )}
             </button>
 
           </form>
