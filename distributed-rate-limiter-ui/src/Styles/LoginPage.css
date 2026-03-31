@@ -1,74 +1,80 @@
-/* ==========================================
-   Reset
-========================================== */
+/* Reset */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* ==========================================
-   Base
-========================================== */
+/* Base */
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   background: #022c2c;
   color: #ffffff;
-  -webkit-font-smoothing: antialiased;
 }
 
-/* ==========================================
-   Layout
-========================================== */
+/* Layout */
 .login-container {
   display: flex;
   height: 100vh;
   width: 100%;
 }
 
-/* ==========================================
-   Left Panel (Brand)
-========================================== */
+/* LEFT PANEL */
 .left-panel {
   flex: 1;
   background: linear-gradient(145deg, #023535, #021f1f);
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+/* Glow effect */
+.left-panel::after {
+  content: "";
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(0,255,200,0.15), transparent);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 /* Brand */
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  z-index: 1;
 }
 
 .logo-shape {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 10px;
   background: linear-gradient(180deg, #00d4aa, #ff7a18);
-  box-shadow: 0 0 20px rgba(0, 212, 170, 0.3);
+  box-shadow: 0 0 25px rgba(0, 212, 170, 0.4);
 }
 
 .brand h2 {
+  font-size: 1.4rem;
   font-weight: 500;
-  font-size: 1.3rem;
   color: #e6fffb;
 }
 
-/* ==========================================
-   Divider
-========================================== */
+/* Divider */
 .divider {
   width: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255,255,255,0.2),
+    transparent
+  );
 }
 
-/* ==========================================
-   Right Panel
-========================================== */
+/* RIGHT PANEL */
 .right-panel {
   flex: 1;
   background: #022c2c;
@@ -77,32 +83,26 @@ body {
   justify-content: center;
 }
 
-/* ==========================================
-   Form Wrapper
-========================================== */
+/* Form */
 .form-wrapper {
-  width: 320px;
+  width: 340px;
 }
 
 /* Heading */
 .form-wrapper h1 {
   font-size: 1.7rem;
-  font-weight: 500;
   margin-bottom: 6px;
 }
 
 .subtitle {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #9ca3af;
   margin-bottom: 20px;
 }
 
-/* ==========================================
-   Error
-========================================== */
+/* Error */
 .error-alert {
   display: flex;
-  align-items: center;
   gap: 6px;
   background: rgba(255, 0, 0, 0.1);
   border: 1px solid rgba(255, 0, 0, 0.3);
@@ -110,12 +110,9 @@ body {
   border-radius: 4px;
   margin-bottom: 12px;
   font-size: 0.8rem;
-  color: #fca5a5;
 }
 
-/* ==========================================
-   Form
-========================================== */
+/* Form */
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -124,13 +121,14 @@ body {
 
 /* Inputs */
 .auth-form input {
+  width: 100%;
   padding: 10px;
-  border-radius: 4px;
+  border-radius: 6px;
   border: none;
-  background: #e5e7eb;
+  background: rgba(255, 255, 255, 0.92);
   color: #111827;
   font-size: 0.9rem;
-  transition: all 0.2s ease;
+  transition: 0.2s;
 }
 
 .auth-form input:focus {
@@ -156,19 +154,22 @@ body {
 
 /* Button */
 .auth-form button[type="submit"] {
-  margin-top: 10px;
-  padding: 10px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 11px;
   background: #f97316;
   border: none;
+  border-radius: 6px;
   color: white;
-  font-weight: 500;
-  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: 0.2s;
 }
 
 .auth-form button[type="submit"]:hover {
   background: #ea580c;
+  transform: translateY(-1px);
 }
 
 /* Disabled */
@@ -177,19 +178,10 @@ body {
   cursor: not-allowed;
 }
 
-/* ==========================================
-   Responsive
-========================================== */
+/* Responsive */
 @media (max-width: 768px) {
-  .left-panel {
-    display: none;
-  }
-
+  .left-panel,
   .divider {
     display: none;
-  }
-
-  .right-panel {
-    flex: 1;
   }
 }
