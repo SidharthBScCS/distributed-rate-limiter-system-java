@@ -261,17 +261,3 @@
 
   color: var(--accent);
 }
-
-/* ===================== */
-/* MOBILE */
-/* ===================== */
-
-@media (max-width: 1024px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-}
