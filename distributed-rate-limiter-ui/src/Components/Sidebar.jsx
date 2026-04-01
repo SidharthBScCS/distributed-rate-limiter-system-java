@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { LayoutDashboard, BarChart3, Shield, LogOut, X } from "lucide-react";
-import { apiUrl } from "../apiBase.js";
+import { setFrontendAuthenticated } from "../auth.js";
 import "../Styles/Sidebar.css";
 
 function Sidebar({ isMobileOpen }) {
@@ -21,16 +21,9 @@ function Sidebar({ isMobileOpen }) {
   ];
 
   const handleLogout = async () => {
-    try {
-      await fetch(apiUrl("/api/auth/logout"), {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch {
-    } finally {
-      window.dispatchEvent(new Event("auth-changed"));
-      window.location.assign("/login");
-    }
+    setFrontendAuthenticated(false);
+    window.dispatchEvent(new Event("auth-changed"));
+    window.location.assign("/login");
   };
 
   return (

@@ -32,17 +32,8 @@ function ApiTable({
   const keys = dashboardData.apiKeys ?? [];
   const pagination = dashboardData.pagination;
   const searchTerm = tableQuery.search;
-  const currentPage = pagination.page;
+  const currentPage = tableQuery.page;
   const isPaginationBusy = refreshing && tableQuery.page !== pagination.page;
-
-  useEffect(() => {
-    const nextSearch = pagination.search;
-    const nextPage = pagination.page;
-    const nextSize = pagination.size ?? tableQuery.size ?? 10;
-    if (nextSearch !== tableQuery.search || nextPage !== tableQuery.page || nextSize !== tableQuery.size) {
-      onTableQueryChange({ search: nextSearch, page: nextPage, size: nextSize });
-    }
-  }, [onTableQueryChange, pagination.page, pagination.search, pagination.size, tableQuery.page, tableQuery.search, tableQuery.size]);
 
   useEffect(() => {
     if (!isCreateModalOpen) {
@@ -110,7 +101,7 @@ function ApiTable({
   const totalPages = Math.max(1, pagination.totalPages ?? 1);
   const totalItems = pagination.totalItems ?? keys.length;
   const pageSize = pagination.size ?? tableQuery.size ?? 10;
-  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = totalItems === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
   const endIndex = Math.min(safeCurrentPage * pageSize, totalItems);
 

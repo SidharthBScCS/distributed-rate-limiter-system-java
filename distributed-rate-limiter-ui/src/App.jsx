@@ -7,6 +7,7 @@ import ApiTable from "./Components/Table_Box.jsx";
 import Analytics from "./Components/Analytics.jsx";
 import LoginPage from "./Components/LoginPage.jsx";
 import { apiUrl } from "./apiBase.js";
+import { isFrontendAuthenticated, setFrontendAuthenticated } from "./auth.js";
 import "./App.css";
 
 const DEFAULT_PAGINATION = {
@@ -45,6 +46,7 @@ const DEFAULT_DASHBOARD_RESPONSE = {
 function App() {
   const location = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => isFrontendAuthenticated());
   const [uiConfig, setUiConfig] = useState(null);
   const [configError, setConfigError] = useState("");
   const [dashboardData, setDashboardData] = useState(DEFAULT_DASHBOARD_RESPONSE);
@@ -93,18 +95,36 @@ function App() {
       });
       if (!response.ok) {
         if (response.status === 401) {
+          setFrontendAuthenticated(false);
+          setIsAuthenticated(false);
           window.location.assign("/login");
           return false;
         }
         return false;
       }
       const data = await response.json();
+      const nextPagination = data?.pagination ?? DEFAULT_PAGINATION;
       setDashboardData({
         stats: data?.stats ?? DEFAULT_DASHBOARD_STATS,
         apiKeys: data?.apiKeys ?? [],
-        pagination: data?.pagination ?? DEFAULT_PAGINATION,
+        pagination: nextPagination,
         sources: data?.sources ?? DEFAULT_DASHBOARD_RESPONSE.sources,
         generatedAt: data?.generatedAt ?? "",
+      });
+      setTableQuery((current) => {
+        const nextQuery = {
+          search: nextPagination.search ?? "",
+          page: nextPagination.page ?? 1,
+          size: nextPagination.size ?? current.size ?? 10,
+        };
+        if (
+          current.search === nextQuery.search &&
+          current.page === nextQuery.page &&
+          current.size === nextQuery.size
+        ) {
+          return current;
+        }
+        return nextQuery;
       });
       lastDashboardLoadAtRef.current = Date.now();
       return true;
@@ -131,6 +151,8 @@ function App() {
       });
       if (!response.ok) {
         if (response.status === 401) {
+          setFrontendAuthenticated(false);
+          setIsAuthenticated(false);
           window.location.assign("/login");
           return false;
         }
@@ -161,6 +183,7 @@ function App() {
 
   useEffect(() => {
     const onAuthChanged = () => {
+      setIsAuthenticated(isFrontendAuthenticated());
       void loadUiConfig();
       void loadDashboardData();
     };
@@ -236,12 +259,14 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-            <Route path="/login" element={<LoginPage />} />
+            <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
 
             <Route
               path="/dashboard"
               element={
-                !uiConfig ? (
+                !isAuthenticated ? (
+                  <Navigate to="/login" replace />
+                ) : !uiConfig ? (
                   <div className="page-container">
                     <div className="analytics-empty-state">
                       <p>{configError || "Loading configuration..."}</p>
@@ -269,7 +294,9 @@ function App() {
             <Route
               path="/analytics"
               element={
-                !uiConfig ? (
+                !isAuthenticated ? (
+                  <Navigate to="/login" replace />
+                ) : !uiConfig ? (
                   <div className="page-container">
                     <div className="analytics-empty-state">
                       <p>{configError || "Loading configuration..."}</p>

@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
-import { apiUrl } from "../apiBase.js";
+import {
+  getConfiguredAdminPassword,
+  getConfiguredAdminUsername,
+  isFrontendAuthenticated,
+  setFrontendAuthenticated,
+} from "../auth.js";
 import "../Styles/LoginPage.css";
 
 function LoginPage() {
@@ -18,19 +23,15 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(apiUrl("/api/auth/login"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ username, password }),
-      });
+      const normalizedUsername = username.trim();
+      const adminUsername = getConfiguredAdminUsername();
+      const adminPassword = getConfiguredAdminPassword();
 
-      
-
-      if (!response.ok) {
+      if (normalizedUsername !== adminUsername || password !== adminPassword) {
         throw new Error("Authentication failed");
       }
 
+      setFrontendAuthenticated(true);
       window.dispatchEvent(new Event("auth-changed"));
       window.location.assign("/dashboard");
     } catch (err) {
