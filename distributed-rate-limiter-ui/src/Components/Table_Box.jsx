@@ -140,8 +140,13 @@ function ApiTable({
         throw new Error(body.message);
       }
       const created = await response.json();
-
-      await onDashboardRefresh(true);
+      const nextQuery = {
+        ...tableQuery,
+        search: created.apiKey ?? created.userName ?? "",
+        page: 1,
+      };
+      onTableQueryChange(nextQuery);
+      await onDashboardRefresh(true, nextQuery);
       setIsCreateModalOpen(false);
       setSuccessModal({
         open: true,

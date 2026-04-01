@@ -239,6 +239,7 @@ public class ApiKeyController {
                 request.getRateLimit(),
                 request.getWindowSeconds()
         );
+        dashboardCache.clear();
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
