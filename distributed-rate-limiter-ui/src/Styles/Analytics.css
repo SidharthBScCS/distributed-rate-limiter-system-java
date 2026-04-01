@@ -50,10 +50,4 @@
   color: #3fb950;
 }
 
-@media (max-width: 1024px) {
-  .analytics-page.page-full-bleed,
-  .grafana-full-section {
-    min-height: 100%;
-    height: 100%;
-  }
-}
+
