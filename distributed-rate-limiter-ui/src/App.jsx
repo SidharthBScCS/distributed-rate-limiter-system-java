@@ -6,8 +6,10 @@ import StatsCards from "./Components/Card.jsx";
 import ApiTable from "./Components/Table_Box.jsx";
 import Analytics from "./Components/Analytics.jsx";
 import LoginPage from "./Components/LoginPage.jsx";
+import Settings from "./Components/Settings.jsx";
 import { apiUrl } from "./apiBase.js";
 import { isFrontendAuthenticated, setFrontendAuthenticated } from "./auth.js";
+import { readAppPreferences } from "./preferences.js";
 import "./App.css";
 
 const UI_CONFIG_CACHE_KEY = "ui-config-cache";
@@ -55,6 +57,14 @@ function normalizeTableQuery(dashboardData) {
   };
 }
 
+function resolveInitialTableQuery(dashboardData, preferences) {
+  const normalized = normalizeTableQuery(dashboardData);
+  return {
+    ...normalized,
+    size: preferences.defaultPageSize ?? normalized.size,
+  };
+}
+
 function readCachedJson(key, fallback) {
   if (typeof window === "undefined") {
     return fallback;
@@ -83,6 +93,7 @@ function writeCachedJson(key, value) {
 function App() {
   const location = useLocation();
   const initialDashboardData = readCachedJson(DASHBOARD_CACHE_KEY, DEFAULT_DASHBOARD_RESPONSE);
+  const initialPreferences = readAppPreferences();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(() => isFrontendAuthenticated());
   const [authChecking, setAuthChecking] = useState(false);
@@ -91,7 +102,8 @@ function App() {
   const [dashboardData, setDashboardData] = useState(initialDashboardData);
   const [dashboardLoading, setDashboardLoading] = useState(() => !isFrontendAuthenticated());
   const [dashboardRefreshing, setDashboardRefreshing] = useState(false);
-  const [tableQuery, setTableQuery] = useState(() => normalizeTableQuery(initialDashboardData));
+  const [preferences, setPreferences] = useState(initialPreferences);
+  const [tableQuery, setTableQuery] = useState(() => resolveInitialTableQuery(initialDashboardData, initialPreferences));
   const dashboardRequestInFlightRef = useRef(false);
   const lastDashboardLoadAtRef = useRef(0);
   const tableQueryRef = useRef(tableQuery);
@@ -103,6 +115,26 @@ function App() {
   useEffect(() => {
     tableQueryRef.current = tableQuery;
   }, [tableQuery]);
+
+  useEffect(() => {
+    const onPreferencesChanged = () => {
+      const nextPreferences = readAppPreferences();
+      setPreferences(nextPreferences);
+      setTableQuery((current) => {
+        if (current.size === nextPreferences.defaultPageSize) {
+          return current;
+        }
+        return {
+          ...current,
+          page: 1,
+          size: nextPreferences.defaultPageSize,
+        };
+      });
+    };
+
+    window.addEventListener("app-preferences-changed", onPreferencesChanged);
+    return () => window.removeEventListener("app-preferences-changed", onPreferencesChanged);
+  }, []);
 
   const syncAuthState = async () => {
     try {
@@ -283,7 +315,7 @@ function App() {
   }, [isFullWidthPage, uiConfig, tableQuery]);
 
   useEffect(() => {
-    if (isFullWidthPage || !uiConfig) {
+    if (isFullWidthPage || !uiConfig || !preferences.liveUpdates) {
       return undefined;
     }
 
@@ -302,7 +334,7 @@ function App() {
       source.removeEventListener("tick", onTick);
       source.close();
     };
-  }, [isFullWidthPage, uiConfig]);
+  }, [isFullWidthPage, preferences.liveUpdates, uiConfig]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -388,6 +420,19 @@ function App() {
                 ) : (
                   <div className="page-container analytics-page-container">
                     <Analytics grafanaDashboardUrl={uiConfig.grafanaDashboardUrl} />
+                  </div>
+                )
+              }
+            />
+
+            <Route
+              path="/settings"
+              element={
+                !isAuthenticated ? (
+                  <Navigate to="/login" replace />
+                ) : (
+                  <div className="page-container">
+                    <Settings uiConfig={uiConfig} />
                   </div>
                 )
               }

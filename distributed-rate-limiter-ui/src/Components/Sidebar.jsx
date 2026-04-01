@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, BarChart3, Shield, LogOut, X } from "lucide-react";
+import { LayoutDashboard, BarChart3, Shield, LogOut, Settings as SettingsIcon, X } from "lucide-react";
 import { setFrontendAuthenticated } from "../auth.js";
+import { readAppPreferences } from "../preferences.js";
 import { apiUrl } from "../apiBase.js";
 import "../Styles/Sidebar.css";
 
@@ -19,9 +20,14 @@ function Sidebar({ isMobileOpen }) {
       label: "Analytics",
       path: "/analytics",
     },
+    {
+      icon: SettingsIcon,
+      label: "Settings",
+      path: "/settings",
+    },
   ];
 
-  const handleLogout = async () => {
+  const performLogout = async () => {
     try {
       await fetch(apiUrl("/api/auth/logout"), {
         method: "POST",
@@ -30,9 +36,20 @@ function Sidebar({ isMobileOpen }) {
     } catch {
       // Clear the local session state even if the backend is unavailable.
     }
+    setShowLogoutConfirm(false);
     setFrontendAuthenticated(false);
     window.dispatchEvent(new Event("auth-changed"));
     window.location.assign("/login");
+  };
+
+  const handleLogout = () => {
+    const preferences = readAppPreferences();
+    if (preferences.confirmLogout) {
+      setShowLogoutConfirm(true);
+      return;
+    }
+
+    void performLogout();
   };
 
   return (
@@ -69,7 +86,7 @@ function Sidebar({ isMobileOpen }) {
       </nav>
 
       <div className="sidebar-footer">
-        <button className="logout-btn" onClick={() => setShowLogoutConfirm(true)}>
+        <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={20} />
           <span>Logout</span>
         </button>
@@ -92,7 +109,7 @@ function Sidebar({ isMobileOpen }) {
               <button type="button" className="logout-cancel-btn" onClick={() => setShowLogoutConfirm(false)}>
                 Cancel
               </button>
-              <button type="button" className="logout-confirm-btn" onClick={handleLogout}>
+              <button type="button" className="logout-confirm-btn" onClick={() => void performLogout()}>
                 Logout
               </button>
             </div>

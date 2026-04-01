@@ -1,0 +1,215 @@
+.settings-page {
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+  padding-bottom: 28px;
+  animation: fadeSlideIn var(--transition-slow) both;
+}
+
+.settings-single-card {
+  width: min(760px, 100%);
+  padding: 28px;
+  border: 1px solid rgba(69, 255, 211, 0.14);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top right, rgba(83, 183, 255, 0.14), transparent 26%),
+    linear-gradient(180deg, rgba(6, 16, 29, 0.97), rgba(4, 12, 22, 0.94));
+  box-shadow: var(--shadow-panel);
+}
+
+.settings-single-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.settings-avatar {
+  width: 58px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(69, 255, 211, 0.18), rgba(83, 183, 255, 0.14));
+  border: 1px solid rgba(69, 255, 211, 0.22);
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.settings-overline {
+  margin: 0 0 4px;
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.settings-single-header h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  letter-spacing: -0.04em;
+}
+
+.settings-subtitle {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-secondary);
+}
+
+.settings-simple-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-simple-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(69, 255, 211, 0.08);
+}
+
+.settings-simple-row span {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.settings-simple-row strong {
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.settings-divider {
+  height: 1px;
+  margin: 24px 0;
+  background: linear-gradient(90deg, rgba(69, 255, 211, 0.16), transparent);
+}
+
+.settings-form {
+  display: grid;
+  gap: 18px;
+}
+
+.settings-field {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-field label {
+  color: #b4dfda;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.settings-field input,
+.settings-field select {
+  min-height: 50px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(69, 255, 211, 0.12);
+  background: rgba(69, 255, 211, 0.03);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.settings-field input:focus,
+.settings-field select:focus {
+  border-color: rgba(69, 255, 211, 0.28);
+  background: rgba(69, 255, 211, 0.05);
+  box-shadow: 0 0 0 4px rgba(69, 255, 211, 0.05);
+}
+
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(69, 255, 211, 0.1);
+  background: rgba(69, 255, 211, 0.025);
+}
+
+.settings-toggle-row strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 0.96rem;
+}
+
+.settings-toggle-row span {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.settings-toggle-row input {
+  width: 50px;
+  height: 28px;
+  accent-color: var(--accent-cyan);
+}
+
+.settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.settings-footer p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.settings-save-btn {
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(69, 255, 211, 0.24);
+  background: linear-gradient(135deg, rgba(69, 255, 211, 0.16), rgba(114, 255, 126, 0.14));
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  .settings-single-card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .settings-single-card {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .settings-single-header,
+  .settings-simple-row,
+  .settings-footer,
+  .settings-toggle-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .settings-simple-row strong {
+    text-align: left;
+  }
+}
