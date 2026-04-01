@@ -178,13 +178,7 @@ body {
   cursor: not-allowed;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .left-panel,
-  .divider {
-    display: none;
-  }
-}
+
 
 /* LEFT PANEL */
 .left-panel {
