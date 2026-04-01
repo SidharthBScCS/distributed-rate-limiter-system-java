@@ -10,6 +10,9 @@ import { apiUrl } from "./apiBase.js";
 import { isFrontendAuthenticated, setFrontendAuthenticated } from "./auth.js";
 import "./App.css";
 
+const UI_CONFIG_CACHE_KEY = "ui-config-cache";
+const DASHBOARD_CACHE_KEY = "dashboard-cache";
+
 const DEFAULT_PAGINATION = {
   page: 1,
   size: 10,
@@ -43,17 +46,52 @@ const DEFAULT_DASHBOARD_RESPONSE = {
   generatedAt: "",
 };
 
+function normalizeTableQuery(dashboardData) {
+  const pagination = dashboardData?.pagination ?? DEFAULT_PAGINATION;
+  return {
+    search: pagination.search ?? "",
+    page: pagination.page ?? 1,
+    size: pagination.size ?? 10,
+  };
+}
+
+function readCachedJson(key, fallback) {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeCachedJson(key, value) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Ignore storage write failures and keep the in-memory state working.
+  }
+}
+
 function App() {
   const location = useLocation();
+  const initialDashboardData = readCachedJson(DASHBOARD_CACHE_KEY, DEFAULT_DASHBOARD_RESPONSE);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(() => isFrontendAuthenticated());
-  const [authChecking, setAuthChecking] = useState(true);
-  const [uiConfig, setUiConfig] = useState(null);
+  const [authChecking, setAuthChecking] = useState(false);
+  const [uiConfig, setUiConfig] = useState(() => readCachedJson(UI_CONFIG_CACHE_KEY, null));
   const [configError, setConfigError] = useState("");
-  const [dashboardData, setDashboardData] = useState(DEFAULT_DASHBOARD_RESPONSE);
-  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState(initialDashboardData);
+  const [dashboardLoading, setDashboardLoading] = useState(() => !isFrontendAuthenticated());
   const [dashboardRefreshing, setDashboardRefreshing] = useState(false);
-  const [tableQuery, setTableQuery] = useState({ search: "", page: 1, size: 10 });
+  const [tableQuery, setTableQuery] = useState(() => normalizeTableQuery(initialDashboardData));
   const dashboardRequestInFlightRef = useRef(false);
   const lastDashboardLoadAtRef = useRef(0);
   const tableQueryRef = useRef(tableQuery);
@@ -67,7 +105,6 @@ function App() {
   }, [tableQuery]);
 
   const syncAuthState = async () => {
-    setAuthChecking(true);
     try {
       const response = await fetch(apiUrl("/api/auth/me"), {
         credentials: "include",
@@ -125,7 +162,25 @@ function App() {
       }
       const data = await response.json();
       const nextPagination = data?.pagination ?? DEFAULT_PAGINATION;
+      const pendingLoad = pendingDashboardLoadRef.current;
+      const hasNewerPendingQuery = pendingLoad
+        ? (pendingLoad.query?.search ?? "") !== (query.search ?? "") ||
+          (pendingLoad.query?.page ?? 1) !== (query.page ?? 1) ||
+          (pendingLoad.query?.size ?? 10) !== (query.size ?? 10)
+        : false;
+
+      if (hasNewerPendingQuery) {
+        return false;
+      }
+
       setDashboardData({
+        stats: data?.stats ?? DEFAULT_DASHBOARD_STATS,
+        apiKeys: data?.apiKeys ?? [],
+        pagination: nextPagination,
+        sources: data?.sources ?? DEFAULT_DASHBOARD_RESPONSE.sources,
+        generatedAt: data?.generatedAt ?? "",
+      });
+      writeCachedJson(DASHBOARD_CACHE_KEY, {
         stats: data?.stats ?? DEFAULT_DASHBOARD_STATS,
         apiKeys: data?.apiKeys ?? [],
         pagination: nextPagination,
@@ -183,6 +238,7 @@ function App() {
       }
       const data = await response.json();
       setUiConfig(data);
+      writeCachedJson(UI_CONFIG_CACHE_KEY, data);
       setConfigError("");
       return true;
     } catch {
@@ -276,13 +332,7 @@ function App() {
       ) : null}
 
       <div className={`right-content ${isFullWidthPage ? "full-width" : ""} ${isAnalyticsPage ? "analytics-layout" : ""}`}>
-        {authChecking ? (
-          <div className="page-container">
-            <div className="analytics-empty-state">
-              <p>Checking session...</p>
-            </div>
-          </div>
-        ) : !isFullWidthPage && !uiConfig ? (
+        {!isFullWidthPage && !uiConfig ? (
           <div className="page-container">
             <div className="analytics-empty-state">
               <p>{configError || "Loading configuration..."}</p>

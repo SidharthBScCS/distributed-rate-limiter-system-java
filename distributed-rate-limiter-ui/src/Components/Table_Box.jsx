@@ -105,6 +105,11 @@ function ApiTable({
   const startIndex = totalItems === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
   const endIndex = Math.min(safeCurrentPage * pageSize, totalItems);
 
+  const queueTableQueryUpdate = (nextQuery) => {
+    onTableQueryChange(nextQuery);
+    void onDashboardRefresh(true, nextQuery);
+  };
+
   if (loading) {
     return <div className="table-skeleton" />;
   }
@@ -170,7 +175,7 @@ function ApiTable({
             type="text"
             value={searchTerm}
             onChange={(event) =>
-              onTableQueryChange({
+              queueTableQueryUpdate({
                 ...tableQuery,
                 search: event.target.value,
                 page: 1,
@@ -275,7 +280,7 @@ function ApiTable({
             className="pagination-btn"
             onClick={() =>
               !isPaginationBusy &&
-              onTableQueryChange({
+              queueTableQueryUpdate({
                 ...tableQuery,
                 page: Math.max(1, safeCurrentPage - 1),
               })
@@ -293,7 +298,7 @@ function ApiTable({
             className="pagination-btn"
             onClick={() =>
               !isPaginationBusy &&
-              onTableQueryChange({
+              queueTableQueryUpdate({
                 ...tableQuery,
                 page: Math.min(totalPages, safeCurrentPage + 1),
               })
