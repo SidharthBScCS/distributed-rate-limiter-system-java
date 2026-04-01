@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
-import {
-  getConfiguredAdminPassword,
-  getConfiguredAdminUsername,
-  isFrontendAuthenticated,
-  setFrontendAuthenticated,
-} from "../auth.js";
+import { setFrontendAuthenticated } from "../auth.js";
+import { apiUrl } from "../apiBase.js";
 import "../Styles/LoginPage.css";
 
 function LoginPage() {
@@ -23,18 +19,34 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const normalizedUsername = username.trim();
-      const adminUsername = getConfiguredAdminUsername();
-      const adminPassword = getConfiguredAdminPassword();
+      const response = await fetch(apiUrl("/api/auth/login"), {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username.trim(),
+          password,
+        }),
+      });
 
-      if (normalizedUsername !== adminUsername || password !== adminPassword) {
-        throw new Error("Authentication failed");
+      if (!response.ok) {
+        let message = "Authentication failed";
+        try {
+          const data = await response.json();
+          message = data?.message || message;
+        } catch {
+          // Keep the generic message if the response body is not JSON.
+        }
+        throw new Error(message);
       }
 
       setFrontendAuthenticated(true);
       window.dispatchEvent(new Event("auth-changed"));
       window.location.assign("/dashboard");
     } catch (err) {
+      setFrontendAuthenticated(false);
       setError(err.message || "Authentication failed");
     } finally {
       setIsSubmitting(false);
@@ -43,13 +55,11 @@ function LoginPage() {
 
   return (
     <div className="login-container">
-
       <div className="left-panel">
         <div className="left-content">
-
           <div className="logo-row">
             <div className="logo-shape"></div>
-              <h2>RateLimiter</h2>
+            <h2>RateLimiter</h2>
           </div>
 
           <div className="system-info">
@@ -57,18 +67,16 @@ function LoginPage() {
             <p>Secure rate limiting and traffic governance for distributed systems.</p>
           </div>
 
-          <div className="status-badge">
-            ● System Secure
-          </div>
-
+          <div className="status-badge">System Secure</div>
         </div>
       </div>
+
       <div className="divider"></div>
+
       <div className="right-panel">
         <div className={`form-wrapper ${isSubmitting ? "loading" : ""}`}>
-
           <h1>Admin Access</h1>
-          <p className="subtitle">Restricted system • Authorized only</p>
+          <p className="subtitle">Restricted system | Authorized only</p>
 
           {error && (
             <div className="error-alert">
@@ -78,13 +86,12 @@ function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="auth-form">
-
             <input
               id="username"
               type="text"
               placeholder="Username"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(event) => setUsername(event.target.value)}
               autoFocus
               autoComplete="username"
               required
@@ -96,14 +103,14 @@ function LoginPage() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) => setPassword(event.target.value)}
                 autoComplete="current-password"
                 required
               />
 
               <button
                 type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
+                onClick={() => setShowPassword((previous) => !previous)}
                 aria-label="Toggle password visibility"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -111,15 +118,9 @@ function LoginPage() {
             </div>
 
             <button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <span className="spinner"></span>
-              ) : (
-                "Enter System"
-              )}
+              {isSubmitting ? <span className="spinner"></span> : "Enter System"}
             </button>
-
           </form>
-
         </div>
       </div>
     </div>

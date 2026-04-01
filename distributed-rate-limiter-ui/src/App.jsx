@@ -47,6 +47,7 @@ function App() {
   const location = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(() => isFrontendAuthenticated());
+  const [authChecking, setAuthChecking] = useState(true);
   const [uiConfig, setUiConfig] = useState(null);
   const [configError, setConfigError] = useState("");
   const [dashboardData, setDashboardData] = useState(DEFAULT_DASHBOARD_RESPONSE);
@@ -64,6 +65,25 @@ function App() {
   useEffect(() => {
     tableQueryRef.current = tableQuery;
   }, [tableQuery]);
+
+  const syncAuthState = async () => {
+    setAuthChecking(true);
+    try {
+      const response = await fetch(apiUrl("/api/auth/me"), {
+        credentials: "include",
+      });
+      const authenticated = response.ok;
+      setFrontendAuthenticated(authenticated);
+      setIsAuthenticated(authenticated);
+      return authenticated;
+    } catch {
+      setFrontendAuthenticated(false);
+      setIsAuthenticated(false);
+      return false;
+    } finally {
+      setAuthChecking(false);
+    }
+  };
 
   const loadDashboardData = async (force = false, queryOverride = null) => {
     if (isFullWidthPage) {
@@ -97,6 +117,7 @@ function App() {
         if (response.status === 401) {
           setFrontendAuthenticated(false);
           setIsAuthenticated(false);
+          setAuthChecking(false);
           window.location.assign("/login");
           return false;
         }
@@ -153,6 +174,7 @@ function App() {
         if (response.status === 401) {
           setFrontendAuthenticated(false);
           setIsAuthenticated(false);
+          setAuthChecking(false);
           window.location.assign("/login");
           return false;
         }
@@ -182,10 +204,15 @@ function App() {
   }, [isFullWidthPage]);
 
   useEffect(() => {
+    void syncAuthState();
+  }, []);
+
+  useEffect(() => {
     const onAuthChanged = () => {
       setIsAuthenticated(isFrontendAuthenticated());
+      setAuthChecking(false);
       void loadUiConfig();
-      void loadDashboardData();
+      void loadDashboardData(true);
     };
     window.addEventListener("auth-changed", onAuthChanged);
     return () => window.removeEventListener("auth-changed", onAuthChanged);
@@ -249,7 +276,13 @@ function App() {
       ) : null}
 
       <div className={`right-content ${isFullWidthPage ? "full-width" : ""} ${isAnalyticsPage ? "analytics-layout" : ""}`}>
-        {!isFullWidthPage && !uiConfig ? (
+        {authChecking ? (
+          <div className="page-container">
+            <div className="analytics-empty-state">
+              <p>Checking session...</p>
+            </div>
+          </div>
+        ) : !isFullWidthPage && !uiConfig ? (
           <div className="page-container">
             <div className="analytics-empty-state">
               <p>{configError || "Loading configuration..."}</p>
