@@ -12,14 +12,12 @@
   --transition: 0.25s ease;
 }
 
-/* GRID */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 22px;
 }
 
-/* CARD */
 .stat-card {
   position: relative;
   padding: 20px;
@@ -29,7 +27,6 @@
     linear-gradient(180deg, rgba(255,255,255,0.04), transparent 30%),
     var(--bg-card);
 
-  /* blur support */
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
 
@@ -42,7 +39,6 @@
 
   transition: var(--transition);
 
-  /* FIXES */
   isolation: isolate;
   min-width: 0;
   z-index: 1;
@@ -52,7 +48,6 @@
     inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
-/* SOFT GLOW LAYER */
 .stat-card::before {
   content: "";
   position: absolute;
@@ -64,19 +59,16 @@
 
   opacity: 0.9;
 
-  /* FIX: keep visible */
   z-index: 0;
   pointer-events: none;
 }
 
-/* LEFT ACCENT STRIP */
 .stat-card::after {
   content: "";
   position: absolute;
   top: 16px;
   bottom: 16px;
 
-  /* FIX: bring inside */
   left: 8px;
 
   width: 3px;
@@ -93,7 +85,6 @@
   transition: var(--transition);
 }
 
-/* HOVER */
 .stat-card:hover {
   transform: translateY(-6px);
   border-color: rgba(69, 255, 211, 0.25);
@@ -107,14 +98,12 @@
   opacity: 1;
 }
 
-/* HEADER */
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-/* ICON */
 .card-icon-wrapper {
   width: 42px;
   height: 42px;
@@ -134,7 +123,6 @@
     0 6px 18px rgba(0,0,0,0.25);
 }
 
-/* TITLE */
 .card-title {
   font-size: 0.68rem;
   text-transform: uppercase;
@@ -143,7 +131,6 @@
   font-weight: 600;
 }
 
-/* VALUE */
 .card-value {
   font-size: clamp(2.1rem, 4vw, 2.9rem);
   font-weight: 900;
@@ -152,24 +139,20 @@
 
   text-shadow: 0 4px 18px rgba(0,0,0,0.35);
 
-  /* FIX: prevent overflow */
   word-break: break-word;
 }
 
-/* META TEXT */
 .card-caption {
   font-size: 0.85rem;
   color: var(--text-dim);
 }
 
-/* FOOTER */
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-/* TREND */
 .trend-badge {
   display: inline-flex;
   align-items: center;
@@ -196,7 +179,6 @@
   color: #ef4444;
 }
 
-/* SKELETON */
 .cards-skeleton {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

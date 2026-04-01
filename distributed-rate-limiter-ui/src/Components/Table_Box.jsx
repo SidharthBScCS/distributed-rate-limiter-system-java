@@ -6,6 +6,7 @@ import "../Styles/Table_Box.css";
 function ApiTable({
   dashboardData,
   loading,
+  refreshing,
   defaults,
   onDashboardRefresh,
   tableQuery,
@@ -32,6 +33,7 @@ function ApiTable({
   const pagination = dashboardData.pagination;
   const searchTerm = tableQuery.search;
   const currentPage = pagination.page;
+  const isPaginationBusy = refreshing && tableQuery.page !== pagination.page;
 
   useEffect(() => {
     const nextSearch = pagination.search;
@@ -184,6 +186,7 @@ function ApiTable({
               })
             }
             placeholder="Search by API key, user, status, limit, or window"
+            disabled={refreshing}
           />
         </label>
       </div>
@@ -280,14 +283,15 @@ function ApiTable({
             type="button"
             className="pagination-btn"
             onClick={() =>
+              !isPaginationBusy &&
               onTableQueryChange({
                 ...tableQuery,
                 page: Math.max(1, safeCurrentPage - 1),
               })
             }
-            disabled={safeCurrentPage === 1}
+            disabled={safeCurrentPage === 1 || isPaginationBusy}
           >
-            Previous
+            {isPaginationBusy ? "Loading..." : "Previous"}
           </button>
           <span className="pagination-status">
             Showing {totalItems === 0 ? 0 : startIndex}-{endIndex} of {totalItems}
@@ -297,12 +301,13 @@ function ApiTable({
             type="button"
             className="pagination-btn"
             onClick={() =>
+              !isPaginationBusy &&
               onTableQueryChange({
                 ...tableQuery,
                 page: Math.min(totalPages, safeCurrentPage + 1),
               })
             }
-            disabled={safeCurrentPage === totalPages}
+            disabled={safeCurrentPage === totalPages || isPaginationBusy}
           >
             Next
           </button>

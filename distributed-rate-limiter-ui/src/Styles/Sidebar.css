@@ -14,10 +14,6 @@
   --transition: 0.25s ease;
 }
 
-/* ===================== */
-/* SIDEBAR */
-/* ===================== */
-
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
@@ -41,10 +37,6 @@
 
   overflow: hidden;
 }
-
-/* ===================== */
-/* BRAND */
-/* ===================== */
 
 .sidebar-brand {
   display: flex;
@@ -96,10 +88,6 @@
   color: var(--text-soft);
 }
 
-/* ===================== */
-/* NAV */
-/* ===================== */
-
 .sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -142,7 +130,6 @@
   font-weight: 600;
 }
 
-/* Hover = subtle lift */
 .nav-item:hover {
   transform: translateX(3px);
   background: rgba(255,255,255,0.05);
@@ -151,7 +138,6 @@
   box-shadow: 0 6px 18px rgba(0,0,0,0.3);
 }
 
-/* Active */
 .nav-item.active {
   color: var(--text-main);
 
@@ -183,10 +169,6 @@
   background: rgba(69,255,211,0.12);
 }
 
-/* ===================== */
-/* FOOTER */
-/* ===================== */
-
 .sidebar-footer {
   padding-top: 14px;
   border-top: 1px solid var(--sidebar-border);
@@ -215,10 +197,6 @@
 
   box-shadow: 0 10px 25px rgba(255,100,120,0.25);
 }
-
-/* ===================== */
-/* MODAL */
-/* ===================== */
 
 .logout-modal-overlay {
   position: fixed;

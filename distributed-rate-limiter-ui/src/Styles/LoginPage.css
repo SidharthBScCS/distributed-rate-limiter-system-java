@@ -1,25 +1,21 @@
-/* Reset */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* Base */
 body {
   font-family: 'Inter', system-ui, sans-serif;
   background: #022c2c;
   color: #ffffff;
 }
 
-/* Layout */
 .login-container {
   display: flex;
   height: 100vh;
   width: 100%;
 }
 
-/* LEFT PANEL */
 .left-panel {
   flex: 1;
   background: linear-gradient(145deg, #023535, #021f1f);
@@ -29,7 +25,6 @@ body {
   position: relative;
 }
 
-/* Glow effect */
 .left-panel::after {
   content: "";
   position: absolute;
@@ -41,7 +36,6 @@ body {
   transform: translate(-50%, -50%);
 }
 
-/* Brand */
 .brand {
   display: flex;
   align-items: center;
@@ -63,7 +57,6 @@ body {
   color: #e6fffb;
 }
 
-/* Divider */
 .divider {
   width: 1px;
   background: linear-gradient(
@@ -74,7 +67,6 @@ body {
   );
 }
 
-/* RIGHT PANEL */
 .right-panel {
   flex: 1;
   background: #022c2c;
@@ -83,12 +75,10 @@ body {
   justify-content: center;
 }
 
-/* Form */
 .form-wrapper {
   width: 340px;
 }
 
-/* Heading */
 .form-wrapper h1 {
   font-size: 1.7rem;
   margin-bottom: 6px;
@@ -100,7 +90,6 @@ body {
   margin-bottom: 20px;
 }
 
-/* Error */
 .error-alert {
   display: flex;
   gap: 6px;
@@ -112,14 +101,12 @@ body {
   font-size: 0.8rem;
 }
 
-/* Form */
 .auth-form {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* Inputs */
 .auth-form input {
   width: 100%;
   padding: 10px;
@@ -136,7 +123,6 @@ body {
   box-shadow: 0 0 0 2px #f97316;
 }
 
-/* Password field */
 .password-field {
   position: relative;
 }
@@ -152,7 +138,6 @@ body {
   color: #374151;
 }
 
-/* Button */
 .auth-form button[type="submit"] {
   width: 100%;
   margin-top: 12px;
@@ -172,15 +157,10 @@ body {
   transform: translateY(-1px);
 }
 
-/* Disabled */
 .auth-form button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
-
-
-/* LEFT PANEL */
 .left-panel {
   flex: 1;
   background: linear-gradient(145deg, #022c2c, #011a1a);
@@ -191,7 +171,6 @@ body {
   overflow: hidden;
 }
 
-/* Subtle grid overlay (pro touch) */
 .left-panel::before {
   content: "";
   position: absolute;
@@ -202,7 +181,6 @@ body {
   background-size: 40px 40px;
 }
 
-/* Controlled glow */
 .left-panel::after {
   content: "";
   position: absolute;
@@ -214,7 +192,6 @@ body {
   transform: translate(-50%, -50%);
 }
 
-/* Content */
 .left-content {
   z-index: 1;
   max-width: 320px;
@@ -223,14 +200,12 @@ body {
   gap: 20px;
 }
 
-/* Logo row */
 .logo-row {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-/* Logo */
 .logo-shape {
   width: 46px;
   height: 46px;
@@ -239,14 +214,12 @@ body {
   box-shadow: 0 0 25px rgba(0, 212, 170, 0.4);
 }
 
-/* Title */
 .logo-row h2 {
   font-size: 1.5rem;
   font-weight: 600;
   color: #e6fffb;
 }
 
-/* System info */
 .system-info h3 {
   font-size: 1.2rem;
   font-weight: 500;
@@ -259,7 +232,6 @@ body {
   line-height: 1.5;
 }
 
-/* Status badge */
 .status-badge {
   font-size: 0.75rem;
   color: #00d4aa;

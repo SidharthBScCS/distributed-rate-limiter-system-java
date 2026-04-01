@@ -27,7 +27,6 @@ function Sidebar({ isMobileOpen }) {
         credentials: "include",
       });
     } catch {
-      // Ignore API errors and still force a UI-side auth refresh.
     } finally {
       window.dispatchEvent(new Event("auth-changed"));
       window.location.assign("/login");

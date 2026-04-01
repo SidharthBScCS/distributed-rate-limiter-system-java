@@ -49,13 +49,19 @@ function App() {
   const [configError, setConfigError] = useState("");
   const [dashboardData, setDashboardData] = useState(DEFAULT_DASHBOARD_RESPONSE);
   const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardRefreshing, setDashboardRefreshing] = useState(false);
   const [tableQuery, setTableQuery] = useState({ search: "", page: 1, size: 10 });
-  const [toasts, setToasts] = useState([]);
   const dashboardRequestInFlightRef = useRef(false);
   const lastDashboardLoadAtRef = useRef(0);
+  const tableQueryRef = useRef(tableQuery);
+  const pendingDashboardLoadRef = useRef(null);
   const isAnalyticsPage = location.pathname === "/analytics";
   const isFullWidthPage = location.pathname === "/login";
   const showSidebar = !isFullWidthPage;
+
+  useEffect(() => {
+    tableQueryRef.current = tableQuery;
+  }, [tableQuery]);
 
   const loadDashboardData = async (force = false, queryOverride = null) => {
     if (isFullWidthPage) {
@@ -66,12 +72,14 @@ function App() {
     if (!force && now - lastDashboardLoadAtRef.current < refreshIntervalMs) {
       return false;
     }
+    const query = queryOverride ?? tableQueryRef.current;
     if (dashboardRequestInFlightRef.current) {
+      pendingDashboardLoadRef.current = { force, query };
       return false;
     }
     dashboardRequestInFlightRef.current = true;
+    setDashboardRefreshing(true);
     try {
-      const query = queryOverride ?? tableQuery;
       const params = new URLSearchParams({
         page: String(query.page ?? 1),
         size: String(query.size ?? 10),
@@ -105,6 +113,14 @@ function App() {
     } finally {
       dashboardRequestInFlightRef.current = false;
       setDashboardLoading(false);
+      setDashboardRefreshing(false);
+      const pendingLoad = pendingDashboardLoadRef.current;
+      if (pendingLoad) {
+        pendingDashboardLoadRef.current = null;
+        window.setTimeout(() => {
+          void loadDashboardData(pendingLoad.force, pendingLoad.query);
+        }, 0);
+      }
     }
   };
 
@@ -171,43 +187,13 @@ function App() {
       void loadDashboardData();
     };
 
-    const onAlert = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        if (!payload?.id) {
-          return;
-        }
-        setToasts((current) => {
-          if (current.some((toast) => toast.id === payload.id)) {
-            return current;
-          }
-          const next = [
-            ...current,
-            {
-              id: payload.id,
-              title: payload.title ?? "Too many requests (429)",
-              message: payload.message ?? "Rate limit exceeded.",
-            },
-          ];
-          return next.slice(-4);
-        });
-        window.setTimeout(() => {
-          setToasts((current) => current.filter((toast) => toast.id !== payload.id));
-        }, 4000);
-      } catch {
-        // Ignore malformed event payloads.
-      }
-    };
-
     source.addEventListener("tick", onTick);
-    source.addEventListener("alert", onAlert);
     source.onerror = () => {
       source.close();
     };
 
     return () => {
       source.removeEventListener("tick", onTick);
-      source.removeEventListener("alert", onAlert);
       source.close();
     };
   }, [isFullWidthPage, uiConfig]);
@@ -268,6 +254,7 @@ function App() {
                       <ApiTable
                         dashboardData={dashboardData}
                         loading={dashboardLoading}
+                        refreshing={dashboardRefreshing}
                         defaults={uiConfig.defaults}
                         onDashboardRefresh={loadDashboardData}
                         tableQuery={tableQuery}
@@ -300,17 +287,6 @@ function App() {
           </Routes>
         )}
       </div>
-
-      {toasts.length > 0 ? (
-        <div className="toast-stack" aria-live="polite" aria-atomic="true">
-          {toasts.map((toast) => (
-            <div key={toast.id} className="app-toast app-toast--danger">
-              <strong>{toast.title}</strong>
-              <span>{toast.message}</span>
-            </div>
-          ))}
-        </div>
-      ) : null}
     </>
   );
 }

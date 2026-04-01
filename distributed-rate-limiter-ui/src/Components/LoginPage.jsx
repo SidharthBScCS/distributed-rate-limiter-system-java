@@ -62,11 +62,7 @@ function LoginPage() {
 
         </div>
       </div>
-
-      {/* DIVIDER */}
       <div className="divider"></div>
-
-      {/* RIGHT PANEL */}
       <div className="right-panel">
         <div className={`form-wrapper ${isSubmitting ? "loading" : ""}`}>
 
