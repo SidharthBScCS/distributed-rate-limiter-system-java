@@ -23,6 +23,11 @@ docker compose up --build -d
 - Grafana: `admin` / `admin`
 - Postgres: `postgres` / `postgres`
 
+## Authentication notes
+
+- If you run the React app separately with Vite, the dev proxy defaults to `http://localhost:8081` to match the Docker backend port published by this stack.
+- If your frontend and backend are on different origins in production, set `CORS_ALLOWED_ORIGINS` to the frontend URL and configure the backend session cookie with `SESSION_COOKIE_SECURE=true` and `SESSION_COOKIE_SAME_SITE=None`.
+
 ## Stop the stack
 
 ```powershell

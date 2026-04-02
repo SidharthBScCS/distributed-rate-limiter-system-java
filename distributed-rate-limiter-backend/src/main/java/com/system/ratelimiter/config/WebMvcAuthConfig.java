@@ -16,12 +16,14 @@ public class WebMvcAuthConfig implements WebMvcConfigurer {
 
     public WebMvcAuthConfig(
             SessionAuthInterceptor sessionAuthInterceptor,
-            @Value("${app.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173}") String allowedOriginsCsv
+            @Value("${app.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173}") String allowedOriginsCsv,
+            @Value("${frontend.base-url:http://localhost:5173}") String frontendBaseUrl
     ) {
         this.sessionAuthInterceptor = sessionAuthInterceptor;
-        this.allowedOrigins = Arrays.stream((allowedOriginsCsv == null ? "" : allowedOriginsCsv).split(","))
+        this.allowedOrigins = Arrays.stream((((allowedOriginsCsv == null ? "" : allowedOriginsCsv) + "," + (frontendBaseUrl == null ? "" : frontendBaseUrl))).split(","))
                 .map(String::trim)
                 .filter(value -> !value.isBlank())
+                .distinct()
                 .toList();
     }
 
