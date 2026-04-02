@@ -1,6 +1,7 @@
 package com.system.ratelimiter.controller;
 
 import com.system.ratelimiter.dto.LoginRequest;
+import com.system.ratelimiter.dto.UpdateAdminProfileRequest;
 import com.system.ratelimiter.service.AuthService;
 import jakarta.validation.Valid;
 import java.time.Instant;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,8 +31,8 @@ public class AuthController {
 
     private final AuthService authService;
     private final String adminUsername;
-    private final String adminFullName;
-    private final String adminEmail;
+    private volatile String adminFullName;
+    private volatile String adminEmail;
     private final Instant createdAt;
 
     public AuthController(
@@ -95,6 +97,25 @@ public class AuthController {
                     .body(Map.of("message", "Not authenticated"));
         }
         return ResponseEntity.ok(adminPayload());
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<Map<String, Object>> updateCurrentAdmin(
+            @Valid @RequestBody UpdateAdminProfileRequest request,
+            HttpSession session
+    ) {
+        Object userId = session.getAttribute("userId");
+        if (userId == null || !adminUsername.equals(String.valueOf(userId))) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Not authenticated"));
+        }
+
+        adminFullName = request.getFullName().trim();
+        adminEmail = request.getEmail().trim();
+
+        Map<String, Object> body = adminPayload();
+        body.put("message", "Profile updated");
+        return ResponseEntity.ok(body);
     }
 
     @PostMapping("/logout")

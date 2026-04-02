@@ -16,6 +16,8 @@ function Settings() {
   const [currentAdmin, setCurrentAdmin] = useState(null);
   const [statusMessage, setStatusMessage] = useState("Loading admin details...");
   const [saveMessage, setSaveMessage] = useState("");
+  const [profileForm, setProfileForm] = useState({ fullName: "", email: "" });
+  const [profileSaving, setProfileSaving] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -36,6 +38,10 @@ function Settings() {
         }
 
         setCurrentAdmin(data);
+        setProfileForm({
+          fullName: data?.fullName ?? "",
+          email: data?.email ?? "",
+        });
         setStatusMessage("");
       } catch (error) {
         if (!mounted) {
@@ -54,6 +60,46 @@ function Settings() {
 
   const handleChange = (field, value) => {
     setDraft((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleProfileFieldChange = (field, value) => {
+    setProfileForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleProfileSave = async () => {
+    setProfileSaving(true);
+    setSaveMessage("");
+
+    try {
+      const response = await fetch(apiUrl("/api/auth/me"), {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: profileForm.fullName.trim(),
+          email: profileForm.email.trim(),
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.message || "Unable to save settings.");
+      }
+
+      setCurrentAdmin(data);
+      setProfileForm({
+        fullName: data?.fullName ?? "",
+        email: data?.email ?? "",
+      });
+      setSaveMessage("Profile saved.");
+    } catch (error) {
+      setSaveMessage(error instanceof Error ? error.message : "Unable to save settings.");
+    } finally {
+      setProfileSaving(false);
+      window.setTimeout(() => setSaveMessage(""), 1800);
+    }
   };
 
   const handleSave = () => {
@@ -78,20 +124,43 @@ function Settings() {
         </div>
 
         {currentAdmin ? (
-          <div className="settings-simple-grid">
-            <div className="settings-simple-row">
-              <span>Name</span>
-              <strong>{formatValue(currentAdmin.fullName)}</strong>
+          <>
+            <div className="settings-simple-grid">
+              <div className="settings-simple-row">
+                <span>User ID</span>
+                <strong>{formatValue(currentAdmin.userId)}</strong>
+              </div>
             </div>
-            <div className="settings-simple-row">
-              <span>User ID</span>
-              <strong>{formatValue(currentAdmin.userId)}</strong>
+
+            <div className="settings-form profile-form">
+              <div className="settings-field">
+                <label htmlFor="admin-full-name">Full name</label>
+                <input
+                  id="admin-full-name"
+                  type="text"
+                  value={profileForm.fullName}
+                  onChange={(event) => handleProfileFieldChange("fullName", event.target.value)}
+                />
+              </div>
+
+              <div className="settings-field">
+                <label htmlFor="admin-email">Email</label>
+                <input
+                  id="admin-email"
+                  type="email"
+                  value={profileForm.email}
+                  onChange={(event) => handleProfileFieldChange("email", event.target.value)}
+                />
+              </div>
+
+              <div className="settings-actions-inline">
+                <button type="button" className="settings-save-btn" onClick={handleProfileSave} disabled={profileSaving}>
+                  <Save size={16} />
+                  {profileSaving ? "Saving..." : "Save Profile"}
+                </button>
+              </div>
             </div>
-            <div className="settings-simple-row">
-              <span>Email</span>
-              <strong>{formatValue(currentAdmin.email)}</strong>
-            </div>
-          </div>
+          </>
         ) : (
           <div className="analytics-empty-state">
             <p>{statusMessage}</p>

@@ -98,6 +98,10 @@
   gap: 18px;
 }
 
+.profile-form {
+  margin-top: 18px;
+}
+
 .settings-field {
   display: grid;
   gap: 8px;
@@ -187,6 +191,16 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   cursor: pointer;
+}
+
+.settings-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settings-actions-inline {
+  display: flex;
+  justify-content: flex-end;
 }
 
 @media (max-width: 1024px) {
