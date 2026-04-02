@@ -142,7 +142,7 @@ function ApiTable({
       const created = await response.json();
       const nextQuery = {
         ...tableQuery,
-        search: created.apiKey ?? created.userName ?? "",
+        search: "",
         page: 1,
       };
       onTableQueryChange(nextQuery);
@@ -190,6 +190,22 @@ function ApiTable({
             disabled={refreshing}
           />
         </label>
+        {searchTerm.trim() ? (
+          <button
+            type="button"
+            className="empty-action-btn"
+            onClick={() =>
+              queueTableQueryUpdate({
+                ...tableQuery,
+                search: "",
+                page: 1,
+              })
+            }
+            disabled={refreshing}
+          >
+            Clear Search
+          </button>
+        ) : null}
       </div>
 
       <div className="table-wrapper">

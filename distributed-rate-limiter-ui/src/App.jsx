@@ -61,6 +61,8 @@ function resolveInitialTableQuery(dashboardData, preferences) {
   const normalized = normalizeTableQuery(dashboardData);
   return {
     ...normalized,
+    search: "",
+    page: 1,
     size: preferences.defaultPageSize ?? normalized.size,
   };
 }
