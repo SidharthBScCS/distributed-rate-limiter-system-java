@@ -46,8 +46,26 @@
   font-size: 0.9rem;
 }
 
+.grafana-empty p {
+  margin: 0 0 12px;
+}
+
 .grafana-empty code {
   color: #3fb950;
+}
+
+.grafana-open-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: rgba(63, 185, 80, 0.16);
+  border: 1px solid rgba(63, 185, 80, 0.3);
+  color: #b6f0c2;
+  text-decoration: none;
+  font-weight: 600;
 }
 
 
