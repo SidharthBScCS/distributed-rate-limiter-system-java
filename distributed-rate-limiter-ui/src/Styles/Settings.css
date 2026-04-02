@@ -1,20 +1,13 @@
 .settings-page {
-  display: flex;
-  justify-content: center;
-  padding-top: 8px;
-  padding-bottom: 28px;
+  width: 100%;
+  padding: 8px 0 28px;
   animation: fadeSlideIn var(--transition-slow) both;
 }
 
-.settings-single-card {
-  width: min(760px, 100%);
-  padding: 28px;
-  border: 1px solid rgba(69, 255, 211, 0.14);
-  border-radius: 28px;
-  background:
-    radial-gradient(circle at top right, rgba(83, 183, 255, 0.14), transparent 26%),
-    linear-gradient(180deg, rgba(6, 16, 29, 0.97), rgba(4, 12, 22, 0.94));
-  box-shadow: var(--shadow-panel);
+.settings-panel {
+  width: 100%;
+  max-width: none;
+  padding: 0;
 }
 
 .settings-single-header {
@@ -210,9 +203,8 @@
 }
 
 @media (max-width: 640px) {
-  .settings-single-card {
-    padding: 18px;
-    border-radius: 22px;
+  .settings-page {
+    padding-bottom: 18px;
   }
 
   .settings-single-header,

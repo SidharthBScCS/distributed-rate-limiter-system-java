@@ -111,7 +111,7 @@ function Settings() {
 
   return (
     <div className="settings-page">
-      <section className="settings-single-card">
+      <section className="settings-panel">
         <div className="settings-single-header">
           <div className="settings-avatar">
             <UserRound size={26} />
