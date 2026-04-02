@@ -32,6 +32,7 @@ function ApiTable({
   const keys = dashboardData.apiKeys ?? [];
   const pagination = dashboardData.pagination;
   const searchTerm = tableQuery.search;
+  const [searchInput, setSearchInput] = useState(searchTerm);
   const currentPage = tableQuery.page;
   const isPaginationBusy = refreshing && tableQuery.page !== pagination.page;
 
@@ -44,6 +45,10 @@ function ApiTable({
       });
     }
   }, [defaultRateLimit, defaultWindowSeconds, isCreateModalOpen]);
+
+  useEffect(() => {
+    setSearchInput(searchTerm);
+  }, [searchTerm]);
 
   useEffect(() => {
     const anyModalOpen = isCreateModalOpen || successModal.open;
@@ -109,6 +114,24 @@ function ApiTable({
     onTableQueryChange(nextQuery);
     void onDashboardRefresh(true, nextQuery);
   };
+
+  useEffect(() => {
+    const currentSearch = searchTerm.trim();
+    const draftSearch = searchInput.trim();
+    if (currentSearch === draftSearch) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      queueTableQueryUpdate({
+        ...tableQuery,
+        search: searchInput,
+        page: 1,
+      });
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchInput, searchTerm, tableQuery]);
 
   if (loading) {
     return <div className="table-skeleton" />;
@@ -178,14 +201,17 @@ function ApiTable({
           <Search size={16} />
           <input
             type="text"
-            value={searchTerm}
-            onChange={(event) =>
-              queueTableQueryUpdate({
-                ...tableQuery,
-                search: event.target.value,
-                page: 1,
-              })
-            }
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                queueTableQueryUpdate({
+                  ...tableQuery,
+                  search: searchInput,
+                  page: 1,
+                });
+              }
+            }}
             placeholder="Search by API key, user, status, limit, or window"
             disabled={refreshing}
           />
@@ -194,13 +220,14 @@ function ApiTable({
           <button
             type="button"
             className="empty-action-btn"
-            onClick={() =>
+            onClick={() => {
+              setSearchInput("");
               queueTableQueryUpdate({
                 ...tableQuery,
                 search: "",
                 page: 1,
-              })
-            }
+              });
+            }}
             disabled={refreshing}
           >
             Clear Search

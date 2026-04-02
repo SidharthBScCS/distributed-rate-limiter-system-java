@@ -149,7 +149,7 @@ public class ApiKeyController {
                 })
                 .filter(row -> matchesDashboardSearch(row, search))
                 .toList();
-        apiKeys = mergeSortApiKeysByUsage(apiKeys);
+        apiKeys = sortApiKeysByUsage(apiKeys);
         int totalApiKeys = apiKeys.size();
         int totalPages = Math.max(1, (int) Math.ceil(totalApiKeys / (double) size));
         int safePage = Math.min(Math.max(1, page), totalPages);
@@ -406,48 +406,14 @@ public class ApiKeyController {
         return search + "|" + page + "|" + size;
     }
 
-    private static List<DashboardApiKeyRowDto> mergeSortApiKeysByUsage(List<DashboardApiKeyRowDto> apiKeys) {
+    private static List<DashboardApiKeyRowDto> sortApiKeysByUsage(List<DashboardApiKeyRowDto> apiKeys) {
         if (apiKeys == null || apiKeys.size() <= 1) {
             return apiKeys == null ? List.of() : apiKeys;
         }
 
-        int midpoint = apiKeys.size() / 2;
-        List<DashboardApiKeyRowDto> left = mergeSortApiKeysByUsage(new ArrayList<>(apiKeys.subList(0, midpoint)));
-        List<DashboardApiKeyRowDto> right = mergeSortApiKeysByUsage(new ArrayList<>(apiKeys.subList(midpoint, apiKeys.size())));
-
-        return mergeApiKeyLists(left, right);
-    }
-
-    private static List<DashboardApiKeyRowDto> mergeApiKeyLists(
-            List<DashboardApiKeyRowDto> left,
-            List<DashboardApiKeyRowDto> right
-    ) {
-        List<DashboardApiKeyRowDto> merged = new ArrayList<>(left.size() + right.size());
-        int leftIndex = 0;
-        int rightIndex = 0;
-
-        while (leftIndex < left.size() && rightIndex < right.size()) {
-            DashboardApiKeyRowDto leftRow = left.get(leftIndex);
-            DashboardApiKeyRowDto rightRow = right.get(rightIndex);
-
-            if (compareApiKeyRows(leftRow, rightRow) <= 0) {
-                merged.add(leftRow);
-                leftIndex++;
-            } else {
-                merged.add(rightRow);
-                rightIndex++;
-            }
-        }
-
-        while (leftIndex < left.size()) {
-            merged.add(left.get(leftIndex++));
-        }
-
-        while (rightIndex < right.size()) {
-            merged.add(right.get(rightIndex++));
-        }
-
-        return merged;
+        List<DashboardApiKeyRowDto> sorted = new ArrayList<>(apiKeys);
+        sorted.sort(ApiKeyController::compareApiKeyRows);
+        return sorted;
     }
 
     private static int compareApiKeyRows(DashboardApiKeyRowDto leftRow, DashboardApiKeyRowDto rightRow) {
