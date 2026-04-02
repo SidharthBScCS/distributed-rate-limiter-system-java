@@ -1,0 +1,9 @@
+# Copy this file to local.properties and keep secrets out of git.
+# For Neon, you can use either DATABASE_URL or DB_URL/DB_USERNAME/DB_PASSWORD.
+
+DATABASE_URL=postgresql://username:password@host/database?sslmode=require&channel_binding=require
+
+# Optional direct JDBC alternative:
+# DB_URL=jdbc:postgresql://host:5432/database?sslmode=require&channel_binding=require
+# DB_USERNAME=username
+# DB_PASSWORD=password
