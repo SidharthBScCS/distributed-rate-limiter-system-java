@@ -2,7 +2,7 @@ import http from "k6/http";
 import { check, sleep } from "k6";
 import { Counter, Rate } from "k6/metrics";
 
-const BASE = __ENV.BASE_URL || "http://localhost:8080";
+const BASE = __ENV.BASE_URL || "http://localhost:8082";
 const USERNAME = __ENV.AUTH_USER || "admin";
 const PASSWORD = __ENV.AUTH_PASS || "admin";
 const ROUTE = __ENV.TEST_ROUTE || "/api/test";
