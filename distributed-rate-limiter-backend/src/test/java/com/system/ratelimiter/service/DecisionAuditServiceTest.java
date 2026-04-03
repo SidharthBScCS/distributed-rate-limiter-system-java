@@ -1,5 +1,6 @@
 package com.system.ratelimiter.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.system.ratelimiter.dto.DecisionAuditEntry;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -7,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import tools.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
