@@ -510,21 +510,3 @@
 .api-table td:nth-child(6) { width: 14%; }
 .api-table th:nth-child(7),
 .api-table td:nth-child(7) { width: 14%; }
-
-@media (max-width: 1024px) {
-  .api-table-container {
-    padding: 18px;
-  }
-
-  .table-header,
-  .table-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .create-btn {
-    width: 100%;
-  }
-}
-
-
