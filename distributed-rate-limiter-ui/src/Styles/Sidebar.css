@@ -334,14 +334,3 @@
   cursor: not-allowed;
   transform: none;
 }
-
-@media (max-width: 640px) {
-  .logout-modal-card {
-    padding: 24px 18px 20px;
-    border-radius: 20px;
-  }
-
-  .logout-modal-actions {
-    grid-template-columns: 1fr;
-  }
-}
