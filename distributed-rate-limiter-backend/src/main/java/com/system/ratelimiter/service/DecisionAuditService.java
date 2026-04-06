@@ -90,7 +90,6 @@ public class DecisionAuditService {
                 return null;
             });
         } catch (Exception ex) {
-            // Put the batch back at the tail so it can be retried in order later.
             for (int i = batch.size() - 1; i >= 0; i--) {
                 pendingAuditPayloads.offerLast(batch.get(i));
                 pendingAuditCount.incrementAndGet();
