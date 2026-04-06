@@ -17,6 +17,7 @@ function Analytics({ grafanaDashboardUrl }) {
   const resolvedGrafanaUrl = useMemo(() => normalizeGrafanaUrl(grafanaDashboardUrl), [grafanaDashboardUrl]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEmbedBlocked(false);
     setFrameLoaded(false);
 
