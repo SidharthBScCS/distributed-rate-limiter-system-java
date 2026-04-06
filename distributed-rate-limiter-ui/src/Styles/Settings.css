@@ -195,27 +195,3 @@
   display: flex;
   justify-content: flex-end;
 }
-
-@media (max-width: 1024px) {
-  .settings-single-card {
-    width: 100%;
-  }
-}
-
-@media (max-width: 640px) {
-  .settings-page {
-    padding-bottom: 18px;
-  }
-
-  .settings-single-header,
-  .settings-simple-row,
-  .settings-footer,
-  .settings-toggle-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .settings-simple-row strong {
-    text-align: left;
-  }
-}
