@@ -1,82 +1,132 @@
-* {
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
   background: #022c2c;
   color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .login-container {
   display: flex;
-  height: 100vh;
+  min-height: 100dvh;
   width: 100%;
 }
 
 .left-panel {
   flex: 1;
-  background: linear-gradient(145deg, #023535, #021f1f);
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+  overflow: hidden;
+
+  background: linear-gradient(145deg, #022c2c, #011a1a);
+}
+
+.left-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+
+  background-size: 40px 40px;
 }
 
 .left-panel::after {
   content: "";
   position: absolute;
-  width: 320px;
-  height: 320px;
-  background: radial-gradient(circle, rgba(0,255,200,0.15), transparent);
+  width: 400px;
+  height: 400px;
+
+  background: radial-gradient(circle, rgba(0,255,200,0.12), transparent 70%);
+
   top: 50%;
-  left: 50%;
+  left: 40%;
   transform: translate(-50%, -50%);
 }
 
-.brand {
+.left-content {
+  position: relative;
+  z-index: 1;
+  max-width: 320px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.logo-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  z-index: 1;
+  gap: 12px;
 }
 
 .logo-shape {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+
   background: linear-gradient(180deg, #00d4aa, #ff7a18);
   box-shadow: 0 0 25px rgba(0, 212, 170, 0.4);
 }
 
-.brand h2 {
-  font-size: 1.4rem;
-  font-weight: 500;
+.logo-row h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
   color: #e6fffb;
 }
 
-.divider {
-  width: 1px;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgba(255,255,255,0.2),
-    transparent
-  );
+.system-info h3 {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.system-info p {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  line-height: 1.5;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  color: #00d4aa;
+
+  border: 1px solid rgba(0,212,170,0.3);
+  background: rgba(0,212,170,0.05);
+
+  padding: 6px 10px;
+  border-radius: 999px;
+  width: fit-content;
 }
 
 .right-panel {
   flex: 1;
-  background: #022c2c;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  background: #022c2c;
 }
 
 .form-wrapper {
-  width: 340px;
+  width: 100%;
+  max-width: 360px;
 }
 
 .form-wrapper h1 {
@@ -93,11 +143,15 @@ body {
 .error-alert {
   display: flex;
   gap: 6px;
+
+  padding: 8px;
+  margin-bottom: 12px;
+
+  border-radius: 6px;
+
   background: rgba(255, 0, 0, 0.1);
   border: 1px solid rgba(255, 0, 0, 0.3);
-  padding: 8px;
-  border-radius: 4px;
-  margin-bottom: 12px;
+
   font-size: 0.8rem;
 }
 
@@ -110,12 +164,18 @@ body {
 .auth-form input {
   width: 100%;
   padding: 10px;
+
   border-radius: 6px;
   border: none;
+
   background: rgba(255, 255, 255, 0.92);
   color: #111827;
+
   font-size: 0.9rem;
-  transition: 0.2s;
+
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .auth-form input:focus {
@@ -129,11 +189,14 @@ body {
 
 .password-field button {
   position: absolute;
-  right: 8px;
   top: 50%;
+  right: 8px;
+
   transform: translateY(-50%);
+
   background: transparent;
   border: none;
+
   cursor: pointer;
   color: #374151;
 }
@@ -142,14 +205,21 @@ body {
   width: 100%;
   margin-top: 12px;
   padding: 11px;
-  background: #f97316;
-  border: none;
+
   border-radius: 6px;
-  color: white;
+  border: none;
+
+  background: #f97316;
+  color: #ffffff;
+
   font-weight: 600;
   letter-spacing: 0.02em;
+
   cursor: pointer;
-  transition: 0.2s;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .auth-form button[type="submit"]:hover {
@@ -161,83 +231,29 @@ body {
   opacity: 0.6;
   cursor: not-allowed;
 }
-.left-panel {
-  flex: 1;
-  background: linear-gradient(145deg, #022c2c, #011a1a);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
+
+.auth-form button:focus-visible,
+.auth-form input:focus-visible {
+  outline: 2px solid #f97316;
+  outline-offset: 2px;
 }
 
-.left-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: 
-    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
+@media (max-width: 900px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .left-panel {
+    min-height: 240px;
+  }
+
+  .right-panel {
+    padding: 24px 16px;
+  }
 }
 
-.left-panel::after {
-  content: "";
-  position: absolute;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(0,255,200,0.12), transparent 70%);
-  top: 50%;
-  left: 40%;
-  transform: translate(-50%, -50%);
-}
-
-.left-content {
-  z-index: 1;
-  max-width: 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.logo-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo-shape {
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #00d4aa, #ff7a18);
-  box-shadow: 0 0 25px rgba(0, 212, 170, 0.4);
-}
-
-.logo-row h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #e6fffb;
-}
-
-.system-info h3 {
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: #ffffff;
-}
-
-.system-info p {
-  font-size: 0.85rem;
-  color: #9ca3af;
-  line-height: 1.5;
-}
-
-.status-badge {
-  font-size: 0.75rem;
-  color: #00d4aa;
-  border: 1px solid rgba(0,212,170,0.3);
-  padding: 6px 10px;
-  border-radius: 20px;
-  width: fit-content;
-  background: rgba(0,212,170,0.05);
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }
