@@ -24,7 +24,13 @@
   align-items: center;
   justify-content: center;
   border-radius: 18px;
-  background: linear-gradient(135deg, rgba(69, 255, 211, 0.18), rgba(83, 183, 255, 0.14));
+
+  background: linear-gradient(
+    135deg,
+    rgba(69, 255, 211, 0.18),
+    rgba(83, 183, 255, 0.14)
+  );
+
   border: 1px solid rgba(69, 255, 211, 0.22);
   color: var(--text-primary);
   flex-shrink: 0;
@@ -33,6 +39,7 @@
 .settings-overline {
   margin: 0 0 4px;
   color: var(--accent-cyan);
+
   font-family: var(--font-mono);
   font-size: 0.78rem;
   font-weight: 700;
@@ -63,12 +70,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+
   padding-bottom: 12px;
+
   border-bottom: 1px solid rgba(69, 255, 211, 0.08);
 }
 
 .settings-simple-row span {
   color: var(--text-muted);
+
   font-family: var(--font-mono);
   font-size: 0.82rem;
   letter-spacing: 0.05em;
@@ -83,7 +93,12 @@
 .settings-divider {
   height: 1px;
   margin: 24px 0;
-  background: linear-gradient(90deg, rgba(69, 255, 211, 0.16), transparent);
+
+  background: linear-gradient(
+    90deg,
+    rgba(69, 255, 211, 0.16),
+    transparent
+  );
 }
 
 .settings-form {
@@ -102,6 +117,7 @@
 
 .settings-field label {
   color: #b4dfda;
+
   font-family: var(--font-mono);
   font-size: 0.82rem;
   font-weight: 700;
@@ -113,14 +129,22 @@
 .settings-field select {
   min-height: 50px;
   padding: 0 14px;
+
   border-radius: 14px;
   border: 1px solid rgba(69, 255, 211, 0.12);
+
   background: rgba(69, 255, 211, 0.03);
   color: var(--text-primary);
+
   font-family: var(--font-mono);
   font-size: 0.92rem;
+
   outline: none;
-  transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
 }
 
 .settings-field input:focus,
@@ -135,9 +159,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+
   padding: 14px 16px;
+
   border-radius: 18px;
   border: 1px solid rgba(69, 255, 211, 0.1);
+
   background: rgba(69, 255, 211, 0.025);
 }
 
@@ -174,16 +201,40 @@
 .settings-save-btn {
   min-height: 46px;
   padding: 0 18px;
+
   border-radius: 14px;
   border: 1px solid rgba(69, 255, 211, 0.24);
-  background: linear-gradient(135deg, rgba(69, 255, 211, 0.16), rgba(114, 255, 126, 0.14));
+
+  background: linear-gradient(
+    135deg,
+    rgba(69, 255, 211, 0.16),
+    rgba(114, 255, 126, 0.14)
+  );
+
   color: var(--accent-cyan);
+
   font-family: var(--font-mono);
   font-size: 0.88rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+
   cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.settings-save-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(69, 255, 211, 0.4);
+  background: linear-gradient(
+    135deg,
+    rgba(69, 255, 211, 0.22),
+    rgba(114, 255, 126, 0.18)
+  );
 }
 
 .settings-save-btn:disabled {
@@ -191,7 +242,39 @@
   cursor: not-allowed;
 }
 
+.settings-save-btn:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
 .settings-actions-inline {
   display: flex;
   justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .settings-single-header {
+    align-items: flex-start;
+  }
+
+  .settings-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .settings-actions-inline {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .settings-save-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }
