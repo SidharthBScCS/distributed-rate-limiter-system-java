@@ -1,32 +1,94 @@
 package com.system.ratelimiter.service;
 
-import java.util.Objects;
-import java.util.Locale;
-import org.springframework.beans.factory.annotation.Value;
+import com.system.ratelimiter.dto.AuthResponse;
+import com.system.ratelimiter.entity.Administrator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
 
-    private final String adminUsername;
-    private final String adminPassword;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final AdministratorService administratorService;
+    private final AdministratorPrincipalService administratorPrincipalService;
 
     public AuthService(
-            @Value("${auth.admin.username:admin}") String adminUsername,
-            @Value("${auth.admin.password:admin@123}") String adminPassword
+            AuthenticationManager authenticationManager,
+            JwtService jwtService,
+            AdministratorService administratorService,
+            AdministratorPrincipalService administratorPrincipalService
     ) {
-        this.adminUsername = adminUsername;
-        this.adminPassword = adminPassword;
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
+        this.administratorService = administratorService;
+        this.administratorPrincipalService = administratorPrincipalService;
     }
 
-    public boolean authenticate(String username, String password) {
-        if (username == null || username.isBlank() || password == null) {
-            return false;
+    public AuthResponse authenticate(String username, String password) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username == null ? "" : username.trim(), password)
+            );
+            UserDetails principal = (UserDetails) authentication.getPrincipal();
+            Administrator administrator = administratorService.getByUsername(principal.getUsername());
+            Map<String, Object> claims = new LinkedHashMap<>();
+            claims.put("role", administrator.getRole());
+            claims.put("fullName", administrator.getFullName());
+            String token = jwtService.generateToken(principal, claims);
+            return toAuthResponse(administrator, token);
+        } catch (BadCredentialsException ex) {
+            throw ex;
         }
-        String normalizedUsername = username.trim().toLowerCase(Locale.ROOT);
-        String configuredUsername = adminUsername == null ? "" : adminUsername.trim().toLowerCase(Locale.ROOT);
-        String providedPassword = password.trim();
-        String configuredPassword = adminPassword == null ? "" : adminPassword.trim();
-        return Objects.equals(configuredUsername, normalizedUsername) && Objects.equals(configuredPassword, providedPassword);
+    }
+
+    public AuthResponse getCurrentAdmin(String username) {
+        Administrator administrator = administratorService.getByUsername(username);
+        UserDetails userDetails = administratorPrincipalService.toUserDetails(administrator);
+        String token = jwtService.generateToken(userDetails, Map.of(
+                "role", administrator.getRole(),
+                "fullName", administrator.getFullName()
+        ));
+        return toAuthResponse(administrator, token);
+    }
+
+    public AuthResponse updateProfile(String username, String fullName, String email) {
+        Administrator administrator = administratorService.updateProfile(username, fullName, email);
+        UserDetails userDetails = administratorPrincipalService.toUserDetails(administrator);
+        String token = jwtService.generateToken(userDetails, Map.of(
+                "role", administrator.getRole(),
+                "fullName", administrator.getFullName()
+        ));
+        return toAuthResponse(administrator, token);
+    }
+
+    private AuthResponse toAuthResponse(Administrator administrator, String token) {
+        return new AuthResponse(
+                token,
+                "Bearer",
+                administrator.getUsername(),
+                administrator.getFullName(),
+                administrator.getEmail(),
+                administrator.getCreatedAt(),
+                initials(administrator.getFullName(), administrator.getUsername())
+        );
+    }
+
+    private String initials(String fullName, String fallback) {
+        String base = (fullName == null || fullName.isBlank()) ? fallback : fullName;
+        if (base == null || base.isBlank()) {
+            return "AD";
+        }
+        String[] parts = base.trim().split("\\s+");
+        if (parts.length == 1) {
+            return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
+        }
+        return ("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
     }
 }
