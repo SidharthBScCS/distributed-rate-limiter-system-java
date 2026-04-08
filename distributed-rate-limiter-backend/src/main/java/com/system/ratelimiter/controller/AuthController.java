@@ -1,16 +1,13 @@
 package com.system.ratelimiter.controller;
 
 import com.system.ratelimiter.dto.LoginRequest;
+import com.system.ratelimiter.dto.AuthResponse;
 import com.system.ratelimiter.dto.UpdateAdminProfileRequest;
 import com.system.ratelimiter.service.AuthService;
+import com.system.ratelimiter.service.AdministratorService;
 import jakarta.validation.Valid;
-import java.time.Instant;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpHeaders;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -24,61 +21,43 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService authService;
-    private final String adminUsername;
-    private volatile String adminFullName;
-    private volatile String adminEmail;
-    private final Instant createdAt;
+    private final AdministratorService administratorService;
 
     public AuthController(
             AuthService authService,
-            @Value("${auth.admin.username:admin}") String adminUsername,
-            @Value("${auth.admin.full-name:System Admin}") String adminFullName,
-            @Value("${auth.admin.email:admin@ratelimiter.local}") String adminEmail
+            AdministratorService administratorService
     ) {
         this.authService = authService;
-        this.adminUsername = adminUsername;
-        this.adminFullName = adminFullName;
-        this.adminEmail = adminEmail;
-        this.createdAt = Instant.now();
+        this.administratorService = administratorService;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest) {
-        boolean ok = authService.authenticate(request.getUsername(), request.getPassword());
-        if (!ok) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Invalid credentials"));
-        }
-
-        HttpSession existing = servletRequest.getSession(false);
-        if (existing != null) {
-            existing.invalidate();
-        }
-        HttpSession session = servletRequest.getSession(true);
-        session.setAttribute("userId", adminUsername);
-        Map<String, Object> body = adminPayload();
-        body.put("message", "Login successful");
-        return ResponseEntity.ok(body);
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.authenticate(request.getUsername(), request.getPassword()));
     }
 
     @GetMapping("/admin/{userId}")
     public ResponseEntity<Map<String, Object>> getAdmin(@PathVariable("userId") String userId) {
-        if (!adminUsername.equals(userId)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Admin not found"));
+        try {
+            return ResponseEntity.ok(toAdminPayload(administratorService.getByUsername(userId)));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Admin not found"));
         }
-        return ResponseEntity.ok(adminPayload());
     }
 
     @GetMapping("/admins")
     public ResponseEntity<Map<String, Object>> listAdmins() {
-        var admins = java.util.List.of(adminListItemPayload());
+        var admins = administratorService.findAll().stream()
+                .map(this::toAdminListItemPayload)
+                .toList();
         return ResponseEntity.ok(Map.of(
                 "count", admins.size(),
                 "items", admins
@@ -86,41 +65,22 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<Map<String, Object>> getCurrentAdmin(HttpSession session) {
-        Object userId = session.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Not authenticated"));
-        }
-        if (!adminUsername.equals(String.valueOf(userId))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Not authenticated"));
-        }
-        return ResponseEntity.ok(adminPayload());
+    public ResponseEntity<AuthResponse> getCurrentAdmin(Authentication authentication) {
+        return ResponseEntity.ok(authService.getCurrentAdmin(authentication.getName()));
     }
 
     @PutMapping("/me")
-    public ResponseEntity<Map<String, Object>> updateCurrentAdmin(
+    public ResponseEntity<AuthResponse> updateCurrentAdmin(
             @Valid @RequestBody UpdateAdminProfileRequest request,
-            HttpSession session
+            Authentication authentication
     ) {
-        Object userId = session.getAttribute("userId");
-        if (userId == null || !adminUsername.equals(String.valueOf(userId))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Not authenticated"));
-        }
-
-        adminFullName = request.getFullName().trim();
-        adminEmail = request.getEmail().trim();
-
-        Map<String, Object> body = adminPayload();
-        body.put("message", "Profile updated");
-        return ResponseEntity.ok(body);
+        return ResponseEntity.ok(
+                authService.updateProfile(authentication.getName(), request.getFullName(), request.getEmail())
+        );
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, Object>> logout(HttpSession session) {
-        session.invalidate();
+    public ResponseEntity<Map<String, Object>> logout() {
         return ResponseEntity.ok(Map.of("message", "Logged out"));
     }
 
@@ -143,40 +103,34 @@ public class AuthController {
                 .body(Map.of("message", "Invalid JSON payload"));
     }
 
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Map<String, Object>> handleBadCredentials() {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", "Invalid credentials"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "Authentication failed unexpectedly"));
     }
 
-    private String initials(String fullName, String fallback) {
-        String base = (fullName == null || fullName.isBlank()) ? fallback : fullName;
-        if (base == null || base.isBlank()) {
-            return "AD";
-        }
-        String[] parts = base.trim().split("\\s+");
-        if (parts.length == 1) {
-            return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
-        }
-        return ("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
-    }
-
-    private Map<String, Object> adminPayload() {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("userId", adminUsername);
-        payload.put("fullName", adminFullName);
-        payload.put("email", adminEmail);
-        payload.put("createdAt", createdAt);
-        payload.put("initials", initials(adminFullName, adminUsername));
+    private Map<String, Object> toAdminPayload(com.system.ratelimiter.entity.Administrator administrator) {
+        Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("userId", administrator.getUsername());
+        payload.put("fullName", administrator.getFullName());
+        payload.put("email", administrator.getEmail());
+        payload.put("createdAt", administrator.getCreatedAt());
+        payload.put("role", administrator.getRole());
         return payload;
     }
 
-    private Map<String, Object> adminListItemPayload() {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("userId", adminUsername);
-        payload.put("fullName", adminFullName);
-        payload.put("email", adminEmail);
-        payload.put("createdAt", createdAt);
+    private Map<String, Object> toAdminListItemPayload(com.system.ratelimiter.entity.Administrator administrator) {
+        Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("userId", administrator.getUsername());
+        payload.put("fullName", administrator.getFullName());
+        payload.put("email", administrator.getEmail());
+        payload.put("createdAt", administrator.getCreatedAt());
         return payload;
     }
 }
