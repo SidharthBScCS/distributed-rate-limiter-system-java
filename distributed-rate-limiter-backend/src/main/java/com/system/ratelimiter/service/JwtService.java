@@ -61,10 +61,10 @@ public class JwtService {
 
     private static byte[] resolveSecret(String rawSecret) {
         String value = rawSecret == null ? "" : rawSecret.trim();
-        try {
-            return Decoders.BASE64.decode(value);
-        } catch (IllegalArgumentException ex) {
-            return value.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        if (value.regionMatches(true, 0, "base64:", 0, "base64:".length())) {
+            String encoded = value.substring("base64:".length()).trim();
+            return Decoders.BASE64.decode(encoded);
         }
+        return value.getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 }
