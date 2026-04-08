@@ -8,7 +8,7 @@ import Analytics from "./Components/Analytics.jsx";
 import LoginPage from "./Components/LoginPage.jsx";
 import Settings from "./Components/Settings.jsx";
 import { apiUrl } from "./apiBase.js";
-import { isFrontendAuthenticated, setFrontendAuthenticated } from "./auth.js";
+import { buildAuthHeaders, getAccessToken, isFrontendAuthenticated, setFrontendAuthenticated } from "./auth.js";
 import { readAppPreferences } from "./preferences.js";
 import "./App.css";
 
@@ -141,10 +141,15 @@ function App() {
   const syncAuthState = async () => {
     try {
       const response = await fetch(apiUrl("/api/auth/me"), {
-        credentials: "include",
+        headers: buildAuthHeaders(),
       });
       const authenticated = response.ok;
-      setFrontendAuthenticated(authenticated);
+      let nextToken = getAccessToken();
+      if (response.ok) {
+        const data = await response.json();
+        nextToken = data?.token ?? nextToken;
+      }
+      setFrontendAuthenticated(authenticated, nextToken);
       setIsAuthenticated(authenticated);
       return authenticated;
     } catch {
@@ -182,7 +187,7 @@ function App() {
       }
 
       const response = await fetch(apiUrl(`/api/view/dashboard?${params.toString()}`), {
-        credentials: "include",
+        headers: buildAuthHeaders(),
       });
       if (!response.ok) {
         if (response.status === 401) {
@@ -257,7 +262,6 @@ function App() {
   const loadUiConfig = async () => {
     try {
       const response = await fetch(apiUrl("/api/config"), {
-        credentials: "include",
       });
       if (!response.ok) {
         if (response.status === 401) {
@@ -321,7 +325,9 @@ function App() {
       return undefined;
     }
 
-    const source = new EventSource(apiUrl("/api/stream/dashboard"), { withCredentials: true });
+    const source = new EventSource(
+      apiUrl(`/api/stream/dashboard?access_token=${encodeURIComponent(getAccessToken())}`)
+    );
 
     const onTick = () => {
       void loadDashboardData();

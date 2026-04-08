@@ -21,7 +21,6 @@ function LoginPage() {
     try {
       const response = await fetch(apiUrl("/api/auth/login"), {
         method: "POST",
-        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -42,7 +41,8 @@ function LoginPage() {
         throw new Error(message);
       }
 
-      setFrontendAuthenticated(true);
+      const data = await response.json();
+      setFrontendAuthenticated(true, data?.token ?? "");
       window.dispatchEvent(new Event("auth-changed"));
       window.location.assign("/dashboard");
     } catch (err) {

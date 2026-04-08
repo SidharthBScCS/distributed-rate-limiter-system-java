@@ -1,9 +1,5 @@
 const FRONTEND_AUTH_KEY = "frontend-authenticated";
-const ADMIN_USERNAME_KEY = "configured-admin-username";
-const ADMIN_PASSWORD_KEY = "configured-admin-password";
-
-const DEFAULT_ADMIN_USERNAME = (import.meta.env.VITE_ADMIN_USERNAME ?? "admin").trim();
-const DEFAULT_ADMIN_PASSWORD = (import.meta.env.VITE_ADMIN_PASSWORD ?? "admin").trim();
+const ACCESS_TOKEN_KEY = "admin-access-token";
 
 function readStorageValue(key) {
   if (typeof window === "undefined") {
@@ -13,26 +9,40 @@ function readStorageValue(key) {
   return window.localStorage.getItem(key) ?? "";
 }
 
+export function getAccessToken() {
+  return readStorageValue(ACCESS_TOKEN_KEY).trim();
+}
+
 export function isFrontendAuthenticated() {
   if (typeof window === "undefined") {
     return false;
   }
 
-  return readStorageValue(FRONTEND_AUTH_KEY) === "true";
+  return readStorageValue(FRONTEND_AUTH_KEY) === "true" && getAccessToken() !== "";
 }
 
-export function setFrontendAuthenticated(isAuthenticated) {
+export function setFrontendAuthenticated(isAuthenticated, token = "") {
   if (typeof window === "undefined") {
     return;
   }
 
   window.localStorage.setItem(FRONTEND_AUTH_KEY, isAuthenticated ? "true" : "false");
+  if (isAuthenticated && token) {
+    window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
+    return;
+  }
+
+  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
 }
 
-export function getConfiguredAdminUsername() {
-  return readStorageValue(ADMIN_USERNAME_KEY).trim() || DEFAULT_ADMIN_USERNAME;
-}
+export function buildAuthHeaders(headers = {}) {
+  const token = getAccessToken();
+  if (!token) {
+    return headers;
+  }
 
-export function getConfiguredAdminPassword() {
-  return readStorageValue(ADMIN_PASSWORD_KEY) || DEFAULT_ADMIN_PASSWORD;
+  return {
+    ...headers,
+    Authorization: `Bearer ${token}`,
+  };
 }
