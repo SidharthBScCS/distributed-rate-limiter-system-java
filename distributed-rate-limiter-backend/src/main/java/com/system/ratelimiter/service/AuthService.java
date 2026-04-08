@@ -2,7 +2,6 @@ package com.system.ratelimiter.service;
 
 import com.system.ratelimiter.dto.AuthResponse;
 import com.system.ratelimiter.entity.Administrator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -38,10 +37,7 @@ public class AuthService {
             );
             UserDetails principal = (UserDetails) authentication.getPrincipal();
             Administrator administrator = administratorService.getByUsername(principal.getUsername());
-            Map<String, Object> claims = new LinkedHashMap<>();
-            claims.put("role", administrator.getRole());
-            claims.put("fullName", administrator.getFullName());
-            String token = jwtService.generateToken(principal, claims);
+            String token = jwtService.generateToken(principal, Map.of());
             return toAuthResponse(administrator, token);
         } catch (BadCredentialsException ex) {
             throw ex;
@@ -51,21 +47,12 @@ public class AuthService {
     public AuthResponse getCurrentAdmin(String username) {
         Administrator administrator = administratorService.getByUsername(username);
         UserDetails userDetails = administratorPrincipalService.toUserDetails(administrator);
-        String token = jwtService.generateToken(userDetails, Map.of(
-                "role", administrator.getRole(),
-                "fullName", administrator.getFullName()
-        ));
+        String token = jwtService.generateToken(userDetails, Map.of());
         return toAuthResponse(administrator, token);
     }
 
-    public AuthResponse updateProfile(String username, String fullName, String email) {
-        Administrator administrator = administratorService.updateProfile(username, fullName, email);
-        UserDetails userDetails = administratorPrincipalService.toUserDetails(administrator);
-        String token = jwtService.generateToken(userDetails, Map.of(
-                "role", administrator.getRole(),
-                "fullName", administrator.getFullName()
-        ));
-        return toAuthResponse(administrator, token);
+    public AuthResponse updateProfile(String username) {
+        return getCurrentAdmin(username);
     }
 
     private AuthResponse toAuthResponse(Administrator administrator, String token) {
@@ -73,10 +60,10 @@ public class AuthService {
                 token,
                 "Bearer",
                 administrator.getUsername(),
-                administrator.getFullName(),
-                administrator.getEmail(),
-                administrator.getCreatedAt(),
-                initials(administrator.getFullName(), administrator.getUsername())
+                administrator.getUsername(),
+                "",
+                null,
+                initials(administrator.getUsername(), administrator.getUsername())
         );
     }
 
