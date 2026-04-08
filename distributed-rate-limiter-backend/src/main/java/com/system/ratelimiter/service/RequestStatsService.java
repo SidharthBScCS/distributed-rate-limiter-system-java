@@ -57,6 +57,11 @@ public class RequestStatsService {
     @PostConstruct
     @Transactional
     public void syncOnStartup() {
+        reloadFromDatabase();
+    }
+
+    @Transactional
+    public void reloadFromDatabase() {
         RequestStats stats = normalize(getOrCreate());
         statsId = stats.getId();
         totalRequests.set(safe(stats.getTotalRequests()));
