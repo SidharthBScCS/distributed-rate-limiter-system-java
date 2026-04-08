@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { LayoutDashboard, BarChart3, Shield, LogOut, Settings as SettingsIcon, X } from "lucide-react";
-import { setFrontendAuthenticated } from "../auth.js";
+import { buildAuthHeaders, setFrontendAuthenticated } from "../auth.js";
 import { readAppPreferences } from "../preferences.js";
 import { apiUrl } from "../apiBase.js";
 import "../Styles/Sidebar.css";
@@ -31,7 +31,7 @@ function Sidebar({ isMobileOpen }) {
     try {
       await fetch(apiUrl("/api/auth/logout"), {
         method: "POST",
-        credentials: "include",
+        headers: buildAuthHeaders(),
       });
     } catch {
       // Clear the local session state even if the backend is unavailable.

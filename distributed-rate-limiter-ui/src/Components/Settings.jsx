@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Save, UserRound } from "lucide-react";
 import { apiUrl } from "../apiBase.js";
+import { buildAuthHeaders, setFrontendAuthenticated } from "../auth.js";
 import { readAppPreferences, writeAppPreferences } from "../preferences.js";
 import "../Styles/Settings.css";
 
@@ -25,7 +26,7 @@ function Settings() {
     const loadAdmin = async () => {
       try {
         const response = await fetch(apiUrl("/api/auth/me"), {
-          credentials: "include",
+          headers: buildAuthHeaders(),
         });
 
         if (!response.ok) {
@@ -73,10 +74,9 @@ function Settings() {
     try {
       const response = await fetch(apiUrl("/api/auth/me"), {
         method: "PUT",
-        credentials: "include",
-        headers: {
+        headers: buildAuthHeaders({
           "Content-Type": "application/json",
-        },
+        }),
         body: JSON.stringify({
           fullName: profileForm.fullName.trim(),
           email: profileForm.email.trim(),
@@ -89,6 +89,7 @@ function Settings() {
       }
 
       setCurrentAdmin(data);
+      setFrontendAuthenticated(true, data?.token ?? "");
       setProfileForm({
         fullName: data?.fullName ?? "",
         email: data?.email ?? "",
