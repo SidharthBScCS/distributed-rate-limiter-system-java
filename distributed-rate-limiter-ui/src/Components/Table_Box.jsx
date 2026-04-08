@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Copy, Search } from "lucide-react";
 import { apiUrl } from "../apiBase.js";
+import { buildAuthHeaders } from "../auth.js";
 import "../Styles/Table_Box.css";
 
 function ApiTable({
@@ -151,10 +152,10 @@ function ApiTable({
     try {
       const response = await fetch(apiUrl("/api/keys"), {
         method: "POST",
-        credentials: "include",
-        headers: {
+        headers: buildAuthHeaders({
           "Content-Type": "application/json",
-        },
+        }),
+        cache: "no-store",
         body: JSON.stringify(payload),
       });
 

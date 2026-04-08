@@ -4,7 +4,7 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: administrators
+      POSTGRES_DB: ratelimiter_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -12,7 +12,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d administrators"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ratelimiter_db"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -38,7 +38,7 @@ services:
       dockerfile: Dockerfile
     environment:
       PORT: 8080
-      DB_URL: jdbc:postgresql://postgres:5432/administrators
+      DB_URL: jdbc:postgresql://postgres:5432/ratelimiter_db
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       REDIS_HOST: redis

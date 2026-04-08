@@ -12,8 +12,8 @@ import { buildAuthHeaders, getAccessToken, isFrontendAuthenticated, setFrontendA
 import { readAppPreferences } from "./preferences.js";
 import "./App.css";
 
-const UI_CONFIG_CACHE_KEY = "ui-config-cache";
-const DASHBOARD_CACHE_KEY = "dashboard-cache";
+const UI_CONFIG_CACHE_KEY = "ui-config-cache-v2";
+const DASHBOARD_CACHE_KEY = "dashboard-cache-v2";
 
 const DEFAULT_PAGINATION = {
   page: 1,
@@ -142,6 +142,7 @@ function App() {
     try {
       const response = await fetch(apiUrl("/api/auth/me"), {
         headers: buildAuthHeaders(),
+        cache: "no-store",
       });
       const authenticated = response.ok;
       let nextToken = getAccessToken();
@@ -188,6 +189,7 @@ function App() {
 
       const response = await fetch(apiUrl(`/api/view/dashboard?${params.toString()}`), {
         headers: buildAuthHeaders(),
+        cache: "no-store",
       });
       if (!response.ok) {
         if (response.status === 401) {
@@ -262,6 +264,7 @@ function App() {
   const loadUiConfig = async () => {
     try {
       const response = await fetch(apiUrl("/api/config"), {
+        cache: "no-store",
       });
       if (!response.ok) {
         if (response.status === 401) {

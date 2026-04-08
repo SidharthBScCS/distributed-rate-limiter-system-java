@@ -27,6 +27,7 @@ function Settings() {
       try {
         const response = await fetch(apiUrl("/api/auth/me"), {
           headers: buildAuthHeaders(),
+          cache: "no-store",
         });
 
         if (!response.ok) {
@@ -77,6 +78,7 @@ function Settings() {
         headers: buildAuthHeaders({
           "Content-Type": "application/json",
         }),
+        cache: "no-store",
         body: JSON.stringify({
           fullName: profileForm.fullName.trim(),
           email: profileForm.email.trim(),
