@@ -10,6 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.util.UUID;
@@ -66,9 +69,26 @@ public class ApiKeyService {
     }
 
     public java.util.List<ApiKey> getAllRealKeys() {
-        return getAll().stream()
-                .filter(this::isRealKey)
+        return apiKeyRepository.findAllRealKeys().stream()
+                .map(this::copyAndNormalize)
                 .toList();
+    }
+
+    public Page<ApiKey> getDashboardKeys(String search, int page, int size) {
+        String normalized = search == null ? "" : search.trim().toLowerCase(Locale.ROOT);
+        int safePage = Math.max(0, page);
+        int safeSize = Math.max(1, Math.min(100, size));
+        return apiKeyRepository.findDashboardKeys(
+                normalized,
+                PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "totalRequests"))
+        ).map(this::copyAndNormalize);
+    }
+
+    public java.util.List<ApiKey> getTopKeys(int limit) {
+        int safeLimit = Math.max(1, Math.min(20, limit));
+        return apiKeyRepository.findTopKeys(PageRequest.of(0, safeLimit))
+                .map(this::copyAndNormalize)
+                .getContent();
     }
 
     public ApiKey getCachedByValue(String apiKeyValue) {
@@ -144,7 +164,7 @@ public class ApiKeyService {
     }
 
     public java.util.List<ApiKeyStatsItemDto> getApiKeyStats() {
-        java.util.List<ApiKey> apiKeys = getAllRealKeys();
+        java.util.List<ApiKey> apiKeys = getTopKeys(50);
 
         return apiKeys.stream()
                 .map(apiKey -> new ApiKeyStatsItemDto(
@@ -155,19 +175,6 @@ public class ApiKeyService {
                         normalizeOrDefault(apiKey.getAlgorithm(), defaultAlgorithm)
                 ))
                 .toList();
-    }
-
-    private boolean isRealKey(ApiKey apiKey) {
-        if (apiKey == null) {
-            return false;
-        }
-        String user = apiKey.getUserName() == null ? "" : apiKey.getUserName().trim().toLowerCase(Locale.ROOT);
-        String key = apiKey.getApiKey() == null ? "" : apiKey.getApiKey().trim().toLowerCase(Locale.ROOT);
-        
-        return !(user.startsWith("demo")
-                || user.startsWith("sample")
-                || key.startsWith("demo")
-                || key.startsWith("sample"));
     }
 
     private ApiKey applyDelta(ApiKey source, long totalDelta, long allowedDelta, long blockedDelta, String status) {

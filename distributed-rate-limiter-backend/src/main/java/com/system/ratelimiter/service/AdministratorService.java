@@ -28,13 +28,23 @@ public class AdministratorService {
     }
 
     @Transactional
-    public void ensureDefaultAdministrator(String username, String password) {
+    public void ensureDefaultAdministrator(String username, String password, String fullName, String email) {
         if (administratorRepository.existsByUsernameIgnoreCase(username)) {
             return;
         }
         Administrator administrator = new Administrator();
         administrator.setUsername(username.trim());
-        administrator.setApassword(passwordEncoder.encode(password));
+        administrator.setFullName(fullName == null || fullName.isBlank() ? username.trim() : fullName.trim());
+        administrator.setEmail(email == null || email.isBlank() ? username.trim() + "@ratelimiter.local" : email.trim());
+        administrator.setPassword(passwordEncoder.encode(password));
         administratorRepository.save(administrator);
+    }
+
+    @Transactional
+    public Administrator updateProfile(String username, String fullName, String email) {
+        Administrator administrator = getByUsername(username);
+        administrator.setFullName(fullName.trim());
+        administrator.setEmail(email.trim());
+        return administratorRepository.save(administrator);
     }
 }

@@ -55,15 +55,22 @@ public class AuthService {
         return getCurrentAdmin(username);
     }
 
+    public AuthResponse updateProfile(String username, String fullName, String email) {
+        Administrator administrator = administratorService.updateProfile(username, fullName, email);
+        UserDetails userDetails = administratorPrincipalService.toUserDetails(administrator);
+        String token = jwtService.generateToken(userDetails, Map.of());
+        return toAuthResponse(administrator, token);
+    }
+
     private AuthResponse toAuthResponse(Administrator administrator, String token) {
         return new AuthResponse(
                 token,
                 "Bearer",
                 administrator.getUsername(),
-                administrator.getUsername(),
-                "",
-                null,
-                initials(administrator.getUsername(), administrator.getUsername())
+                administrator.getFullName(),
+                administrator.getEmail(),
+                administrator.getCreatedAt(),
+                initials(administrator.getFullName(), administrator.getUsername())
         );
     }
 
