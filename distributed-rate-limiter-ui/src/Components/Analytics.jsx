@@ -1,20 +1,47 @@
 import { useEffect, useMemo, useState } from "react";
 import "../Styles/Analytics.css";
 
-function normalizeGrafanaUrl(grafanaDashboardUrl) {
+function buildGrafanaCandidates(grafanaDashboardUrl) {
   if (!grafanaDashboardUrl) {
-    return "http://localhost:3001/d/adqskbg/total-request-rate?orgId=1&from=now-6h&to=now&timezone=browser";
+    return [];
   }
 
-  return grafanaDashboardUrl
-    .replace("http://localhost:3002", "http://localhost:3001")
-    .replace("http://127.0.0.1:3002", "http://127.0.0.1:3001");
+  const raw = String(grafanaDashboardUrl).trim();
+  if (!raw) {
+    return [];
+  }
+
+  const candidates = [raw];
+  try {
+    const url = new URL(raw);
+    const host = url.hostname;
+    const port = url.port;
+    const isLocal = host === "localhost" || host === "127.0.0.1";
+    if (isLocal && (port === "3001" || port === "3002")) {
+      const nextPort = port === "3001" ? "3002" : "3001";
+      url.port = nextPort;
+      candidates.push(url.toString());
+    }
+  } catch {
+    // Leave only the raw value if it is not a valid URL.
+  }
+
+  return Array.from(new Set(candidates));
 }
 
 function Analytics({ grafanaDashboardUrl }) {
   const [embedBlocked, setEmbedBlocked] = useState(false);
   const [frameLoaded, setFrameLoaded] = useState(false);
-  const resolvedGrafanaUrl = useMemo(() => normalizeGrafanaUrl(grafanaDashboardUrl), [grafanaDashboardUrl]);
+  const candidates = useMemo(() => buildGrafanaCandidates(grafanaDashboardUrl), [grafanaDashboardUrl]);
+  const [candidateIndex, setCandidateIndex] = useState(0);
+  const resolvedGrafanaUrl = candidates[candidateIndex] || "";
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setEmbedBlocked(false);
+    setFrameLoaded(false);
+    setCandidateIndex(0);
+  }, [grafanaDashboardUrl]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -27,6 +54,15 @@ function Analytics({ grafanaDashboardUrl }) {
 
     return () => window.clearTimeout(timeoutId);
   }, [resolvedGrafanaUrl]);
+
+  useEffect(() => {
+    if (!embedBlocked || frameLoaded) {
+      return;
+    }
+    if (candidateIndex < candidates.length - 1) {
+      setCandidateIndex((current) => Math.min(current + 1, candidates.length - 1));
+    }
+  }, [embedBlocked, frameLoaded, candidateIndex, candidates.length]);
 
   return (
     <div className="analytics-page page-full-bleed">
@@ -46,7 +82,7 @@ function Analytics({ grafanaDashboardUrl }) {
             />
             {embedBlocked && !frameLoaded ? (
               <div className="grafana-empty">
-                <p>Local Grafana is not reachable in the embedded view.</p>
+                <p>Grafana is not reachable in the embedded view.</p>
                 <a href={resolvedGrafanaUrl} target="_blank" rel="noreferrer" className="grafana-open-link">
                   Open in Grafana
                 </a>

@@ -172,22 +172,6 @@ function Settings() {
 
         <div className="settings-divider"></div>
 
-        <div className="settings-form">
-          <div className="settings-field">
-            <label htmlFor="default-page-size">Default table page size</label>
-            <select
-              id="default-page-size"
-              value={draft.defaultPageSize}
-              onChange={(event) => handleChange("defaultPageSize", Number(event.target.value))}
-            >
-              <option value={5}>5 rows</option>
-              <option value={10}>10 rows</option>
-              <option value={20}>20 rows</option>
-              <option value={50}>50 rows</option>
-            </select>
-          </div>
-        </div>
-
         <div className="settings-footer">
           <p>{saveMessage || "Preferences are saved only in this browser."}</p>
           <button type="button" className="settings-save-btn" onClick={handleSave}>
