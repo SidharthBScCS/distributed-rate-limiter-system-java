@@ -28,7 +28,7 @@ public class AdministratorPrincipalService implements UserDetailsService {
 
     public UserDetails toUserDetails(Administrator administrator) {
         return User.withUsername(administrator.getUsername())
-                .password(administrator.getApassword())
+                .password(administrator.getPassword())
                 .authorities(List.of(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .build();
     }
