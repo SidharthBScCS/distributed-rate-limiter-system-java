@@ -21,7 +21,6 @@ import com.system.ratelimiter.service.DistributedRateLimiterService;
 import com.system.ratelimiter.service.RequestStatsService;
 import jakarta.validation.Valid;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -103,8 +102,9 @@ public class ApiKeyController {
 
     private DashboardViewResponse buildDashboardView(String search, int page, int size) {
         RequestStats statsSnapshot = requestStatsService.snapshot();
-        List<ApiKey> allKeys = apiKeyService.getAllRealKeys();
-        var liveSnapshots = distributedRateLimiterService.snapshotDashboardState(allKeys);
+        var pageResult = apiKeyService.getDashboardKeys(search, Math.max(0, page - 1), size);
+        List<ApiKey> pageKeys = pageResult.getContent();
+        var liveSnapshots = distributedRateLimiterService.snapshotDashboardState(pageKeys);
         long total = statsSnapshot.getTotalRequests() == null ? 0L : statsSnapshot.getTotalRequests();
         long allowed = statsSnapshot.getAllowedRequests() == null ? 0L : statsSnapshot.getAllowedRequests();
         long blocked = statsSnapshot.getBlockedRequests() == null ? 0L : statsSnapshot.getBlockedRequests();
@@ -117,7 +117,7 @@ public class ApiKeyController {
                 statCard("Blocked", blocked, "Throttled requests", formatPercent(blockedPercent), blockedPercent > 0 ? "down" : "up", "#f87171", "x-circle")
         );
 
-        List<DashboardApiKeyRowDto> apiKeys = allKeys.stream()
+        List<DashboardApiKeyRowDto> apiKeys = pageKeys.stream()
                 .map(apiKey -> {
                     var liveSnapshot = liveSnapshots.getOrDefault(
                             apiKey.getApiKey(),
@@ -147,15 +147,11 @@ public class ApiKeyController {
                             statusColor(status)
                     );
                 })
-                .filter(row -> matchesDashboardSearch(row, search))
                 .toList();
-        apiKeys = sortApiKeysByUsage(apiKeys);
-        int totalApiKeys = apiKeys.size();
-        int totalPages = Math.max(1, (int) Math.ceil(totalApiKeys / (double) size));
+        int totalApiKeys = (int) pageResult.getTotalElements();
+        int totalPages = Math.max(1, pageResult.getTotalPages());
         int safePage = Math.min(Math.max(1, page), totalPages);
-        int startIndex = Math.min((safePage - 1) * size, totalApiKeys);
-        int endIndex = Math.min(startIndex + size, totalApiKeys);
-        List<DashboardApiKeyRowDto> pageRows = apiKeys.subList(startIndex, endIndex);
+        List<DashboardApiKeyRowDto> pageRows = apiKeys;
 
         return new DashboardViewResponse(
                 new DashboardStatsDto(
@@ -384,59 +380,8 @@ public class ApiKeyController {
         return search == null ? "" : search.trim().toLowerCase();
     }
 
-    private static boolean matchesDashboardSearch(DashboardApiKeyRowDto row, String search) {
-        if (search == null || search.isEmpty()) {
-            return true;
-        }
-        return List.of(
-                        row.apiKey(),
-                        row.userName(),
-                        row.status(),
-                        row.algorithm(),
-                        row.rateLimit(),
-                        row.windowSeconds()
-                ).stream()
-                .filter(value -> value != null)
-                .map(String::valueOf)
-                .map(String::toLowerCase)
-                .anyMatch(value -> value.contains(search));
-    }
-
     private static String dashboardCacheKey(String search, int page, int size) {
         return search + "|" + page + "|" + size;
-    }
-
-    private static List<DashboardApiKeyRowDto> sortApiKeysByUsage(List<DashboardApiKeyRowDto> apiKeys) {
-        if (apiKeys == null || apiKeys.size() <= 1) {
-            return apiKeys == null ? List.of() : apiKeys;
-        }
-
-        List<DashboardApiKeyRowDto> sorted = new ArrayList<>(apiKeys);
-        sorted.sort(ApiKeyController::compareApiKeyRows);
-        return sorted;
-    }
-
-    private static int compareApiKeyRows(DashboardApiKeyRowDto leftRow, DashboardApiKeyRowDto rightRow) {
-        int usageComparison = Double.compare(
-                rightRow.usagePercentage(),
-                leftRow.usagePercentage()
-        );
-        if (usageComparison != 0) {
-            return usageComparison;
-        }
-
-        int requestCountComparison = Long.compare(
-                rightRow.requestCount(),
-                leftRow.requestCount()
-        );
-        if (requestCountComparison != 0) {
-            return requestCountComparison;
-        }
-
-        return String.CASE_INSENSITIVE_ORDER.compare(
-                String.valueOf(leftRow.userName()),
-                String.valueOf(rightRow.userName())
-        );
     }
 
     private record CachedDashboardView(DashboardViewResponse payload, long createdAtMs) {}

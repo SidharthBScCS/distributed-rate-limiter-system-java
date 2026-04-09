@@ -13,8 +13,10 @@ public class AdminDataInitializer {
     CommandLineRunner seedDefaultAdministrator(
             AdministratorService administratorService,
             @Value("${auth.admin.username:admin}") String username,
-            @Value("${auth.admin.password:admin@2026}") String password
+            @Value("${auth.admin.password:admin@2026}") String password,
+            @Value("${auth.admin.full-name:API Administrator}") String fullName,
+            @Value("${auth.admin.email:admin@ratelimiter.local}") String email
     ) {
-        return args -> administratorService.ensureDefaultAdministrator(username, password);
+        return args -> administratorService.ensureDefaultAdministrator(username, password, fullName, email);
     }
 }
