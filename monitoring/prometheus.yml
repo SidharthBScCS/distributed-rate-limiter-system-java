@@ -5,4 +5,6 @@ scrape_configs:
   - job_name: ratelimiter-backend
     metrics_path: /actuator/prometheus
     static_configs:
-      - targets: ["host.docker.internal:8080"]
+      - targets:
+          - "host.docker.internal:8082"
+          - "backend:8080"
