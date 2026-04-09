@@ -75,7 +75,7 @@ public class AuthController {
             Authentication authentication
     ) {
         return ResponseEntity.ok(
-                authService.updateProfile(authentication.getName())
+                authService.updateProfile(authentication.getName(), request.getFullName(), request.getEmail())
         );
     }
 
@@ -118,16 +118,18 @@ public class AuthController {
     private Map<String, Object> toAdminPayload(com.system.ratelimiter.entity.Administrator administrator) {
         Map<String, Object> payload = new java.util.LinkedHashMap<>();
         payload.put("userId", administrator.getUsername());
-        payload.put("fullName", administrator.getUsername());
-        payload.put("email", "");
+        payload.put("fullName", administrator.getFullName());
+        payload.put("email", administrator.getEmail());
+        payload.put("createdAt", administrator.getCreatedAt());
         return payload;
     }
 
     private Map<String, Object> toAdminListItemPayload(com.system.ratelimiter.entity.Administrator administrator) {
         Map<String, Object> payload = new java.util.LinkedHashMap<>();
         payload.put("userId", administrator.getUsername());
-        payload.put("fullName", administrator.getUsername());
-        payload.put("email", "");
+        payload.put("fullName", administrator.getFullName());
+        payload.put("email", administrator.getEmail());
+        payload.put("createdAt", administrator.getCreatedAt());
         return payload;
     }
 }
