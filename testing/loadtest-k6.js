@@ -4,7 +4,7 @@ import { Counter, Rate } from "k6/metrics";
 
 const BASE = __ENV.BASE_URL || "http://localhost:8082";
 const USERNAME = __ENV.AUTH_USER || "admin";
-const PASSWORD = __ENV.AUTH_PASS || "admin";
+const PASSWORD = __ENV.AUTH_PASS || "admin@2026";
 const ROUTE = __ENV.TEST_ROUTE || "/api/test";
 const TOKENS = Number(__ENV.TOKENS || "1");
 const SLEEP_MS = Number(__ENV.SLEEP_MS || "25");
@@ -82,9 +82,16 @@ function login() {
     return null;
   }
 
-  return Object.fromEntries(
-    Object.entries(response.cookies).map(([name, values]) => [name, values?.[0]?.value ?? ""])
-  );
+  const body = response.json();
+  if (!body || !body.token) {
+    loginFailures.add(1);
+    return null;
+  }
+
+  return {
+    token: body.token,
+    tokenType: body.tokenType || "Bearer",
+  };
 }
 
 function selectApiKey() {
@@ -105,7 +112,7 @@ export function setup() {
     keyCount: API_KEYS.length,
     route: ROUTE,
     tokens: TOKENS,
-    cookies,
+    auth: cookies,
   };
 }
 
@@ -119,8 +126,10 @@ export default function (data) {
   });
 
   const response = http.post(`${BASE}/api/limit/check`, payload, {
-    headers: { "Content-Type": "application/json" },
-    cookies: data.cookies,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `${data.auth.tokenType} ${data.auth.token}`,
+    },
     tags: {
       name: "limit_check",
       api_key_slot: String(API_KEYS.indexOf(apiKey)),

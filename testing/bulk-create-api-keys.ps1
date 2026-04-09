@@ -1,7 +1,7 @@
 param(
   [string]$BaseUrl = "http://localhost:8082",
   [string]$Username = "admin",
-  [string]$Password = "admin",
+  [string]$Password = "admin@2026",
   [int]$Count = 1000,
   [string]$UserPrefix = "loadtest-user",
   [int]$RateLimit = 10,
@@ -12,22 +12,34 @@ if ($Count -lt 1) {
   throw "Count must be at least 1."
 }
 
-$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 $loginBody = @{
   username = $Username
   password = $Password
 } | ConvertTo-Json
 
-try {
-  Invoke-RestMethod `
-    -Method POST `
-    -Uri "$BaseUrl/api/auth/login" `
-    -WebSession $session `
-    -ContentType "application/json" `
-    -Body $loginBody | Out-Null
-} catch {
-  throw "Login failed. Check backend status and admin credentials."
+function Get-AuthHeaders([string]$BaseUrl, [string]$LoginBody) {
+  try {
+    $response = Invoke-RestMethod `
+      -Method POST `
+      -Uri "$BaseUrl/api/auth/login" `
+      -ContentType "application/json" `
+      -Body $LoginBody
+  } catch {
+    throw "Login failed. Check backend status and admin credentials."
+  }
+
+  if (-not $response.token) {
+    throw "Login failed. Token missing from response."
+  }
+
+  $tokenType = if ($response.tokenType) { $response.tokenType } else { "Bearer" }
+  return @{
+    Authorization = "$tokenType $($response.token)"
+    "Content-Type" = "application/json"
+  }
 }
+
+$authHeaders = Get-AuthHeaders -BaseUrl $BaseUrl -LoginBody $loginBody
 
 $created = New-Object System.Collections.Generic.List[string]
 
@@ -42,8 +54,7 @@ for ($i = 1; $i -le $Count; $i++) {
     $response = Invoke-RestMethod `
       -Method POST `
       -Uri "$BaseUrl/api/keys" `
-      -WebSession $session `
-      -ContentType "application/json" `
+      -Headers $authHeaders `
       -Body $payload
 
     $created.Add($response.apiKey) | Out-Null
