@@ -47,11 +47,19 @@ It also gives administrators a dashboard where they can log in, create API keys,
 - Monitoring support through Prometheus and Grafana
 - Load testing assets using Postman, JMeter, and k6
 
-## Screenshots
+## System Architecture
 
-### System Architecture
+### Main Architecture
 
-![Architecture](documents/26E3179_Architecture.png)
+![System Architecture](documents/26E3179_Architecture.png)
+
+### Roadmap View
+
+![System Roadmap](documents/26E3179_Mid-Progress_Roadmap.png)
+
+### Timeline View
+
+![System Timeline](documents/26E3179_TIMELINE_CHART.png)
 
 ### Dashboard UI
 
@@ -64,41 +72,6 @@ It also gives administrators a dashboard where they can log in, create API keys,
 ### Testing Snapshot
 
 ![Testing](documents/TEST-IMG-1.png)
-
-## API Endpoints
-
-These are the main endpoints in a simple, brief format.
-
-### Authentication
-
-- `POST /api/auth/login` - log in as admin
-- `GET /api/auth/me` - get current logged-in admin
-- `PUT /api/auth/me` - update admin profile
-- `GET /api/auth/admins` - list admins
-- `GET /api/auth/admin/{userId}` - get one admin by user ID
-- `POST /api/auth/logout` - logout response endpoint
-
-### API Key and Rate Limiting
-
-- `GET /api` - list API keys
-- `POST /api/keys` - create a new API key
-- `POST /api/limit/check` - check whether a request should be allowed or blocked
-- `GET /api/stats` - get overall request stats
-
-### Dashboard and Analytics
-
-- `GET /api/view/dashboard` - fetch dashboard cards and API key table data
-- `GET /api/analytics/view` - fetch analytics chart data
-- `GET /api/analytics/keys` - get API key level usage stats
-- `GET /api/analytics/recent-decisions` - recent rate-limit decisions
-- `GET /api/stream/dashboard` - live dashboard updates using server-sent events
-
-### Health and Config
-
-- `GET /api/health/redis` - check Redis connection health
-- `GET /api/config` - fetch frontend UI configuration from backend
-- `GET /actuator/health` - Spring health endpoint
-- `GET /actuator/prometheus` - Prometheus metrics endpoint
 
 ## Future Improvements
 
