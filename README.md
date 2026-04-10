@@ -49,29 +49,7 @@ It also gives administrators a dashboard where they can log in, create API keys,
 
 ## System Architecture
 
-### Main Architecture
-
 ![System Architecture](documents/26E3179_Architecture.png)
-
-### Roadmap View
-
-![System Roadmap](documents/26E3179_Mid-Progress_Roadmap.png)
-
-### Timeline View
-
-![System Timeline](documents/26E3179_TIMELINE_CHART.png)
-
-### Dashboard UI
-
-![Dashboard](documents/UI-IMG-1.png)
-
-### Analytics View
-
-![Analytics](documents/UI-IMG-4.png)
-
-### Testing Snapshot
-
-![Testing](documents/TEST-IMG-1.png)
 
 ## Future Improvements
 
