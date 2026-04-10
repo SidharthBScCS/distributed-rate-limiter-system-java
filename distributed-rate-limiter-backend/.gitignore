@@ -34,3 +34,7 @@ build/
 
 ### Local config ###
 local.properties
+.m2/
+.m2home/
+.mvn/local-settings.xml
+AppData/
