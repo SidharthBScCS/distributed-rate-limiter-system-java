@@ -17,7 +17,7 @@ const DASHBOARD_CACHE_KEY = "dashboard-cache-v2";
 
 const DEFAULT_PAGINATION = {
   page: 1,
-  size: 10,
+  size: 15,
   totalItems: 0,
   totalPages: 1,
   filtered: false,
@@ -53,7 +53,7 @@ function normalizeTableQuery(dashboardData) {
   return {
     search: pagination.search ?? "",
     page: pagination.page ?? 1,
-    size: pagination.size ?? 10,
+    size: pagination.size ?? 15,
   };
 }
 
@@ -181,7 +181,7 @@ function App() {
     try {
       const params = new URLSearchParams({
         page: String(query.page ?? 1),
-        size: String(query.size ?? 10),
+        size: String(query.size ?? 15),
       });
       if (query.search.trim()) {
         params.set("search", query.search.trim());
@@ -207,7 +207,7 @@ function App() {
       const hasNewerPendingQuery = pendingLoad
         ? (pendingLoad.query?.search ?? "") !== (query.search ?? "") ||
           (pendingLoad.query?.page ?? 1) !== (query.page ?? 1) ||
-          (pendingLoad.query?.size ?? 10) !== (query.size ?? 10)
+          (pendingLoad.query?.size ?? 15) !== (query.size ?? 15)
         : false;
 
       if (hasNewerPendingQuery) {
@@ -232,7 +232,7 @@ function App() {
         const nextQuery = {
           search: nextPagination.search ?? "",
           page: nextPagination.page ?? 1,
-          size: nextPagination.size ?? current.size ?? 10,
+          size: nextPagination.size ?? current.size ?? 15,
         };
         if (
           current.search === nextQuery.search &&

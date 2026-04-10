@@ -106,14 +106,13 @@ function ApiTable({
 
   const totalPages = Math.max(1, pagination.totalPages ?? 1);
   const totalItems = pagination.totalItems ?? keys.length;
-  const pageSize = pagination.size ?? tableQuery.size ?? 10;
+  const pageSize = pagination.size ?? tableQuery.size ?? 15;
   const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = totalItems === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
   const endIndex = Math.min(safeCurrentPage * pageSize, totalItems);
 
   const queueTableQueryUpdate = (nextQuery) => {
     onTableQueryChange(nextQuery);
-    void onDashboardRefresh(true, nextQuery);
   };
 
   useEffect(() => {

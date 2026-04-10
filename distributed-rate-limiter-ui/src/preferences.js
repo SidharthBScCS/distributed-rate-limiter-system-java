@@ -1,13 +1,14 @@
 const APP_PREFERENCES_KEY = "app-preferences";
+const APP_PREFERENCES_VERSION = 2;
 
 const DEFAULT_PREFERENCES = {
   liveUpdates: true,
-  defaultPageSize: 10,
+  defaultPageSize: 15,
   confirmLogout: true,
 };
 
 function normalizePageSize(value) {
-  const allowedPageSizes = [5, 10, 20, 50];
+  const allowedPageSizes = [5, 10, 15, 20, 50];
   const numericValue = Number(value);
   return allowedPageSizes.includes(numericValue) ? numericValue : DEFAULT_PREFERENCES.defaultPageSize;
 }
@@ -34,7 +35,21 @@ export function readAppPreferences() {
     if (!raw) {
       return getDefaultPreferences();
     }
-    return normalizePreferences(JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    const normalized = normalizePreferences(parsed);
+
+    // Migrate legacy saved preferences that still carried the old page-size default.
+    if ((parsed?.version ?? 0) < APP_PREFERENCES_VERSION) {
+      if (parsed?.defaultPageSize === 10) {
+        normalized.defaultPageSize = DEFAULT_PREFERENCES.defaultPageSize;
+      }
+      window.localStorage.setItem(
+        APP_PREFERENCES_KEY,
+        JSON.stringify({ ...normalized, version: APP_PREFERENCES_VERSION })
+      );
+    }
+
+    return normalized;
   } catch {
     return getDefaultPreferences();
   }
@@ -45,7 +60,10 @@ export function writeAppPreferences(preferences) {
 
   if (typeof window !== "undefined") {
     try {
-      window.localStorage.setItem(APP_PREFERENCES_KEY, JSON.stringify(normalized));
+      window.localStorage.setItem(
+        APP_PREFERENCES_KEY,
+        JSON.stringify({ ...normalized, version: APP_PREFERENCES_VERSION })
+      );
     } catch {
       // Keep the UI usable even if storage is unavailable.
     }

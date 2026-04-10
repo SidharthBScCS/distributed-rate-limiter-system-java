@@ -18,7 +18,7 @@ function Settings() {
   const [statusMessage, setStatusMessage] = useState("Loading admin details...");
   const [saveMessage, setSaveMessage] = useState("");
   const [profileForm, setProfileForm] = useState({ fullName: "", email: "" });
-  const [profileSaving, setProfileSaving] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -68,8 +68,8 @@ function Settings() {
     setProfileForm((current) => ({ ...current, [field]: value }));
   };
 
-  const handleProfileSave = async () => {
-    setProfileSaving(true);
+  const handleSave = async () => {
+    setSaving(true);
     setSaveMessage("");
 
     try {
@@ -96,20 +96,15 @@ function Settings() {
         fullName: data?.fullName ?? "",
         email: data?.email ?? "",
       });
-      setSaveMessage("Profile saved.");
+      writeAppPreferences(draft);
+      window.dispatchEvent(new Event("app-preferences-changed"));
+      setSaveMessage("Settings saved.");
     } catch (error) {
       setSaveMessage(error instanceof Error ? error.message : "Unable to save settings.");
     } finally {
-      setProfileSaving(false);
+      setSaving(false);
       window.setTimeout(() => setSaveMessage(""), 1800);
     }
-  };
-
-  const handleSave = () => {
-    writeAppPreferences(draft);
-    window.dispatchEvent(new Event("app-preferences-changed"));
-    setSaveMessage("Settings saved.");
-    window.setTimeout(() => setSaveMessage(""), 1600);
   };
 
   return (
@@ -156,12 +151,6 @@ function Settings() {
                 />
               </div>
 
-              <div className="settings-actions-inline">
-                <button type="button" className="settings-save-btn" onClick={handleProfileSave} disabled={profileSaving}>
-                  <Save size={16} />
-                  {profileSaving ? "Saving..." : "Save Profile"}
-                </button>
-              </div>
             </div>
           </>
         ) : (
@@ -174,9 +163,9 @@ function Settings() {
 
         <div className="settings-footer">
           <p>{saveMessage || "Preferences are saved only in this browser."}</p>
-          <button type="button" className="settings-save-btn" onClick={handleSave}>
+          <button type="button" className="settings-save-btn" onClick={handleSave} disabled={saving}>
             <Save size={16} />
-            Save
+            {saving ? "Saving..." : "Save"}
           </button>
         </div>
       </section>
