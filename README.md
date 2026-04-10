@@ -13,14 +13,14 @@ It also gives administrators a dashboard where they can log in, create API keys,
 ## Tech Stack
 
 ### Backend
-- Java 17
+- Java 
 - Spring Boot
 - Spring Security
 - Spring Data JPA
 - PostgreSQL
 - Redis
 - JWT Authentication
-- Micrometer + Prometheus
+- Prometheus
 
 ### Frontend
 - React
@@ -63,6 +63,6 @@ It also gives administrators a dashboard where they can log in, create API keys,
 
 ## Project Summary
 
-If someone asks what this project does, the easiest answer is this:
+This project successfully implements a distributed rate limiter system that helps protect APIs from heavy traffic and misuse.
 
-It protects APIs from too much traffic, helps admins manage API keys, and shows everything clearly through a dashboard and monitoring tools.
+It provides a practical solution for controlling request flow, managing API keys, and monitoring system activity through a clean dashboard and real-time analytics. The goal of the project is not only to improve system stability, but also to make traffic behavior easy to understand and manage.
