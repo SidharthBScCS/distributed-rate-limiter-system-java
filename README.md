@@ -8,7 +8,7 @@ It also gives administrators a dashboard where they can log in, create API keys,
 
 ## Live Demo
 
-- Live Demo: `https://api-rate-limiter-4o3b.onrender.com`
+- Live Demo: https://api-rate-limiter-4o3b.onrender.com
 
 ## Tech Stack
 
