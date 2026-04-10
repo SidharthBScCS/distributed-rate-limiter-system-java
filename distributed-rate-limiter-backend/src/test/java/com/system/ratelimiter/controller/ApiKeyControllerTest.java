@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -145,8 +147,10 @@ class ApiKeyControllerTest {
         liveSnapshots.put("key-beta", new DistributedRateLimiterService.DashboardLiveSnapshot("Blocked", 8L));
 
         when(requestStatsService.snapshot()).thenReturn(stats);
-        when(apiKeyService.getAllRealKeys()).thenReturn(List.of(alpha, beta));
-        when(distributedRateLimiterService.snapshotDashboardState(List.of(alpha, beta))).thenReturn(liveSnapshots);
+        when(apiKeyService.getDashboardKeys("beta", 0, 1))
+                .thenReturn(new PageImpl<>(List.of(beta), PageRequest.of(0, 1), 1));
+        when(distributedRateLimiterService.snapshotDashboardState(List.of(beta)))
+                .thenReturn(Map.of("key-beta", liveSnapshots.get("key-beta")));
 
         ResponseEntity<DashboardViewResponse> response = controller.getDashboardView("beta", 1, 1);
 

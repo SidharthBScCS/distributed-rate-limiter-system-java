@@ -84,6 +84,13 @@ public class ApiKeyService {
         ).map(this::copyAndNormalize);
     }
 
+    public java.util.List<ApiKey> getAllDashboardKeys(String search) {
+        String normalized = search == null ? "" : search.trim().toLowerCase(Locale.ROOT);
+        return apiKeyRepository.findAllDashboardKeys(normalized).stream()
+                .map(this::copyAndNormalize)
+                .toList();
+    }
+
     public java.util.List<ApiKey> getTopKeys(int limit) {
         int safeLimit = Math.max(1, Math.min(20, limit));
         return apiKeyRepository.findTopKeys(PageRequest.of(0, safeLimit))

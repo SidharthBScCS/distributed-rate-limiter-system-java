@@ -28,6 +28,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -82,7 +83,7 @@ public class ApiKeyController {
     public ResponseEntity<DashboardViewResponse> getDashboardView(
             @RequestParam(name = "search", required = false) String search,
             @RequestParam(name = "page", required = false, defaultValue = "1") int page,
-            @RequestParam(name = "size", required = false, defaultValue = "10") int size
+            @RequestParam(name = "size", required = false, defaultValue = "15") int size
     ) {
         String normalizedSearch = normalizeSearch(search);
         int safePage = Math.max(1, page);
@@ -102,8 +103,8 @@ public class ApiKeyController {
 
     private DashboardViewResponse buildDashboardView(String search, int page, int size) {
         RequestStats statsSnapshot = requestStatsService.snapshot();
-        var pageResult = apiKeyService.getDashboardKeys(search, Math.max(0, page - 1), size);
-        List<ApiKey> pageKeys = pageResult.getContent();
+        Page<ApiKey> apiKeyPage = apiKeyService.getDashboardKeys(search, page - 1, size);
+        List<ApiKey> pageKeys = apiKeyPage.getContent();
         var liveSnapshots = distributedRateLimiterService.snapshotDashboardState(pageKeys);
         long total = statsSnapshot.getTotalRequests() == null ? 0L : statsSnapshot.getTotalRequests();
         long allowed = statsSnapshot.getAllowedRequests() == null ? 0L : statsSnapshot.getAllowedRequests();
@@ -148,10 +149,9 @@ public class ApiKeyController {
                     );
                 })
                 .toList();
-        int totalApiKeys = (int) pageResult.getTotalElements();
-        int totalPages = Math.max(1, pageResult.getTotalPages());
-        int safePage = Math.min(Math.max(1, page), totalPages);
-        List<DashboardApiKeyRowDto> pageRows = apiKeys;
+        int totalApiKeys = Math.toIntExact(apiKeyPage.getTotalElements());
+        int totalPages = Math.max(1, apiKeyPage.getTotalPages());
+        int safePage = apiKeyPage.getNumberOfElements() == 0 ? 1 : apiKeyPage.getNumber() + 1;
 
         return new DashboardViewResponse(
                 new DashboardStatsDto(
@@ -166,7 +166,7 @@ public class ApiKeyController {
                         blockedPercent,
                         statCards
                 ),
-                pageRows,
+                apiKeys,
                 new DashboardPaginationDto(
                         safePage,
                         size,

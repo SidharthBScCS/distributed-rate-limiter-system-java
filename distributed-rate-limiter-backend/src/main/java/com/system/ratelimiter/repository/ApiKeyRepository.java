@@ -31,10 +31,24 @@ public interface ApiKeyRepository extends JpaRepository<ApiKey, Long> {
             )
             and lower(apiKey.userName) not like 'demo%'
             and lower(apiKey.userName) not like 'sample%'
+             and lower(apiKey.apiKey) not like 'demo%'
+             and lower(apiKey.apiKey) not like 'sample%'
+             """)
+    Page<ApiKey> findDashboardKeys(@Param("search") String search, Pageable pageable);
+
+    @Query("""
+            select apiKey from ApiKey apiKey
+            where (
+                :search = ''
+                or lower(apiKey.userName) like concat('%', :search, '%')
+                or lower(apiKey.apiKey) like concat('%', :search, '%')
+            )
+            and lower(apiKey.userName) not like 'demo%'
+            and lower(apiKey.userName) not like 'sample%'
             and lower(apiKey.apiKey) not like 'demo%'
             and lower(apiKey.apiKey) not like 'sample%'
             """)
-    Page<ApiKey> findDashboardKeys(@Param("search") String search, Pageable pageable);
+    List<ApiKey> findAllDashboardKeys(@Param("search") String search);
 
     @Query("""
             select apiKey from ApiKey apiKey
