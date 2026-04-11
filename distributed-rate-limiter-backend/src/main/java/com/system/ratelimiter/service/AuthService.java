@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
+    public record AuthSession(String token, AuthResponse response) {}
+
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final AdministratorService administratorService;
@@ -30,7 +32,7 @@ public class AuthService {
         this.administratorPrincipalService = administratorPrincipalService;
     }
 
-    public AuthResponse authenticate(String username, String password) {
+    public AuthSession authenticate(String username, String password) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(username == null ? "" : username.trim(), password)
@@ -38,34 +40,32 @@ public class AuthService {
             UserDetails principal = (UserDetails) authentication.getPrincipal();
             Administrator administrator = administratorService.getByUsername(principal.getUsername());
             String token = jwtService.generateToken(principal, Map.of());
-            return toAuthResponse(administrator, token);
+            return new AuthSession(token, toAuthResponse(administrator));
         } catch (BadCredentialsException ex) {
             throw ex;
         }
     }
 
-    public AuthResponse getCurrentAdmin(String username) {
+    public AuthSession getCurrentAdmin(String username) {
         Administrator administrator = administratorService.getByUsername(username);
         UserDetails userDetails = administratorPrincipalService.toUserDetails(administrator);
         String token = jwtService.generateToken(userDetails, Map.of());
-        return toAuthResponse(administrator, token);
+        return new AuthSession(token, toAuthResponse(administrator));
     }
 
-    public AuthResponse updateProfile(String username) {
+    public AuthSession updateProfile(String username) {
         return getCurrentAdmin(username);
     }
 
-    public AuthResponse updateProfile(String username, String fullName, String email) {
+    public AuthSession updateProfile(String username, String fullName, String email) {
         Administrator administrator = administratorService.updateProfile(username, fullName, email);
         UserDetails userDetails = administratorPrincipalService.toUserDetails(administrator);
         String token = jwtService.generateToken(userDetails, Map.of());
-        return toAuthResponse(administrator, token);
+        return new AuthSession(token, toAuthResponse(administrator));
     }
 
-    private AuthResponse toAuthResponse(Administrator administrator, String token) {
+    private AuthResponse toAuthResponse(Administrator administrator) {
         return new AuthResponse(
-                token,
-                "Bearer",
                 administrator.getUsername(),
                 administrator.getFullName(),
                 administrator.getEmail(),

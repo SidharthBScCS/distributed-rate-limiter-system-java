@@ -160,8 +160,9 @@ class ApiKeyControllerTest {
         List<?> apiKeys = response.getBody().apiKeys();
         assertEquals(1, apiKeys.size());
         assertEquals("Beta", response.getBody().apiKeys().get(0).userName());
-        assertEquals("8 req", response.getBody().apiKeys().get(0).requestCountLabel());
-        assertEquals("40%", response.getBody().apiKeys().get(0).usageLabel());
+        assertEquals(8L, response.getBody().apiKeys().get(0).requestCount());
+        assertEquals(40.0d, response.getBody().apiKeys().get(0).usagePercentage());
+        assertEquals("Blocked", response.getBody().apiKeys().get(0).status());
 
         assertEquals(1, response.getBody().pagination().page());
         assertEquals(1, response.getBody().pagination().size());
@@ -169,6 +170,7 @@ class ApiKeyControllerTest {
         assertEquals("beta", response.getBody().pagination().search());
 
         assertEquals(3, response.getBody().stats().cards().size());
-        assertEquals("check-circle", response.getBody().stats().cards().get(1).iconKey());
+        assertEquals("Allowed", response.getBody().stats().cards().get(1).title());
+        assertEquals(80.0d, response.getBody().stats().cards().get(1).percentage());
     }
 }
