@@ -1,38 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import "../Styles/Analytics.css";
 
-function buildGrafanaCandidates(grafanaDashboardUrl) {
-  if (!grafanaDashboardUrl) {
-    return [];
+function normalizeGrafanaCandidates(grafanaDashboardUrls, grafanaDashboardUrl) {
+  const values = Array.isArray(grafanaDashboardUrls) ? grafanaDashboardUrls : [];
+  const normalized = values
+    .map((value) => String(value ?? "").trim())
+    .filter(Boolean);
+
+  if (normalized.length > 0) {
+    return Array.from(new Set(normalized));
   }
 
-  const raw = String(grafanaDashboardUrl).trim();
-  if (!raw) {
-    return [];
-  }
-
-  const candidates = [raw];
-  try {
-    const url = new URL(raw);
-    const host = url.hostname;
-    const port = url.port;
-    const isLocal = host === "localhost" || host === "127.0.0.1";
-    if (isLocal && (port === "3001" || port === "3002")) {
-      const nextPort = port === "3001" ? "3002" : "3001";
-      url.port = nextPort;
-      candidates.push(url.toString());
-    }
-  } catch {
-    // Leave only the raw value if it is not a valid URL.
-  }
-
-  return Array.from(new Set(candidates));
+  const fallback = String(grafanaDashboardUrl ?? "").trim();
+  return fallback ? [fallback] : [];
 }
 
-function Analytics({ grafanaDashboardUrl }) {
+function Analytics({ grafanaDashboardUrl, grafanaDashboardUrls }) {
   const [embedBlocked, setEmbedBlocked] = useState(false);
   const [frameLoaded, setFrameLoaded] = useState(false);
-  const candidates = useMemo(() => buildGrafanaCandidates(grafanaDashboardUrl), [grafanaDashboardUrl]);
+  const candidates = useMemo(
+    () => normalizeGrafanaCandidates(grafanaDashboardUrls, grafanaDashboardUrl),
+    [grafanaDashboardUrl, grafanaDashboardUrls]
+  );
   const [candidateIndex, setCandidateIndex] = useState(0);
   const resolvedGrafanaUrl = candidates[candidateIndex] || "";
 
@@ -41,7 +30,7 @@ function Analytics({ grafanaDashboardUrl }) {
     setEmbedBlocked(false);
     setFrameLoaded(false);
     setCandidateIndex(0);
-  }, [grafanaDashboardUrl]);
+  }, [grafanaDashboardUrl, grafanaDashboardUrls]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

@@ -8,7 +8,7 @@ import Analytics from "./Components/Analytics.jsx";
 import LoginPage from "./Components/LoginPage.jsx";
 import Settings from "./Components/Settings.jsx";
 import { apiUrl } from "./apiBase.js";
-import { buildAuthHeaders, getAccessToken, isFrontendAuthenticated, setFrontendAuthenticated } from "./auth.js";
+import { buildAuthHeaders, withAuth } from "./auth.js";
 import { readAppPreferences } from "./preferences.js";
 import "./App.css";
 
@@ -97,12 +97,12 @@ function App() {
   const initialDashboardData = readCachedJson(DASHBOARD_CACHE_KEY, DEFAULT_DASHBOARD_RESPONSE);
   const initialPreferences = readAppPreferences();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(() => isFrontendAuthenticated());
-  const [authChecking, setAuthChecking] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
   const [uiConfig, setUiConfig] = useState(() => readCachedJson(UI_CONFIG_CACHE_KEY, null));
   const [configError, setConfigError] = useState("");
   const [dashboardData, setDashboardData] = useState(initialDashboardData);
-  const [dashboardLoading, setDashboardLoading] = useState(() => !isFrontendAuthenticated());
+  const [dashboardLoading, setDashboardLoading] = useState(true);
   const [dashboardRefreshing, setDashboardRefreshing] = useState(false);
   const [preferences, setPreferences] = useState(initialPreferences);
   const [tableQuery, setTableQuery] = useState(() => resolveInitialTableQuery(initialDashboardData, initialPreferences));
@@ -139,22 +139,20 @@ function App() {
   }, []);
 
   const syncAuthState = async () => {
+    setAuthChecking(true);
     try {
       const response = await fetch(apiUrl("/api/auth/me"), {
+        ...withAuth(),
         headers: buildAuthHeaders(),
         cache: "no-store",
       });
       const authenticated = response.ok;
-      let nextToken = getAccessToken();
       if (response.ok) {
-        const data = await response.json();
-        nextToken = data?.token ?? nextToken;
+        await response.json();
       }
-      setFrontendAuthenticated(authenticated, nextToken);
       setIsAuthenticated(authenticated);
       return authenticated;
     } catch {
-      setFrontendAuthenticated(false);
       setIsAuthenticated(false);
       return false;
     } finally {
@@ -188,12 +186,12 @@ function App() {
       }
 
       const response = await fetch(apiUrl(`/api/view/dashboard?${params.toString()}`), {
+        ...withAuth(),
         headers: buildAuthHeaders(),
         cache: "no-store",
       });
       if (!response.ok) {
         if (response.status === 401) {
-          setFrontendAuthenticated(false);
           setIsAuthenticated(false);
           setAuthChecking(false);
           window.location.assign("/login");
@@ -268,7 +266,6 @@ function App() {
       });
       if (!response.ok) {
         if (response.status === 401) {
-          setFrontendAuthenticated(false);
           setIsAuthenticated(false);
           setAuthChecking(false);
           window.location.assign("/login");
@@ -306,30 +303,29 @@ function App() {
 
   useEffect(() => {
     const onAuthChanged = () => {
-      setIsAuthenticated(isFrontendAuthenticated());
-      setAuthChecking(false);
+      void syncAuthState();
       void loadUiConfig();
-      void loadDashboardData(true);
     };
     window.addEventListener("auth-changed", onAuthChanged);
     return () => window.removeEventListener("auth-changed", onAuthChanged);
   }, []);
 
   useEffect(() => {
-    if (isFullWidthPage || !uiConfig) {
+    if (isFullWidthPage || !uiConfig || authChecking || !isAuthenticated) {
       return undefined;
     }
     void loadDashboardData(true);
     return undefined;
-  }, [isFullWidthPage, uiConfig, tableQuery]);
+  }, [authChecking, isAuthenticated, isFullWidthPage, uiConfig, tableQuery]);
 
   useEffect(() => {
-    if (isFullWidthPage || !uiConfig || !preferences.liveUpdates) {
+    if (isFullWidthPage || !uiConfig || !preferences.liveUpdates || authChecking || !isAuthenticated) {
       return undefined;
     }
 
     const source = new EventSource(
-      apiUrl(`/api/stream/dashboard?access_token=${encodeURIComponent(getAccessToken())}`)
+      apiUrl("/api/stream/dashboard"),
+      { withCredentials: true }
     );
 
     const onTick = () => {
@@ -345,7 +341,7 @@ function App() {
       source.removeEventListener("tick", onTick);
       source.close();
     };
-  }, [isFullWidthPage, preferences.liveUpdates, uiConfig]);
+  }, [authChecking, isAuthenticated, isFullWidthPage, preferences.liveUpdates, uiConfig]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -385,12 +381,31 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-            <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+            <Route
+              path="/login"
+              element={authChecking ? (
+                <div className="page-container">
+                  <div className="analytics-empty-state">
+                    <p>Checking session...</p>
+                  </div>
+                </div>
+              ) : isAuthenticated ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <LoginPage />
+              )}
+            />
 
             <Route
               path="/dashboard"
               element={
-                !isAuthenticated ? (
+                authChecking ? (
+                  <div className="page-container">
+                    <div className="analytics-empty-state">
+                      <p>Checking session...</p>
+                    </div>
+                  </div>
+                ) : !isAuthenticated ? (
                   <Navigate to="/login" replace />
                 ) : !uiConfig ? (
                   <div className="page-container">
@@ -420,7 +435,13 @@ function App() {
             <Route
               path="/analytics"
               element={
-                !isAuthenticated ? (
+                authChecking ? (
+                  <div className="page-container">
+                    <div className="analytics-empty-state">
+                      <p>Checking session...</p>
+                    </div>
+                  </div>
+                ) : !isAuthenticated ? (
                   <Navigate to="/login" replace />
                 ) : !uiConfig ? (
                   <div className="page-container">
@@ -430,7 +451,10 @@ function App() {
                   </div>
                 ) : (
                   <div className="page-container analytics-page-container">
-                    <Analytics grafanaDashboardUrl={uiConfig.grafanaDashboardUrl} />
+                    <Analytics
+                      grafanaDashboardUrl={uiConfig.grafanaDashboardUrl}
+                      grafanaDashboardUrls={uiConfig.grafanaDashboardUrls}
+                    />
                   </div>
                 )
               }
@@ -439,7 +463,13 @@ function App() {
             <Route
               path="/settings"
               element={
-                !isAuthenticated ? (
+                authChecking ? (
+                  <div className="page-container">
+                    <div className="analytics-empty-state">
+                      <p>Checking session...</p>
+                    </div>
+                  </div>
+                ) : !isAuthenticated ? (
                   <Navigate to="/login" replace />
                 ) : (
                   <div className="page-container">
