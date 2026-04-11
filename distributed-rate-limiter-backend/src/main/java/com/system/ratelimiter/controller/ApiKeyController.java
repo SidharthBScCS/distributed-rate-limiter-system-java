@@ -20,7 +20,6 @@ import com.system.ratelimiter.service.DecisionAuditService;
 import com.system.ratelimiter.service.DistributedRateLimiterService;
 import com.system.ratelimiter.service.RequestStatsService;
 import jakarta.validation.Valid;
-import java.text.NumberFormat;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -113,9 +112,9 @@ public class ApiKeyController {
         double allowedPercent = total == 0 ? 0.0 : (allowed * 100.0) / total;
         double blockedPercent = total == 0 ? 0.0 : (blocked * 100.0) / total;
         List<DashboardStatCardDto> statCards = List.of(
-                statCard("Total Requests", total, "All requests processed", formatPercent(total == 0 ? 0.0 : 100.0), total > 0 ? "up" : "down", "#94a3b8", "activity"),
-                statCard("Allowed", allowed, "Passed rate limits", formatPercent(allowedPercent), allowedPercent > 0 ? "up" : "down", "#4ade80", "check-circle"),
-                statCard("Blocked", blocked, "Throttled requests", formatPercent(blockedPercent), blockedPercent > 0 ? "down" : "up", "#f87171", "x-circle")
+                statCard("Total Requests", total, "All requests processed", total == 0 ? 0.0 : 100.0),
+                statCard("Allowed", allowed, "Passed rate limits", allowedPercent),
+                statCard("Blocked", blocked, "Throttled requests", blockedPercent)
         );
 
         List<DashboardApiKeyRowDto> apiKeys = pageKeys.stream()
@@ -137,15 +136,7 @@ public class ApiKeyController {
                             apiKey.getAlgorithm(),
                             requestCount,
                             usagePercentage,
-                            NumberFormat.getIntegerInstance().format(requestCount) + " req",
-                            rateLimit + "/window",
-                            (apiKey.getWindowSeconds() == null ? 0 : apiKey.getWindowSeconds()) + "s",
-                            apiKey.getAlgorithm() == null || apiKey.getAlgorithm().isBlank() ? "-" : apiKey.getAlgorithm(),
-                            formatUsagePercentage(usagePercentage),
-                            usageColor(usagePercentage),
-                            status,
-                            status == null || status.isBlank() ? "Unknown" : status,
-                            statusColor(status)
+                            status
                     );
                 })
                 .toList();
@@ -156,11 +147,11 @@ public class ApiKeyController {
         return new DashboardViewResponse(
                 new DashboardStatsDto(
                         total,
-                        NumberFormat.getIntegerInstance().format(total),
+                        Long.toString(total),
                         allowed,
-                        NumberFormat.getIntegerInstance().format(allowed),
+                        Long.toString(allowed),
                         blocked,
-                        NumberFormat.getIntegerInstance().format(blocked),
+                        Long.toString(blocked),
                         total == 0 ? 0.0 : 100.0,
                         allowedPercent,
                         blockedPercent,
@@ -319,61 +310,18 @@ public class ApiKeyController {
         ));
     }
 
-    private static String statusColor(String status) {
-        String value = status == null ? "" : status.toLowerCase();
-        if ("blocked".equals(value)) return "#ef4444";
-        if ("warning".equals(value)) return "#f59e0b";
-        if ("normal".equals(value)) return "#10b981";
-        return "#94a3b8";
-    }
-
-    private static String usageColor(double percentage) {
-        if (percentage > 90) return "#ef4444";
-        if (percentage > 70) return "#f59e0b";
-        return "#10b981";
-    }
-
     private static DashboardStatCardDto statCard(
             String title,
             long value,
             String caption,
-            String changeLabel,
-            String trend,
-            String color,
-            String iconKey
+            double percentage
     ) {
         return new DashboardStatCardDto(
                 title,
                 value,
-                NumberFormat.getIntegerInstance().format(value),
                 caption,
-                changeLabel,
-                trend,
-                color,
-                iconKey
+                percentage
         );
-    }
-
-    private static String formatPercent(double value) {
-        if (Double.isNaN(value) || Double.isInfinite(value)) {
-            return "0%";
-        }
-        return value >= 10.0
-                ? String.format(java.util.Locale.ROOT, "%.1f%%", value)
-                : String.format(java.util.Locale.ROOT, "%.2f%%", value);
-    }
-
-    private static String formatUsagePercentage(double value) {
-        if (Double.isNaN(value) || Double.isInfinite(value)) {
-            return "0%";
-        }
-        if (value == 100.0d) {
-            return "100%";
-        }
-        String formatted = value >= 10.0d
-                ? String.format(java.util.Locale.ROOT, "%.1f", value)
-                : String.format(java.util.Locale.ROOT, "%.2f", value);
-        return formatted.replaceAll("\\.0+$", "").replaceAll("(\\.\\d*[1-9])0+$", "$1") + "%";
     }
 
     private static String normalizeSearch(String search) {

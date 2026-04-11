@@ -7,9 +7,12 @@ import com.system.ratelimiter.service.AuthService;
 import com.system.ratelimiter.service.AdministratorService;
 import jakarta.validation.Valid;
 import java.util.Map;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,18 +33,32 @@ public class AuthController {
 
     private final AuthService authService;
     private final AdministratorService administratorService;
+    private final String authCookieName;
+    private final boolean authCookieSecure;
+    private final String authCookieSameSite;
+    private final long authCookieMaxAgeSeconds;
 
     public AuthController(
             AuthService authService,
-            AdministratorService administratorService
+            AdministratorService administratorService,
+            @Value("${auth.cookie.name:RL_ADMIN_TOKEN}") String authCookieName,
+            @Value("${auth.cookie.secure:false}") boolean authCookieSecure,
+            @Value("${auth.cookie.same-site:Lax}") String authCookieSameSite,
+            @Value("${jwt.expiration-ms:86400000}") long jwtExpirationMs
     ) {
         this.authService = authService;
         this.administratorService = administratorService;
+        this.authCookieName = authCookieName;
+        this.authCookieSecure = authCookieSecure;
+        this.authCookieSameSite = authCookieSameSite;
+        this.authCookieMaxAgeSeconds = Math.max(1L, jwtExpirationMs / 1000L);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.authenticate(request.getUsername(), request.getPassword()));
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
+        AuthService.AuthSession session = authService.authenticate(request.getUsername(), request.getPassword());
+        writeAuthCookie(response, session.token());
+        return ResponseEntity.ok(session.response());
     }
 
     @GetMapping("/admin/{userId}")
@@ -65,22 +82,30 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<AuthResponse> getCurrentAdmin(Authentication authentication) {
-        return ResponseEntity.ok(authService.getCurrentAdmin(authentication.getName()));
+    public ResponseEntity<AuthResponse> getCurrentAdmin(Authentication authentication, HttpServletResponse response) {
+        AuthService.AuthSession session = authService.getCurrentAdmin(authentication.getName());
+        writeAuthCookie(response, session.token());
+        return ResponseEntity.ok(session.response());
     }
 
     @PutMapping("/me")
     public ResponseEntity<AuthResponse> updateCurrentAdmin(
             @Valid @RequestBody UpdateAdminProfileRequest request,
-            Authentication authentication
+            Authentication authentication,
+            HttpServletResponse response
     ) {
-        return ResponseEntity.ok(
-                authService.updateProfile(authentication.getName(), request.getFullName(), request.getEmail())
+        AuthService.AuthSession session = authService.updateProfile(
+                authentication.getName(),
+                request.getFullName(),
+                request.getEmail()
         );
+        writeAuthCookie(response, session.token());
+        return ResponseEntity.ok(session.response());
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, Object>> logout() {
+    public ResponseEntity<Map<String, Object>> logout(HttpServletResponse response) {
+        clearAuthCookie(response);
         return ResponseEntity.ok(Map.of("message", "Logged out"));
     }
 
@@ -131,5 +156,27 @@ public class AuthController {
         payload.put("email", administrator.getEmail());
         payload.put("createdAt", administrator.getCreatedAt());
         return payload;
+    }
+
+    private void writeAuthCookie(HttpServletResponse response, String token) {
+        response.addHeader(HttpHeaders.SET_COOKIE, ResponseCookie.from(authCookieName, token)
+                .httpOnly(true)
+                .secure(authCookieSecure)
+                .sameSite(authCookieSameSite)
+                .path("/")
+                .maxAge(authCookieMaxAgeSeconds)
+                .build()
+                .toString());
+    }
+
+    private void clearAuthCookie(HttpServletResponse response) {
+        response.addHeader(HttpHeaders.SET_COOKIE, ResponseCookie.from(authCookieName, "")
+                .httpOnly(true)
+                .secure(authCookieSecure)
+                .sameSite(authCookieSameSite)
+                .path("/")
+                .maxAge(0)
+                .build()
+                .toString());
     }
 }

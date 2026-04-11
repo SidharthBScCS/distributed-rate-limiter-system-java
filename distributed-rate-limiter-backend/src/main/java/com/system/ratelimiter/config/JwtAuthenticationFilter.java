@@ -2,6 +2,7 @@ package com.system.ratelimiter.config;
 
 import com.system.ratelimiter.service.AdministratorPrincipalService;
 import com.system.ratelimiter.service.JwtService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,13 +20,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final AdministratorPrincipalService administratorPrincipalService;
+    private final String authCookieName;
 
     public JwtAuthenticationFilter(
             JwtService jwtService,
-            AdministratorPrincipalService administratorPrincipalService
+            AdministratorPrincipalService administratorPrincipalService,
+            @org.springframework.beans.factory.annotation.Value("${auth.cookie.name:RL_ADMIN_TOKEN}") String authCookieName
     ) {
         this.jwtService = jwtService;
         this.administratorPrincipalService = administratorPrincipalService;
+        this.authCookieName = authCookieName;
     }
 
     @Override
@@ -67,9 +71,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return authorization.substring(7).trim();
         }
 
-        String sseToken = request.getParameter("access_token");
-        if (sseToken != null && !sseToken.isBlank()) {
-            return sseToken.trim();
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            if (cookie != null && authCookieName.equals(cookie.getName())) {
+                String value = cookie.getValue();
+                if (value != null && !value.isBlank()) {
+                    return value.trim();
+                }
+            }
         }
         return null;
     }
