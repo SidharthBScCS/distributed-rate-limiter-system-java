@@ -9,13 +9,5 @@ public record DashboardApiKeyRowDto(
         String algorithm,
         long requestCount,
         double usagePercentage,
-        String requestCountLabel,
-        String rateLimitLabel,
-        String windowLabel,
-        String algorithmLabel,
-        String usageLabel,
-        String usageColor,
-        String status,
-        String statusLabel,
-        String statusColor
+        String status
 ) {}

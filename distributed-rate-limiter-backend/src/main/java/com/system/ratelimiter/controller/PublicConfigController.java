@@ -2,6 +2,8 @@ package com.system.ratelimiter.controller;
 
 import com.system.ratelimiter.dto.PublicConfigResponse;
 import com.system.ratelimiter.dto.PublicUiDefaultsDto;
+import java.net.URI;
+import java.util.LinkedHashSet;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PublicConfigController {
 
     private final String grafanaDashboardUrl;
+    private final List<String> grafanaDashboardUrls;
     private final int refreshIntervalMs;
     private final int defaultRateLimit;
     private final int defaultWindowSeconds;
@@ -27,6 +30,7 @@ public class PublicConfigController {
             @Value("${ui.defaults.window-seconds:60}") int defaultWindowSeconds
     ) {
         this.grafanaDashboardUrl = normalizeGrafanaDashboardUrl(grafanaDashboardUrl);
+        this.grafanaDashboardUrls = buildGrafanaDashboardUrls(this.grafanaDashboardUrl);
         this.refreshIntervalMs = Math.max(500, refreshIntervalMs);
         this.defaultRateLimit = Math.max(1, defaultRateLimit);
         this.defaultWindowSeconds = Math.max(1, defaultWindowSeconds);
@@ -38,6 +42,7 @@ public class PublicConfigController {
     public ResponseEntity<PublicConfigResponse> getFrontendConfig() {
         return ResponseEntity.ok(new PublicConfigResponse(
                 grafanaDashboardUrl,
+                grafanaDashboardUrls,
                 refreshIntervalMs,
                 allowedAlgorithms,
                 new PublicUiDefaultsDto(
@@ -60,5 +65,38 @@ public class PublicConfigController {
             return url;
         }
         return url + (url.contains("?") ? "&" : "?") + "kiosk=tv";
+    }
+
+    private static List<String> buildGrafanaDashboardUrls(String primaryUrl) {
+        if (primaryUrl == null || primaryUrl.isBlank()) {
+            return List.of();
+        }
+
+        LinkedHashSet<String> urls = new LinkedHashSet<>();
+        urls.add(primaryUrl);
+
+        try {
+            URI uri = URI.create(primaryUrl);
+            String host = uri.getHost();
+            int port = uri.getPort();
+            boolean isLocal = "localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host);
+            if (isLocal && (port == 3001 || port == 3002)) {
+                int fallbackPort = port == 3001 ? 3002 : 3001;
+                URI fallback = new URI(
+                        uri.getScheme(),
+                        uri.getUserInfo(),
+                        uri.getHost(),
+                        fallbackPort,
+                        uri.getPath(),
+                        uri.getQuery(),
+                        uri.getFragment()
+                );
+                urls.add(fallback.toString());
+            }
+        } catch (Exception ignored) {
+            // Keep the primary URL only when parsing fails.
+        }
+
+        return List.copyOf(urls);
     }
 }
