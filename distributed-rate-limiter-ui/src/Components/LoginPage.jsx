@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
-import { setFrontendAuthenticated } from "../auth.js";
+import { withAuth } from "../auth.js";
 import { apiUrl } from "../apiBase.js";
 import "../Styles/LoginPage.css";
 
@@ -20,6 +20,7 @@ function LoginPage() {
 
     try {
       const response = await fetch(apiUrl("/api/auth/login"), {
+        ...withAuth(),
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,12 +42,10 @@ function LoginPage() {
         throw new Error(message);
       }
 
-      const data = await response.json();
-      setFrontendAuthenticated(true, data?.token ?? "");
+      await response.json();
       window.dispatchEvent(new Event("auth-changed"));
       window.location.assign("/dashboard");
     } catch (err) {
-      setFrontendAuthenticated(false);
       setError(err.message || "Authentication failed");
     } finally {
       setIsSubmitting(false);

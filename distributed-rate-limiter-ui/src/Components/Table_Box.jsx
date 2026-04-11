@@ -1,8 +1,40 @@
 import { useState, useEffect } from "react";
 import { Plus, Copy, Search } from "lucide-react";
 import { apiUrl } from "../apiBase.js";
-import { buildAuthHeaders } from "../auth.js";
+import { buildAuthHeaders, withAuth } from "../auth.js";
 import "../Styles/Table_Box.css";
+
+function formatNumber(value) {
+  const numericValue = Number(value ?? 0);
+  return Number.isFinite(numericValue) ? numericValue.toLocaleString() : "0";
+}
+
+function formatUsagePercentage(value) {
+  const numericValue = Number(value ?? 0);
+  if (!Number.isFinite(numericValue)) {
+    return "0%";
+  }
+  if (numericValue === 100) {
+    return "100%";
+  }
+  return `${numericValue >= 10 ? numericValue.toFixed(1) : numericValue.toFixed(2)}`
+    .replace(/\.0+$/, "")
+    .replace(/(\.\d*[1-9])0+$/, "$1") + "%";
+}
+
+function usageColor(percentage) {
+  if (percentage > 90) return "#ef4444";
+  if (percentage > 70) return "#f59e0b";
+  return "#10b981";
+}
+
+function statusColor(status) {
+  const value = String(status ?? "").toLowerCase();
+  if (value === "blocked") return "#ef4444";
+  if (value === "warning") return "#f59e0b";
+  if (value === "normal") return "#10b981";
+  return "#94a3b8";
+}
 
 function ApiTable({
   dashboardData,
@@ -150,10 +182,12 @@ function ApiTable({
 
     try {
       const response = await fetch(apiUrl("/api/keys"), {
-        method: "POST",
-        headers: buildAuthHeaders({
-          "Content-Type": "application/json",
+        ...withAuth({
+          headers: buildAuthHeaders({
+            "Content-Type": "application/json",
+          }),
         }),
+        method: "POST",
         cache: "no-store",
         body: JSON.stringify(payload),
       });
@@ -267,6 +301,14 @@ function ApiTable({
               keys.map((key) => {
                 const usage = key.usagePercentage;
                 const fullApiKey = key.apiKey;
+                const keyUsageColor = usageColor(usage);
+                const keyStatusColor = statusColor(key.status);
+                const requestCountLabel = `${formatNumber(key.requestCount)} req`;
+                const rateLimitLabel = `${key.rateLimit ?? 0}/window`;
+                const windowLabel = `${key.windowSeconds ?? 0}s`;
+                const algorithmLabel = key.algorithm?.trim() ? key.algorithm : "-";
+                const usageLabel = formatUsagePercentage(usage);
+                const statusLabel = key.status?.trim() ? key.status : "Unknown";
 
                 return (
                   <tr key={key.id} className="table-row">
@@ -282,35 +324,35 @@ function ApiTable({
                       <span className="user-name">{key.userName}</span>
                     </td>
                     <td>
-                      <span className="rate-value">{key.rateLimitLabel}</span>
+                      <span className="rate-value">{rateLimitLabel}</span>
                     </td>
                     <td>
-                      <span className="window-value">{key.windowLabel}</span>
+                      <span className="window-value">{windowLabel}</span>
                     </td>
                     <td>
-                      <code className="algo-code">{key.algorithmLabel}</code>
+                      <code className="algo-code">{algorithmLabel}</code>
                     </td>
                     <td>
                       <div className="usage-cell">
                         <div className="usage-header">
-                          <span>{key.requestCountLabel}</span>
-                          <span style={{ color: key.usageColor }}>{key.usageLabel}</span>
+                          <span>{requestCountLabel}</span>
+                          <span style={{ color: keyUsageColor }}>{usageLabel}</span>
                         </div>
                         <div className="usage-bar">
                           <div
                             className="usage-progress"
                             style={{
                               width: `${usage}%`,
-                              background: key.usageColor,
+                              background: keyUsageColor,
                             }}
                           />
                         </div>
                       </div>
                     </td>
                     <td>
-                      <div className="status-cell" style={{ background: `${key.statusColor}22` }}>
-                        <span className="status-dot" style={{ background: key.statusColor }} />
-                        <span style={{ color: key.statusColor }}>{key.statusLabel}</span>
+                      <div className="status-cell" style={{ background: `${keyStatusColor}22` }}>
+                        <span className="status-dot" style={{ background: keyStatusColor }} />
+                        <span style={{ color: keyStatusColor }}>{statusLabel}</span>
                       </div>
                     </td>
                   </tr>
