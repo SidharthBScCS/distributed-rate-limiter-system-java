@@ -8,6 +8,7 @@ const PASSWORD = __ENV.AUTH_PASS || "admin@2026";
 const ROUTE = __ENV.TEST_ROUTE || "/api/test";
 const TOKENS = Number(__ENV.TOKENS || "1");
 const SLEEP_MS = Number(__ENV.SLEEP_MS || "25");
+const AUTH_COOKIE_NAME = __ENV.AUTH_COOKIE_NAME || "RL_ADMIN_TOKEN";
 const START_VUS = Number(__ENV.START_VUS || "0");
 const STAGE_1_TARGET = Number(__ENV.STAGE_1_TARGET || "100");
 const STAGE_2_TARGET = Number(__ENV.STAGE_2_TARGET || "300");
@@ -83,14 +84,20 @@ function login() {
   }
 
   const body = response.json();
-  if (!body || !body.token) {
+  const responseCookies = response.cookies || {};
+  const authCookie = responseCookies[AUTH_COOKIE_NAME];
+  const cookieToken =
+    Array.isArray(authCookie) && authCookie.length > 0 ? authCookie[0].value : null;
+  const token = body && body.token ? body.token : cookieToken;
+
+  if (!token) {
     loginFailures.add(1);
     return null;
   }
 
   return {
-    token: body.token,
-    tokenType: body.tokenType || "Bearer",
+    token,
+    tokenType: body && body.tokenType ? body.tokenType : "Bearer",
   };
 }
 

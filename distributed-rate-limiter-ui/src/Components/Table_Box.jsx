@@ -39,7 +39,6 @@ function statusColor(status) {
 function ApiTable({
   dashboardData,
   loading,
-  refreshing,
   defaults,
   onDashboardRefresh,
   tableQuery,
@@ -67,7 +66,7 @@ function ApiTable({
   const searchTerm = tableQuery.search;
   const [searchInput, setSearchInput] = useState(searchTerm);
   const currentPage = tableQuery.page;
-  const isPaginationBusy = refreshing && tableQuery.page !== pagination.page;
+  const isPaginationBusy = loading && tableQuery.page !== pagination.page;
 
   useEffect(() => {
     if (!isCreateModalOpen) {
@@ -247,7 +246,6 @@ function ApiTable({
               }
             }}
             placeholder="Search by API key, user, status, limit, or window"
-            disabled={refreshing}
           />
         </label>
         {searchTerm.trim() ? (
@@ -262,7 +260,6 @@ function ApiTable({
                 page: 1,
               });
             }}
-            disabled={refreshing}
           >
             Clear Search
           </button>

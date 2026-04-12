@@ -1,8 +1,7 @@
 const APP_PREFERENCES_KEY = "app-preferences";
-const APP_PREFERENCES_VERSION = 2;
+const APP_PREFERENCES_VERSION = 4;
 
 const DEFAULT_PREFERENCES = {
-  liveUpdates: true,
   defaultPageSize: 15,
   confirmLogout: true,
 };
@@ -15,7 +14,6 @@ function normalizePageSize(value) {
 
 function normalizePreferences(value) {
   return {
-    liveUpdates: value?.liveUpdates !== false,
     defaultPageSize: normalizePageSize(value?.defaultPageSize),
     confirmLogout: value?.confirmLogout !== false,
   };
@@ -38,9 +36,9 @@ export function readAppPreferences() {
     const parsed = JSON.parse(raw);
     const normalized = normalizePreferences(parsed);
 
-    // Migrate legacy saved preferences that still carried the old page-size default.
+    // Migrate legacy saved preferences that still carried older page-size defaults.
     if ((parsed?.version ?? 0) < APP_PREFERENCES_VERSION) {
-      if (parsed?.defaultPageSize === 10) {
+      if (parsed?.defaultPageSize === 5 || parsed?.defaultPageSize === 10) {
         normalized.defaultPageSize = DEFAULT_PREFERENCES.defaultPageSize;
       }
       window.localStorage.setItem(
