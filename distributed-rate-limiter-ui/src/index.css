@@ -2,21 +2,28 @@
 *::before,
 *::after {
   box-sizing: border-box;
+  animation: none !important;
+  transition: none !important;
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-
-  html {
-    scroll-behavior: auto;
-  }
+.dashboard-refresh-badge.active,
+.nav-item:hover,
+.logout-btn:hover,
+.logout-modal-close:hover,
+.logout-cancel-btn:hover,
+.logout-confirm-btn:hover,
+.grafana-open-link:hover,
+.stat-card:hover,
+.create-btn:hover,
+.secondary-btn:hover,
+.pagination-btn:hover,
+.empty-action-btn:hover,
+.action-btn:hover,
+.auth-form button[type="submit"]:hover,
+.settings-save-btn:hover {
+  transform: none !important;
 }
