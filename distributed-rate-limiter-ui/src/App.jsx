@@ -45,7 +45,6 @@ const DEFAULT_DASHBOARD_RESPONSE = {
     postgres: "",
     redis: "",
   },
-  generatedAt: "",
 };
 
 function normalizeTableQuery(dashboardData) {
@@ -103,11 +102,9 @@ function App() {
   const [configError, setConfigError] = useState("");
   const [dashboardData, setDashboardData] = useState(initialDashboardData);
   const [dashboardLoading, setDashboardLoading] = useState(true);
-  const [dashboardRefreshing, setDashboardRefreshing] = useState(false);
   const [preferences, setPreferences] = useState(initialPreferences);
   const [tableQuery, setTableQuery] = useState(() => resolveInitialTableQuery(initialDashboardData, initialPreferences));
   const dashboardRequestInFlightRef = useRef(false);
-  const lastDashboardLoadAtRef = useRef(0);
   const tableQueryRef = useRef(tableQuery);
   const pendingDashboardLoadRef = useRef(null);
   const isAnalyticsPage = location.pathname === "/analytics";
@@ -164,18 +161,12 @@ function App() {
     if (isFullWidthPage) {
       return false;
     }
-    const refreshIntervalMs = Math.max(500, Number(uiConfig?.refreshIntervalMs) || 1000);
-    const now = Date.now();
-    if (!force && now - lastDashboardLoadAtRef.current < refreshIntervalMs) {
-      return false;
-    }
     const query = queryOverride ?? tableQueryRef.current;
     if (dashboardRequestInFlightRef.current) {
       pendingDashboardLoadRef.current = { force, query };
       return false;
     }
     dashboardRequestInFlightRef.current = true;
-    setDashboardRefreshing(true);
     try {
       const params = new URLSearchParams({
         page: String(query.page ?? 1),
@@ -217,14 +208,12 @@ function App() {
         apiKeys: data?.apiKeys ?? [],
         pagination: nextPagination,
         sources: data?.sources ?? DEFAULT_DASHBOARD_RESPONSE.sources,
-        generatedAt: data?.generatedAt ?? "",
       });
       writeCachedJson(DASHBOARD_CACHE_KEY, {
         stats: data?.stats ?? DEFAULT_DASHBOARD_STATS,
         apiKeys: data?.apiKeys ?? [],
         pagination: nextPagination,
         sources: data?.sources ?? DEFAULT_DASHBOARD_RESPONSE.sources,
-        generatedAt: data?.generatedAt ?? "",
       });
       setTableQuery((current) => {
         const nextQuery = {
@@ -241,14 +230,12 @@ function App() {
         }
         return nextQuery;
       });
-      lastDashboardLoadAtRef.current = Date.now();
       return true;
     } catch {
       return false;
     } finally {
       dashboardRequestInFlightRef.current = false;
       setDashboardLoading(false);
-      setDashboardRefreshing(false);
       const pendingLoad = pendingDashboardLoadRef.current;
       if (pendingLoad) {
         pendingDashboardLoadRef.current = null;
@@ -317,31 +304,6 @@ function App() {
     void loadDashboardData(true);
     return undefined;
   }, [authChecking, isAuthenticated, isFullWidthPage, uiConfig, tableQuery]);
-
-  useEffect(() => {
-    if (isFullWidthPage || !uiConfig || !preferences.liveUpdates || authChecking || !isAuthenticated) {
-      return undefined;
-    }
-
-    const source = new EventSource(
-      apiUrl("/api/stream/dashboard"),
-      { withCredentials: true }
-    );
-
-    const onTick = () => {
-      void loadDashboardData();
-    };
-
-    source.addEventListener("tick", onTick);
-    source.onerror = () => {
-      source.close();
-    };
-
-    return () => {
-      source.removeEventListener("tick", onTick);
-      source.close();
-    };
-  }, [authChecking, isAuthenticated, isFullWidthPage, preferences.liveUpdates, uiConfig]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -416,11 +378,13 @@ function App() {
                 ) : (
                   <div className="dashboard-page">
                     <div className="dashboard-content">
-                      <StatsCards stats={dashboardData.stats} loading={dashboardLoading} />
+                      <StatsCards
+                        stats={dashboardData.stats}
+                        loading={dashboardLoading}
+                      />
                       <ApiTable
                         dashboardData={dashboardData}
                         loading={dashboardLoading}
-                        refreshing={dashboardRefreshing}
                         defaults={uiConfig.defaults}
                         onDashboardRefresh={loadDashboardData}
                         tableQuery={tableQuery}
