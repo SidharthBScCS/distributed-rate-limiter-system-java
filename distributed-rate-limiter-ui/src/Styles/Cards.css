@@ -21,6 +21,11 @@
   gap: 20px;
 }
 
+.stats-grid.is-refreshing .stat-card {
+  border-color: rgba(69, 255, 211, 0.18);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.36);
+}
+
 .stat-card {
   position: relative;
   display: flex;
@@ -140,11 +145,17 @@
   line-height: 1.1;
 
   word-break: break-word;
+  transition:
+    color 220ms ease,
+    opacity 220ms ease,
+    transform 320ms ease,
+    filter 320ms ease;
 }
 
 .card-caption {
   font-size: 0.85rem;
   color: var(--text-dim);
+  transition: color 220ms ease, opacity 220ms ease;
 }
 
 .card-footer {
@@ -169,6 +180,11 @@
 
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  transition:
+    transform 220ms ease,
+    background 220ms ease,
+    border-color 220ms ease,
+    opacity 220ms ease;
 }
 
 .trend-badge.up {
@@ -177,6 +193,17 @@
 
 .trend-badge.down {
   color: #ef4444;
+}
+
+.stats-grid.is-refreshing .card-value,
+.stats-grid.is-refreshing .card-caption,
+.stats-grid.is-refreshing .trend-badge {
+  opacity: 0.9;
+}
+
+.stats-grid.is-refreshing .card-value {
+  transform: translateY(-1px);
+  filter: saturate(1.08);
 }
 
 .cards-skeleton {
