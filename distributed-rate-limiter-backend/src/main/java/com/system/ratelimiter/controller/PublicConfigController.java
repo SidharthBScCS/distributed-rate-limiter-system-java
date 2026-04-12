@@ -25,13 +25,13 @@ public class PublicConfigController {
 
     public PublicConfigController(
             @Value("${ui.grafana.dashboard-url:}") String grafanaDashboardUrl,
-            @Value("${ui.refresh-interval-ms:500}") int refreshIntervalMs,
+            @Value("${ui.refresh-interval-ms:5000}") int refreshIntervalMs,
             @Value("${ui.defaults.rate-limit:10}") int defaultRateLimit,
             @Value("${ui.defaults.window-seconds:60}") int defaultWindowSeconds
     ) {
         this.grafanaDashboardUrl = normalizeGrafanaDashboardUrl(grafanaDashboardUrl);
         this.grafanaDashboardUrls = buildGrafanaDashboardUrls(this.grafanaDashboardUrl);
-        this.refreshIntervalMs = Math.max(500, refreshIntervalMs);
+        this.refreshIntervalMs = Math.max(5000, refreshIntervalMs);
         this.defaultRateLimit = Math.max(1, defaultRateLimit);
         this.defaultWindowSeconds = Math.max(1, defaultWindowSeconds);
         this.defaultAlgorithm = "SLIDING_WINDOW";
