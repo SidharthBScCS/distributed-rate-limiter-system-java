@@ -51,7 +51,7 @@ services:
       AUTH_ADMIN_FULL_NAME: ADMIN
       AUTH_ADMIN_EMAIL: admin@ratelimiter.local
       JWT_SECRET: change-this-jwt-secret-key-to-a-32-byte-minimum-value
-      UI_GRAFANA_DASHBOARD_URL: http://localhost:5050/d/adqskbg/total-request-rate?orgId=1&from=now-6h&to=now&timezone=browser
+      UI_GRAFANA_DASHBOARD_URL: http://localhost:5050/d/adqskbg/rate-limiter-neon-command-grid?orgId=1&from=now-15m&to=now&timezone=browser&refresh=5s
     ports:
       - "8081:8080"
     depends_on:
