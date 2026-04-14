@@ -6,9 +6,7 @@ In simple words, it works like a smart traffic controller for APIs. Instead of l
 
 It also gives administrators a dashboard where they can log in, create API keys, watch traffic in real time, and understand which requests are being allowed or blocked.
 
-## Live Demo
 
-- Live Demo: https://api-rate-limiter-4o3b.onrender.com
 
 ## Tech Stack
 
