@@ -80,18 +80,22 @@ public class PublicConfigController {
             String host = uri.getHost();
             int port = uri.getPort();
             boolean isLocal = "localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host);
-            if (isLocal && (port == 3001 || port == 3002)) {
-                int fallbackPort = port == 3001 ? 3002 : 3001;
-                URI fallback = new URI(
-                        uri.getScheme(),
-                        uri.getUserInfo(),
-                        uri.getHost(),
-                        fallbackPort,
-                        uri.getPath(),
-                        uri.getQuery(),
-                        uri.getFragment()
-                );
-                urls.add(fallback.toString());
+            if (isLocal) {
+                for (int fallbackPort : List.of(5050, 3001, 3002)) {
+                    if (fallbackPort == port) {
+                        continue;
+                    }
+                    URI fallback = new URI(
+                            uri.getScheme(),
+                            uri.getUserInfo(),
+                            uri.getHost(),
+                            fallbackPort,
+                            uri.getPath(),
+                            uri.getQuery(),
+                            uri.getFragment()
+                    );
+                    urls.add(fallback.toString());
+                }
             }
         } catch (Exception ignored) {
             // Keep the primary URL only when parsing fails.
